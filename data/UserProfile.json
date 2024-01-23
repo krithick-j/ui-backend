@@ -1,0 +1,51 @@
+[   {
+        "id": 1,
+        "distributor_id": "A12KGH",
+        "title": "Dr",
+        "last_name": "Jegatheesan",
+        "first_name": "Krithick",
+        "cheque_name": "Krithick Jegatheesan",
+        "address_1": "shalimar Garden",
+        "address_2": "Shalimar Garden 2",
+        "town_or_city": "Injambakkam",
+        "district": "Chennai",
+        "state_or_province": "Tamil Nadu",
+        "postal_or_zip_code": 600115,
+        "home_phone_no": "3262694412",
+        "mobile_phone_no": "8787841154",
+        "email_address": "j.krithick@gmail.com",
+        "valid_id_type": "Passport",
+        "valid_id_no": "DfKJJUEH6756565",
+        "nationality": "India",
+        "dob": "19-03-2004",
+        "name_of_benificiary_or_Nominee": "Siva",
+        "relationship": "Friend",
+        "mothers_family_name": "Kuppuraj",
+        "pan_card": "2318PQTFKDNH",
+        "Bank Name": "Kotak Bank",
+        "Branch Name": "Akkarai",
+        "Bank Account No": "32219461212",
+        "CPA Pin": 21215481,
+        "password": "kri1234"
+    },
+    {
+        "id": 2,
+        "distributor_id": "A123456",
+        "password": "jega1234"
+    },
+    {
+        "id": 3,
+        "distributor_id": "A126767H",
+        "password": "sri1234"
+    },
+    {
+        "id": 4,
+        "distributor_id": "A12KGH",
+        "password": "siva1234"
+    },
+    {
+        "id": 5,
+        "distributor_id": "A12KGH",
+        "password": "mala1234"
+    }
+]

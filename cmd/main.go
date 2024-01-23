@@ -37,6 +37,7 @@ func main() {
 	api.Get("/trackShipment", controllers.TrackShipment)
 	api.Get("/orderAndPayment", controllers.OrderAndPayment)
 	api.Get("/newReferrals", controllers.NewReferrals)
+	api.Get("/allReferrals", controllers.AllReferrals)
 
 	app.Listen(":8080")
 }

@@ -1,0 +1,21 @@
+{
+    "id": 1,
+    "ir_id_no": "IN294813454",
+    "ir_name": "Childson P",
+    "year": "20234",
+    "date_generated": "23-01-2024 23:54:10",
+    "table_data": [
+        {
+            "no": null,
+            "tc_or_Ref": null,
+            "country": null,
+            "product_name": null,
+            "type": null,
+            "awb_no": null,
+            "awb_or_pick_up_date": null,
+            "status": null,
+            "return_date": null,
+            "reason": null
+        }
+    ]
+}

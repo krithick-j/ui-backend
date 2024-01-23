@@ -1,0 +1,67 @@
+{
+    "id": 1,
+    "commission_payable_account_balance": "(INR) 45.51",
+    "commission_payable_account_available_balance": "(INR) 45.51",
+    "table_data": [
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 50.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 100.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 500.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 1000.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 5000.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 20000.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 50000.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "iCoupon (INR)",
+            "value": 100000.00,
+            "quantity": 0,
+            "subtotal": 0
+        },
+        {
+            "settlement_type": "Telegraphic Transfer",
+            "value": 1.00,
+            "quantity": 0,
+            "subtotal": 0
+        }
+    ],
+    "subtotal": "(INR) 0.00",
+    "fees": "(INR) 0.00",
+    "commission_payable_account_balance_after_settlement": "(INR) 45.51",
+    "commission_payable_account_available_balance_after_settlement": "(INR) 45.51",
+    "note": ""
+
+}

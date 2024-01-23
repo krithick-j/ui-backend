@@ -1,0 +1,24 @@
+{
+    "id": 1,
+    "balance_inr": 45.51,
+    "available_balance": 45.51,
+    "account_details_table": [
+        {
+            "name": "Godson S",
+            "country": 14,
+            "date_of_birth": "06-17-1992",
+            "mobile_number": "918300323787",
+            "email_address": "godson@gmail.com",
+            "pan": "KCGP4343",
+            "currency": "INR",
+            "cpa_available_balance": 45.51
+        }
+    ],
+    "load_request_details_table": [
+        {
+            "card_reference_no": null,
+            "load_amount": null,
+            "remarks": null
+        }
+    ]
+}

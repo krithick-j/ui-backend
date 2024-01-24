@@ -1,7 +1,7 @@
 {
     "id": 1,
     "ir_id_no": "IN23242343",
-    "total_commission(INR)": 1766011.56,
+    "total_commission_inr": 1766011.56,
     "total_credit_or_fund_transfer_inr": 0.00,
     "total_credit_adjustment_inr": 0.00,
     "total_stopped_cheque_inr": 0.00,

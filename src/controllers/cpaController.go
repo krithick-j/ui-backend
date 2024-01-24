@@ -12,7 +12,7 @@ func GetLoadRequest(c *fiber.Ctx) error {
 }
 
 func GetMyAccountSummary(c *fiber.Ctx) error {
-	filePath := "data/cpa/SettlementCatalog.json"
+	filePath := "data/cpa/MyAccountSummary.json"
 	return c.Status(http.StatusOK).SendFile(filePath)
 }
 func GetSettlementCatalog(c *fiber.Ctx) error {

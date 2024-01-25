@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func RecieveUserByID(ID string, user models.User) (models.User, *gorm.DB) {
-	result := configs.DB.First(&user, ID)
+func RecieveUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
+	result := configs.DB.First(&user, "dist_id = ?", DistID)
 	return user, result
 }

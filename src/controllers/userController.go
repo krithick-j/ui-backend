@@ -8,7 +8,7 @@ import (
 )
 
 func GetUserByDistId(c *fiber.Ctx) error {
-	id := c.Query("id")
+	id := c.Params("dist_id")
 
 	res := service.GetUserByDistId(id)
 

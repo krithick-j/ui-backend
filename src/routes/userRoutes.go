@@ -8,5 +8,5 @@ import (
 
 func UserRouter(router fiber.Router) {
 
-	router.Get("/UserByDistID", controllers.GetUserByDistId)
+	router.Get("/:dist_id", controllers.GetUserByDistId)
 }

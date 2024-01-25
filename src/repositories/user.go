@@ -7,7 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func RecieveUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
+func GetUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
 	result := configs.DB.First(&user, "dist_id = ?", DistID)
+	return user, result
+}
+
+func GetAllUsers(user []models.User) ([]models.User, *gorm.DB) {
+	result := configs.DB.Find(&user)
 	return user, result
 }

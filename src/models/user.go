@@ -35,4 +35,6 @@ type User struct {
 	Pass      string
 	RefDistID string
 	Place     string
+	Lside     string
+	Rside     string
 }

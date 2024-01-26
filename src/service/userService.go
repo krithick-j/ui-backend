@@ -9,10 +9,10 @@ import (
 )
 
 type RecursiveUser struct {
-	Name  string
-	Link  string
-	Left  *RecursiveUser
-	Right *RecursiveUser
+	Name  string         `json:"name"`
+	Link  string         `json:"link"`
+	Left  *RecursiveUser `json:"left"`
+	Right *RecursiveUser `json:"right"`
 }
 
 func GetUserByDistId(dist_id string) fiber.Map {

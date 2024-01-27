@@ -30,11 +30,11 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	DistID    string
-	Name      string
-	Pass      string
-	RefDistID string
-	Place     string
-	Lside     string
-	Rside     string
+	DistID    string `json:"distid"`
+	Name      string `json:"name"`
+	Pass      string `json:"pass"`
+	RefDistID string `json:"refdistid"`
+	Place     string `json:"place"`
+	Lside     string `json:"left"`
+	Rside     string `json:"right"`
 }

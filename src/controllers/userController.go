@@ -30,6 +30,6 @@ func GetUserTreeByDistId(c *fiber.Ctx) error {
 func UserRegistration(c *fiber.Ctx) error {
 	user := models.User{}
 	c.BodyParser(&user)
-	res := service.RegisterUser(user)
+	res, _ := service.RegisterUser(user)
 	return c.Status(http.StatusCreated).JSON(res)
 }

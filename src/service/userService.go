@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
@@ -92,4 +95,46 @@ func GetTreeUserByDistId(dist_id string) fiber.Map {
 		return fiber.Map{"error": result.Error}
 	}
 	return fiber.Map{"data": data}
+}
+
+func FindNextAvailUserSeq() string {
+	last_no := repositories.GetLastId()
+	distrib_no, _ := strconv.Atoi(strings.TrimPrefix(last_no, "IN-"))
+	return fmt.Sprintf("IN-%03d", distrib_no+1)
+}
+
+func FindNextAvailSlot(distrib_id string, side string) string {
+	/**
+		On a Pyramid network, a reference can only be added either on left or right
+		if a person adds thrid person an so on, the actual referree becomes the person below
+		the person, if he has an empty slot on the same side
+		if not the tree traverse till the botton where it finds an empty slot
+		Here we find an empty slot recursively on the same side
+		Caution a circular refernce by external db edit may cause an infinite loop
+	**/
+	var old_distrib_id string
+	for {
+		old_distrib_id = distrib_id
+		distrib_id = repositories.GetSide(distrib_id, side)
+		if distrib_id == "" {
+			return old_distrib_id
+		}
+	}
+}
+
+func RegisterUser(regDetails models.User) (fiber.Map, error) {
+	var side string
+	if regDetails.Place == "L" {
+		side = "lside"
+	} else {
+		side = "rside"
+	}
+	regDetails.DistID = FindNextAvailUserSeq()
+	regDetails.RefDistID = FindNextAvailSlot(regDetails.RefDistID, side)
+	err := repositories.CreateUser(regDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	return fiber.Map{"data": regDetails}, nil
 }

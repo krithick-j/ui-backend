@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"ui-back-end/src/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -26,6 +27,12 @@ func DbConnect(config *Config) {
 	}
 
 	db.Logger.Info(context.Background(), "\x1b[32m🚀Successfully connected to Database\x1b[0m")
+
+	//create tables if not exists
+	if err := db.AutoMigrate(&models.Product{}, &models.ProductCategory{}); err != nil {
+		db.Logger.Info(context.Background(), "\x1b[31mAuto Migration failed\x1b[0m")
+		os.Exit(1)
+	}
 
 	DB = db
 

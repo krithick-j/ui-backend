@@ -8,13 +8,14 @@ type Product struct {
 	gorm.Model
 	Name              string
 	Quantity          int
-	ProductImages     []ProductImage
+	ProductImages     []ProductImage //group of pictures
+	ProductImageID    uint
+	ProductImage      ProductImage //main picture
 	ShipmentTime      string
 	Price             int
 	SandH             int
 	RSP               int
-	BV                int
-	AddToCart         bool
+	BV                int  `gorm:"default:null"`
+	AddToCart         bool `gorm:"default:false" `
 	ProductCategoryID int
-	ProductCategory   ProductCategory
 }

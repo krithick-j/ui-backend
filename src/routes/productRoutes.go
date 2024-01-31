@@ -9,5 +9,5 @@ import (
 func ProductRouter(router fiber.Router) {
 	router.Get("/", controllers.GetProductsController)
 	router.Get("/categories", controllers.GetProductCategoriesController)
-	router.Get("/filterByCategory/:category_id", controllers.GetProductByCategoryID)
+	router.Get("/filterByCategory/:category_id", controllers.GetProductsByCategoryID)
 }

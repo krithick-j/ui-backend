@@ -18,4 +18,5 @@ type Product struct {
 	BV                int  `gorm:"default:null"`
 	AddToCart         bool `gorm:"default:false" `
 	ProductCategoryID int
+	EP                float32 `gorm:"default:null"`
 }

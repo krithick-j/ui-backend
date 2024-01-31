@@ -18,7 +18,7 @@ func GetAllProductCategories(productCategories []models.ProductCategory) ([]mode
 	return productCategories, result
 }
 
-func GetAllProductByCategoryID(category_id string, product models.Product) (models.Product, *gorm.DB) {
-	result := configs.DB.First(&product, "product_category_id = ?", category_id)
+func GetAllProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
+	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ?", category_id)
 	return product, result
 }

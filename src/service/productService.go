@@ -37,7 +37,7 @@ func GetProductCategories() fiber.Map {
 
 func GetProductByCategoryID(category_id string) fiber.Map {
 
-	var product models.Product
+	var product []models.Product
 	var result *gorm.DB
 
 	product, result = repositories.GetAllProductByCategoryID(category_id, product)

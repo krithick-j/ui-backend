@@ -28,9 +28,9 @@ func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product,
 	return product, result
 }
 
-// func SaveToCart(products []models.Product) {
-// 	for _, product := range products {
-// 		product.AddToCart = true
-// 		configs.DB.Save(&product)
-// 	}
-// }
+func SaveToCart(products []models.Product) {
+	for _, product := range products {
+		product.AddToCart = true
+		configs.DB.Save(&product)
+	}
+}

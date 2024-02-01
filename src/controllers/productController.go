@@ -24,20 +24,22 @@ func GetProductsByCategoryID(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
-// func AddToCartController(c *fiber.Ctx) error {
-// 	var ids []uint
-// 	if err := c.BodyParser(&ids); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
-// 	}
+func AddToCartController(c *fiber.Ctx) error {
+	var request struct {
+		IDs []uint `json:"ids"`
+	}
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	}
 
-// 	if len(ids) == 0 {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No IDs provided"})
-// 	}
+	if len(request.IDs) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No IDs provided"})
+	}
 
-// 	res := service.AddToCart(ids)
+	res := service.AddToCart(request.IDs)
 
-// 	return c.Status(http.StatusOK).JSON(res)
-// }
+	return c.Status(http.StatusOK).JSON(res)
+}
 
 func GetProductsById(c *fiber.Ctx) error {
 	var request struct {

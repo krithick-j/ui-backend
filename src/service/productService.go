@@ -62,13 +62,13 @@ func GetProductsByIds(ids []uint) ([]models.Product, error) {
 	return products, nil
 }
 
-// func AddToCart(ids []uint) fiber.Map {
-// 	products, err := GetProductsByIds(ids)
-// 	if err != nil {
-// 		return fiber.Map{"error": err.Error()}
-// 	}
+func AddToCart(ids []uint) fiber.Map {
+	products, err := GetProductsByIds(ids)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}
+	}
 
-// 	repositories.SaveToCart(products)
+	repositories.SaveToCart(products)
 
-// 	return fiber.Map{"success": true}
-// }
+	return fiber.Map{"success": true}
+}

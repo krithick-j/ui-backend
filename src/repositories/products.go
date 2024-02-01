@@ -22,3 +22,15 @@ func GetAllProductByCategoryID(category_id string, product []models.Product) ([]
 	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ?", category_id)
 	return product, result
 }
+
+func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product, *gorm.DB) {
+	result := configs.DB.Find(&product, ids)
+	return product, result
+}
+
+func SaveToCart(products []models.Product) {
+	for _, product := range products {
+		product.AddToCart = true
+		configs.DB.Save(&product)
+	}
+}

@@ -12,11 +12,11 @@ type Product struct {
 	ProductImageID    uint
 	ProductImage      ProductImage //main picture
 	ShipmentTime      string
-	Price             int
-	SandH             int
+	Price             float64
+	SandH             float64
 	RSP               int
 	BV                int  `gorm:"default:null"`
 	AddToCart         bool `gorm:"default:false" `
 	ProductCategoryID int
-	EP                float32 `gorm:"default:null"`
+	EP                float64 `gorm:"default:null"`
 }

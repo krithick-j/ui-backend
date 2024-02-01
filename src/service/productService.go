@@ -50,3 +50,25 @@ func GetProductByCategoryID(category_id string) fiber.Map {
 	}
 	return fiber.Map{"data": product}
 }
+
+func GetProductsByIds(ids []uint) ([]models.Product, error) {
+	var products []models.Product
+	products, result := repositories.GetAllProductByIDs(ids, products)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return products, nil
+}
+
+// func AddToCart(ids []uint) fiber.Map {
+// 	products, err := GetProductsByIds(ids)
+// 	if err != nil {
+// 		return fiber.Map{"error": err.Error()}
+// 	}
+
+// 	repositories.SaveToCart(products)
+
+// 	return fiber.Map{"success": true}
+// }

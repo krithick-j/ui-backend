@@ -12,10 +12,13 @@ import (
 )
 
 type RecursiveUser struct {
-	Name  string         `json:"name"`
-	Link  string         `json:"link"`
-	Left  *RecursiveUser `json:"left"`
-	Right *RecursiveUser `json:"right"`
+	Name           string         `json:"name"`
+	TrackingCenter string         `json:"tracking_center"`
+	LeftPoint      string         `json:"left_point"`
+	RightPoint     string         `json:"right_point"`
+	BV             string         `json:"bv"`
+	Left           *RecursiveUser `json:"left"`
+	Right          *RecursiveUser `json:"right"`
 }
 
 func GetUserByDistId(dist_id string) fiber.Map {
@@ -53,7 +56,11 @@ func FindRecursiveFind(ruser *RecursiveUser, dist_id string, side string) {
 	user, result = repositories.GetUserByID(dist_id, user)
 	var nuser *RecursiveUser = new(RecursiveUser)
 	nuser.Name = user.Name
-	nuser.Link = "Link"
+	nuser.TrackingCenter = user.DistID + "001"
+	nuser.LeftPoint = "24500"
+	nuser.RightPoint = "23500"
+	nuser.BV = "50"
+
 	if result.Error == gorm.ErrRecordNotFound {
 		panic("Not Found")
 	}
@@ -81,7 +88,6 @@ func GetTreeUserByDistId(dist_id string) fiber.Map {
 	data := new(RecursiveUser)
 	user, result = repositories.GetUserByID(dist_id, user)
 	data.Name = user.Name
-	data.Link = "Link"
 	if user.Lside != "" {
 		FindRecursiveFind(data, user.Lside, "left")
 	}

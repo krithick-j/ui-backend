@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"ui-back-end/configs"
 	"ui-back-end/src/controllers"
@@ -13,6 +14,7 @@ import (
 )
 
 func init() {
+	fmt.Println("Initializing the DB")
 	config, err := configs.LoadConfig(".")
 	if err != nil {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())

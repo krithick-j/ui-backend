@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/sha256"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"ui-back-end/configs"
@@ -24,7 +25,7 @@ type RecursiveUser struct {
 	Right          *RecursiveUser `json:"right"`
 }
 
-func GetUserByDistId(dist_id string) fiber.Map {
+func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
 	var user models.User
 	var result *gorm.DB
@@ -32,12 +33,12 @@ func GetUserByDistId(dist_id string) fiber.Map {
 	user, result = repositories.GetUserByID(dist_id, user)
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
-	return fiber.Map{"data": user}
+	return fiber.Map{"data": user}, http.StatusOK
 }
 
 func GetUsers() fiber.Map {
@@ -169,5 +170,6 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		return fiber.Map{"error": res.Error()}, res
 	}
 	tx.Commit()
-	return fiber.Map{"data": user_in}, nil
+	rspdata := dto.UserOut{DistribID: distrib_id}
+	return fiber.Map{"data": rspdata}, nil
 }

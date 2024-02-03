@@ -9,11 +9,11 @@ POST {{host}}/user HTTP/1.1
 content-type: application/json
 
 {
-	"name": "Sivakumar",
+	"name": "Deeya",
 	"pass": "1234",
-	"ref_dist_id": "IN-00001",
-	"ref_center_code": "002",
-	"place": "left"
+	"ref_dist_id": "IN-00006",
+	"ref_center_code": "003",
+	"place": "right"
 }
 
 ###

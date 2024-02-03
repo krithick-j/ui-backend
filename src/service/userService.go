@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -98,7 +99,7 @@ func FindNextAvailUserSeq() string {
 	return fmt.Sprintf("IN-%05d", distrib_no+1)
 }
 
-func FindNextAvailSlot(distrib_id string, side string) string {
+func FindNextAvailSlot(distrib_id string, center_code string, side string) (string, string) {
 	/**
 		On a Pyramid network, a reference can only be added either on left or right
 		if a person adds thrid person an so on, the actual referree becomes the person below
@@ -107,26 +108,27 @@ func FindNextAvailSlot(distrib_id string, side string) string {
 		Here we find an empty slot recursively on the same side
 		Caution a circular refernce by external db edit may cause an infinite loop
 	**/
+	fmt.Println("Finding Next Slot")
 	var old_distrib_id string
+	var old_center_code string
 	for {
-		old_distrib_id = distrib_id
-		distrib_id = repositories.GetSide(distrib_id, side)
+		old_distrib_id, old_center_code = distrib_id, center_code
+		distrib_id, center_code = repositories.GetNextItem(distrib_id, center_code, side)
+		fmt.Println("D: ", distrib_id, "C:", center_code)
 		if distrib_id == "" {
-			return old_distrib_id
+			return old_distrib_id, old_center_code
 		}
 	}
 }
 
 func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
-	//TODO: User Table Update
-	//Generate Automatically
+	//Generate Next Available Distrib Number
 	distrib_id := FindNextAvailUserSeq()
 	user := models.User{
 		DistribID: distrib_id,
 		Name:      user_in.Name,
 		Pass:      fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
 	}
-	repositories.CreateUser(user)
 	tc1 := models.TrackingCenter{
 		Name:           user_in.Name,
 		DistribID:      distrib_id,
@@ -147,7 +149,25 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		DistribID:  distrib_id,
 		CenterCode: "003",
 	}
-	repositories.CreateTCs([]models.TrackingCenter{tc1, tc2, tc3})
-	repositories.UpdateTC(distrib_id, user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+	//if not empty don't overwrite but find next available free slot
+	new_ref_distrib_id, new_ref_center_code := FindNextAvailSlot(user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+	//Succeed all or fail all
+	tx := configs.DB.Begin()
+	res := repositories.CreateUser(tx, user)
+	if res != nil {
+		tx.Rollback()
+		return fiber.Map{"error": res.Error()}, res
+	}
+	res = repositories.CreateTCs(tx, []models.TrackingCenter{tc1, tc2, tc3})
+	if res != nil {
+		tx.Rollback()
+		return fiber.Map{"error": res.Error()}, res
+	}
+	res = repositories.UpdateTC(tx, distrib_id, new_ref_distrib_id, new_ref_center_code, user_in.Place)
+	if res != nil {
+		tx.Rollback()
+		return fiber.Map{"error": res.Error()}, res
+	}
+	tx.Commit()
 	return fiber.Map{"data": user_in}, nil
 }

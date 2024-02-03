@@ -108,11 +108,13 @@ func FindNextAvailSlot(distrib_id string, center_code string, side string) (stri
 		Here we find an empty slot recursively on the same side
 		Caution a circular refernce by external db edit may cause an infinite loop
 	**/
+	fmt.Println("Finding Next Slot")
 	var old_distrib_id string
 	var old_center_code string
 	for {
 		old_distrib_id, old_center_code = distrib_id, center_code
 		distrib_id, center_code = repositories.GetNextItem(distrib_id, center_code, side)
+		fmt.Println("D: ", distrib_id, "C:", center_code)
 		if distrib_id == "" {
 			return old_distrib_id, old_center_code
 		}

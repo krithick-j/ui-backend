@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	"ui-back-end/src/models"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -28,8 +28,8 @@ func GetUserTreeByDistId(c *fiber.Ctx) error {
 }
 
 func UserRegistration(c *fiber.Ctx) error {
-	user := models.User{}
-	c.BodyParser(&user)
-	res, _ := service.RegisterUser(user)
-	return c.Status(http.StatusCreated).JSON(res)
+	user_in := dto.UserIn{}
+	c.BodyParser(&user_in)
+	service.RegisterUser(user_in)
+	return c.Status(http.StatusCreated).JSON(user_in)
 }

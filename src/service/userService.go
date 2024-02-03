@@ -1,9 +1,11 @@
 package service
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strconv"
 	"strings"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
@@ -50,63 +52,50 @@ func GetUsers() fiber.Map {
 	return fiber.Map{"data": users}
 }
 
-func FindRecursiveFind(ruser *RecursiveUser, dist_id string, side string) {
-	var user models.User
-	var result *gorm.DB
-	user, result = repositories.GetUserByID(dist_id, user)
+func FindRecursiveTC(ruser *RecursiveUser, dist_id string, center_code string, side string) {
+	tc := repositories.GetTrackingCenter(dist_id, center_code)
 	var nuser *RecursiveUser = new(RecursiveUser)
-	nuser.Name = user.Name
-	nuser.TrackingCenter = user.DistID + "001"
-	nuser.LeftPoint = "24500"
-	nuser.RightPoint = "23500"
-	nuser.BV = "50"
-
-	if result.Error == gorm.ErrRecordNotFound {
-		panic("Not Found")
+	nuser.Name = tc.Name
+	nuser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
+	nuser.LeftPoint = "2500"
+	nuser.RightPoint = "3500"
+	nuser.BV = "5"
+	if tc.LeftDistribID != "" {
+		FindRecursiveTC(nuser, tc.LeftDistribID, tc.LeftPlace, "left")
 	}
-	if result.Error != nil {
-		panic("Some Error")
-	}
-	if user.Lside != "" {
-		FindRecursiveFind(nuser, user.Lside, "left")
-	}
-	if user.Rside != "" {
-		FindRecursiveFind(nuser, user.Rside, "right")
+	if tc.RightDistribID != "" {
+		FindRecursiveTC(nuser, tc.RightDistribID, tc.RightPlace, "right")
 	}
 	if side == "left" {
 		ruser.Left = nuser
 	} else {
 		ruser.Right = nuser
 	}
-
 }
 
 func GetTreeUserByDistId(dist_id string) fiber.Map {
 
-	var user models.User
-	var result *gorm.DB
-	data := new(RecursiveUser)
-	user, result = repositories.GetUserByID(dist_id, user)
-	data.Name = user.Name
-	if user.Lside != "" {
-		FindRecursiveFind(data, user.Lside, "left")
+	ruser := new(RecursiveUser)
+	tc := repositories.GetTrackingCenter(dist_id, "001")
+	ruser.Name = tc.Name
+	ruser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
+	ruser.LeftPoint = "25500"
+	ruser.RightPoint = "34500"
+	ruser.BV = "10"
+
+	if tc.LeftDistribID != "" {
+		FindRecursiveTC(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
 	}
-	if user.Rside != "" {
-		FindRecursiveFind(data, user.Rside, "right")
+	if tc.RightDistribID != "" {
+		FindRecursiveTC(ruser, tc.RightDistribID, tc.RightPlace, "right")
 	}
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
-	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
-	}
-	return fiber.Map{"data": data}
+	return fiber.Map{"data": ruser}
 }
 
 func FindNextAvailUserSeq() string {
 	last_no := repositories.GetLastId()
 	distrib_no, _ := strconv.Atoi(strings.TrimPrefix(last_no, "IN-"))
-	return fmt.Sprintf("IN-%03d", distrib_no+1)
+	return fmt.Sprintf("IN-%05d", distrib_no+1)
 }
 
 func FindNextAvailSlot(distrib_id string, side string) string {
@@ -128,19 +117,37 @@ func FindNextAvailSlot(distrib_id string, side string) string {
 	}
 }
 
-func RegisterUser(regDetails models.User) (fiber.Map, error) {
-	var side string
-	if regDetails.Place == "L" {
-		side = "lside"
-	} else {
-		side = "rside"
+func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
+	//TODO: User Table Update
+	//Generate Automatically
+	distrib_id := FindNextAvailUserSeq()
+	user := models.User{
+		DistribID: distrib_id,
+		Name:      user_in.Name,
+		Pass:      fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
 	}
-	regDetails.DistID = FindNextAvailUserSeq()
-	regDetails.RefDistID = FindNextAvailSlot(regDetails.RefDistID, side)
-	err := repositories.CreateUser(regDetails)
-	if err != nil {
-		return nil, err
+	repositories.CreateUser(user)
+	tc1 := models.TrackingCenter{
+		Name:           user_in.Name,
+		DistribID:      distrib_id,
+		CenterCode:     "001",
+		RefDistribID:   user_in.RefDistID,
+		LeftDistribID:  distrib_id,
+		LeftPlace:      "002",
+		RightDistribID: distrib_id,
+		RightPlace:     "003",
 	}
-
-	return fiber.Map{"data": regDetails}, nil
+	tc2 := models.TrackingCenter{
+		Name:       user_in.Name,
+		DistribID:  distrib_id,
+		CenterCode: "002",
+	}
+	tc3 := models.TrackingCenter{
+		Name:       user_in.Name,
+		DistribID:  distrib_id,
+		CenterCode: "003",
+	}
+	repositories.CreateTCs([]models.TrackingCenter{tc1, tc2, tc3})
+	repositories.UpdateTC(distrib_id, user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+	return fiber.Map{"data": user_in}, nil
 }

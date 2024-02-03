@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
@@ -21,7 +20,7 @@ func GetAllUsers(user []models.User) ([]models.User, *gorm.DB) {
 
 func GetLastId() string {
 	var lastNo string
-	configs.DB.Table("users").Select("max(dist_id)").Row().Scan(&lastNo)
+	configs.DB.Table("users").Select("max(distrib_id)").Row().Scan(&lastNo)
 	return lastNo
 }
 
@@ -31,27 +30,37 @@ func GetSide(distrib_id string, place string) string {
 	return next_id
 }
 
+func GetTrackingCenter(distrib_id, center_id string) *models.TrackingCenter {
+	tc := new(models.TrackingCenter)
+	configs.DB.First(tc, "distrib_id = ? AND center_code = ?", distrib_id, center_id)
+	return tc
+}
+
 func CreateUser(user models.User) error {
-	var side string
-	if user.Place == "L" {
-		side = "lside"
+	configs.DB.Create(&user)
+	return nil
+}
+
+func CreateTCs(tcs []models.TrackingCenter) error {
+	for _, tc := range tcs {
+		res := configs.DB.Create(&tc)
+		if res.Error != nil {
+			fmt.Printf("Error %v\n", res.Error.Error())
+		}
+	}
+	return nil
+}
+
+func UpdateTC(distrib_id string, tracking_center string, center_code string, side string) error {
+	var updatecols models.TrackingCenter
+	if side == "left" {
+		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: "001"}
 	} else {
-		side = "rside"
+		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: "001"}
 	}
-	tx := configs.DB.Begin()
-	// Create User
-	user.Pass = fmt.Sprintf("%x", sha256.Sum256([]byte(user.Pass)))
-	result := tx.Table("users").Create(&user)
-	if result.Error != nil {
-		tx.Rollback()
-		return result.Error
+	res := configs.DB.Table("tracking_centers").Where("distrib_id=? AND center_code =?", tracking_center, center_code).Updates(updatecols)
+	if res.Error != nil {
+		fmt.Print(res.Error.Error())
 	}
-	// Update Referrer Row
-	result = tx.Table("users").Where("dist_id=?", user.RefDistID).Update(side, user.DistID)
-	if result.Error != nil {
-		tx.Rollback()
-		return result.Error
-	}
-	tx.Commit()
 	return nil
 }

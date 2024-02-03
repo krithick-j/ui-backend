@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
@@ -24,10 +23,20 @@ func GetLastId() string {
 	return lastNo
 }
 
-func GetSide(distrib_id string, place string) string {
-	var next_id string
-	configs.DB.Table("users").Select(place).Where("distrib_id=?", distrib_id).Row().Scan(&next_id)
-	return next_id
+func GetNextItem(distrib_id string, center_code string, place string) (string, string) {
+	next_item := struct {
+		LeftDistribID  string
+		LeftPlace      string
+		RightDistribID string
+		RightPlace     string
+	}{}
+
+	configs.DB.Table("tracking_centers").Where("distrib_id=? AND center_code=?", distrib_id, center_code).First(&next_item)
+	if place == "left" {
+		return next_item.LeftDistribID, next_item.LeftPlace
+	} else {
+		return next_item.RightDistribID, next_item.RightPlace
+	}
 }
 
 func GetTrackingCenter(distrib_id, center_id string) *models.TrackingCenter {
@@ -36,31 +45,34 @@ func GetTrackingCenter(distrib_id, center_id string) *models.TrackingCenter {
 	return tc
 }
 
-func CreateUser(user models.User) error {
-	configs.DB.Create(&user)
+func CreateUser(tx *gorm.DB, user models.User) error {
+	res := tx.Create(&user)
+	if res.Error != nil {
+		return res.Error
+	}
 	return nil
 }
 
-func CreateTCs(tcs []models.TrackingCenter) error {
+func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
 	for _, tc := range tcs {
-		res := configs.DB.Create(&tc)
+		res := tx.Create(&tc)
 		if res.Error != nil {
-			fmt.Printf("Error %v\n", res.Error.Error())
+			return res.Error
 		}
 	}
 	return nil
 }
 
-func UpdateTC(distrib_id string, tracking_center string, center_code string, side string) error {
+func UpdateTC(tx *gorm.DB, distrib_id string, tracking_center string, center_code string, side string) error {
 	var updatecols models.TrackingCenter
 	if side == "left" {
 		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: "001"}
 	} else {
 		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: "001"}
 	}
-	res := configs.DB.Table("tracking_centers").Where("distrib_id=? AND center_code =?", tracking_center, center_code).Updates(updatecols)
+	res := tx.Table("tracking_centers").Where("distrib_id=? AND center_code =?", tracking_center, center_code).Updates(updatecols)
 	if res.Error != nil {
-		fmt.Print(res.Error.Error())
+		return res.Error
 	}
 	return nil
 }

@@ -11,9 +11,9 @@ import (
 func GetUserByDistId(c *fiber.Ctx) error {
 	id := c.Params("dist_id")
 
-	res := service.GetUserByDistId(id)
+	res, status := service.GetUserByDistId(id)
 
-	return c.Status(http.StatusOK).JSON(res)
+	return c.Status(status).JSON(res)
 }
 
 func GetAllUsers(c *fiber.Ctx) error {

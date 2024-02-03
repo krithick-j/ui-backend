@@ -8,3 +8,7 @@ type UserIn struct {
 	RefCenterCode string `json:"ref_center_code"`
 	Place         string `json:"place"`
 }
+
+type UserOut struct {
+	DistribID string `json:"ref_dist_id"`
+}

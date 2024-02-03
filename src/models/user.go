@@ -30,11 +30,19 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	DistID    string `json:"distid"`
+	DistribID string `json:"distrib_id"`
 	Name      string `json:"name"`
 	Pass      string `json:"pass"`
-	RefDistID string `json:"refdistid"`
-	Place     string `json:"place"`
-	Lside     string `json:"left"`
-	Rside     string `json:"right"`
+}
+
+type TrackingCenter struct {
+	gorm.Model
+	DistribID      string `json:"distrib_id"`
+	Name           string `json:"name"`
+	RefDistribID   string `json:"ref_distrib_id"`
+	LeftDistribID  string `json:"left_distrib_id"`
+	LeftPlace      string `json:"left_place"`
+	RightDistribID string `json:"right_distrib_id"`
+	RightPlace     string `json:"right_place"`
+	CenterCode     string `json:"center_code"`
 }

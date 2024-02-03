@@ -9,7 +9,7 @@ import (
 )
 
 func GetUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
-	result := configs.DB.First(&user, "dist_id = ?", DistID)
+	result := configs.DB.First(&user, "distrib_id = ?", DistID)
 	return user, result
 }
 
@@ -26,7 +26,7 @@ func GetLastId() string {
 
 func GetSide(distrib_id string, place string) string {
 	var next_id string
-	configs.DB.Table("users").Select(place).Where("dist_id=?", distrib_id).Row().Scan(&next_id)
+	configs.DB.Table("users").Select(place).Where("distrib_id=?", distrib_id).Row().Scan(&next_id)
 	return next_id
 }
 

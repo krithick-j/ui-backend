@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,18 +26,13 @@ func GetProductsByCategoryID(c *fiber.Ctx) error {
 }
 
 func AddToCartController(c *fiber.Ctx) error {
-	var request struct {
-		IDs []uint `json:"ids"`
-	}
+
+	var request dto.CartItemIn
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	if len(request.IDs) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No IDs provided"})
-	}
-
-	res := service.AddToCart(request.IDs)
+	res := service.AddToCart(request)
 
 	return c.Status(http.StatusOK).JSON(res)
 }
@@ -56,4 +52,10 @@ func GetProductsById(c *fiber.Ctx) error {
 	res, _ := service.GetProductsByIds(request.IDs)
 	return c.Status(http.StatusOK).JSON(res)
 
+}
+
+func GetCartProducts(c *fiber.Ctx) error {
+	user_id := c.Params("user_id")
+	res := service.GetCartProducts(user_id)
+	return c.Status(http.StatusOK).JSON(res)
 }

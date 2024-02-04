@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
@@ -28,9 +29,12 @@ func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product,
 	return product, result
 }
 
-func SaveToCart(products []models.Product) {
-	for _, product := range products {
-		product.AddToCart = true
-		configs.DB.Save(&product)
+func SaveToCart(product models.CartItem) error {
+
+	result := configs.DB.Create(&product)
+	if result.Error != nil {
+		fmt.Printf("Error %v\n", result.Error.Error())
 	}
+
+	return nil
 }

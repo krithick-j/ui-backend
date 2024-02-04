@@ -77,7 +77,19 @@ func AddToCart(request dto.CartItemIn) fiber.Map {
 	return fiber.Map{"success": "Added to Cart Successfully"}
 }
 
-func GetCartProducts(user_id string) fiber.Map {
+func GetCartProductsByUserId(user_id string) fiber.Map {
 
-	return fiber.Map{"data": ""}
+	var products []dto.ProductsOut
+
+	products, result := repositories.GetAllCartProductsByUserID(user_id, products)
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}
+	}
+
+	if result.RowsAffected == 0 {
+		return fiber.Map{"data": "No Products in Cart"}
+	}
+
+	return fiber.Map{"data": products}
 }

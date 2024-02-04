@@ -7,6 +7,7 @@ import (
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // has many
@@ -43,4 +44,9 @@ func SaveToCart(product models.CartItem) error {
 func GetAllCartProductsByUserID(user_id string, productsOut []dto.ProductsOut) ([]dto.ProductsOut, *gorm.DB) {
 	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity").Where("user_id= ?", user_id).Find(&productsOut)
 	return productsOut, result
+}
+
+func DeleteCartProduct(user_id string, product_id string, cartItem models.CartItem) (models.CartItem, *gorm.DB) {
+	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("user_id= ? AND product_id=?", user_id, product_id).Delete(&cartItem)
+	return cartItem, result
 }

@@ -54,8 +54,8 @@ func GetProductsById(c *fiber.Ctx) error {
 
 }
 
-func GetCartProducts(c *fiber.Ctx) error {
+func GetCartProductsByUserId(c *fiber.Ctx) error {
 	user_id := c.Params("user_id")
-	res := service.GetCartProducts(user_id)
+	res := service.GetCartProductsByUserId(user_id)
 	return c.Status(http.StatusOK).JSON(res)
 }

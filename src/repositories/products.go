@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"ui-back-end/configs"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
@@ -37,4 +38,9 @@ func SaveToCart(product models.CartItem) error {
 	}
 
 	return nil
+}
+
+func GetAllCartProductsByUserID(user_id string, productsOut []dto.ProductsOut) ([]dto.ProductsOut, *gorm.DB) {
+	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity").Where("user_id= ?", user_id).Find(&productsOut)
+	return productsOut, result
 }

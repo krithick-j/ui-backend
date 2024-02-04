@@ -1,6 +1,7 @@
 package service
 
 import (
+	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
@@ -62,13 +63,21 @@ func GetProductsByIds(ids []uint) ([]models.Product, error) {
 	return products, nil
 }
 
-func AddToCart(ids []uint) fiber.Map {
-	products, err := GetProductsByIds(ids)
-	if err != nil {
-		return fiber.Map{"error": err.Error()}
+func AddToCart(request dto.CartItemIn) fiber.Map {
+
+	for _, item := range request.Items {
+		product := models.CartItem{
+			UserID:    request.UserID,
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+		}
+		repositories.SaveToCart(product)
 	}
 
-	repositories.SaveToCart(products)
+	return fiber.Map{"success": "Added to Cart Successfully"}
+}
 
-	return fiber.Map{"success": true}
+func GetCartProducts(user_id string) fiber.Map {
+
+	return fiber.Map{"data": ""}
 }

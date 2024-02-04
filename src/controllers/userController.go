@@ -8,6 +8,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func Login(c *fiber.Ctx) error {
+	data := struct {
+		UserName string
+		Password string
+	}{}
+	c.BodyParser(&data)
+	res, status := service.LoginUser(data.UserName, data.Password)
+	return c.Status(status).JSON(res)
+}
+
 func GetUserByDistId(c *fiber.Ctx) error {
 	id := c.Params("dist_id")
 

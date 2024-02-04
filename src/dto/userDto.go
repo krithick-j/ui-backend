@@ -12,3 +12,9 @@ type UserIn struct {
 type UserOut struct {
 	DistribID string `json:"ref_dist_id"`
 }
+
+type AuthOut struct {
+	DistribID string `json:"distrib_id"`
+	Name      string `json:"name"`
+	AuthToken string `json:"auth_token"`
+}

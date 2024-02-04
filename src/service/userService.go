@@ -25,6 +25,16 @@ type RecursiveUser struct {
 	Right          *RecursiveUser `json:"right"`
 }
 
+func LoginUser(username string, password string) (fiber.Map, int) {
+	pass := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	res, err := repositories.AuthUser(username, pass)
+	if err != nil {
+		return fiber.Map{"err": err.Error()}, http.StatusUnauthorized
+	}
+	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID}
+	return fiber.Map{"data": authout}, http.StatusAccepted
+
+}
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
 	var user models.User

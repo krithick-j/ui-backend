@@ -33,6 +33,7 @@ func main() {
 
 	api := app.Group("/api")
 	api.Route("/cpa", routes.CpaRouter)
+	api.Route("/iCoupon", routes.ICouponRouter)
 	api.Route("/user", routes.UserRouter)
 	api.Route("/product", routes.ProductRouter)
 	api.Get("/allGrVisual", controllers.GetAllGrVisual)

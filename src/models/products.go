@@ -15,8 +15,7 @@ type Product struct {
 	Price             float64
 	SandH             float64
 	RSP               int
-	BV                int  `gorm:"default:null"`
-	AddToCart         bool `gorm:"default:false" `
+	BV                int `gorm:"default:null"`
 	ProductCategoryID int
 	EP                float64 `gorm:"default:null"`
 }

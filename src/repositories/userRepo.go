@@ -1,11 +1,21 @@
 package repositories
 
 import (
+	"errors"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
 )
+
+func AuthUser(distrib_id, password string) (models.User, error) {
+	user := models.User{}
+	res := configs.DB.Where("distrib_id = ? AND pass =?", distrib_id, password).First(&user)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return models.User{}, res.Error
+	}
+	return user, nil
+}
 
 func GetUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
 	result := configs.DB.First(&user, "distrib_id = ?", DistID)

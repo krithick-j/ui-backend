@@ -1,6 +1,7 @@
 package service
 
 import (
+	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -92,4 +93,19 @@ func GetCartProductsByUserId(user_id string) fiber.Map {
 	}
 
 	return fiber.Map{"data": products}
+}
+
+func DeleteCartProduct(user_id string, product_id string) (fiber.Map, int) {
+	var cartItem models.CartItem
+	cartItem, result := repositories.DeleteCartProduct(user_id, product_id, cartItem)
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, http.StatusNoContent
+	}
+
+	return fiber.Map{"success": "Product Deleted Successfully", "DeletedProduct": cartItem}, http.StatusOK
 }

@@ -96,9 +96,9 @@ func GetCartProductsByDistribId(user_id string) fiber.Map {
 	return fiber.Map{"data": products}
 }
 
-func DeleteCartProduct(user_id string, product_id string) (fiber.Map, int) {
+func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 	var cartItem models.CartItem
-	cartItem, result := repositories.DeleteCartProduct(user_id, product_id, cartItem)
+	cartItem, result := repositories.DeleteCartProduct(distrib_id, product_id, cartItem)
 
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError

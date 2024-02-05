@@ -62,9 +62,9 @@ func GetCartProductsByUserId(c *fiber.Ctx) error {
 }
 
 func DeleteCartProduct(c *fiber.Ctx) error {
-	user_id := c.Query("user_id")
+	distrib_id := c.Query("distrib_id")
 	product_id := c.Query("product_id")
-	res, status := service.DeleteCartProduct(user_id, product_id)
+	res, status := service.DeleteCartProduct(distrib_id, product_id)
 	return c.Status(status).JSON(res)
 }
 

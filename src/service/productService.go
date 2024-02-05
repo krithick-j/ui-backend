@@ -111,9 +111,9 @@ func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 	return fiber.Map{"success": "Product Deleted Successfully", "DeletedProduct": cartItem}, http.StatusOK
 }
 
-func EditCartProducts(payload models.CartItem, user_id string, product_id string) (fiber.Map, int) {
+func EditCartProducts(payload models.CartItem, distrib_id string, product_id string) (fiber.Map, int) {
 
-	cartItem, result := repositories.EditCartProducts(user_id, product_id, payload)
+	cartItem, result := repositories.EditCartProducts(distrib_id, product_id, payload)
 
 	if result.Error != nil {
 		log.Info("Error saving user to the database:", result.Error)

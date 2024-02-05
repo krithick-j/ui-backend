@@ -1,0 +1,30 @@
+package dto
+
+type DeliveryAddress struct {
+	ContactName   string
+	ContactEmail  string
+	Address       string
+	City          string
+	District      string
+	State         string
+	ZipCode       uint
+	Country       string
+	HomePhoneNo   string
+	MobilePhoneNo string
+}
+
+type OrderProduct struct {
+	Name      string
+	Quantity  uint
+	UnitPrice uint64
+	SubTotal  float64
+	SandH     float64
+}
+
+type OrderDetailsOut struct {
+	Items           []OrderProduct
+	SubTotal        float64
+	TotalSandH      float64
+	TotalAmount     float64
+	DeliveryAddress DeliveryAddress
+}

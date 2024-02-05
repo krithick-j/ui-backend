@@ -50,3 +50,8 @@ func DeleteCartProduct(user_id string, product_id string, cartItem models.CartIt
 	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("user_id= ? AND product_id=?", user_id, product_id).Delete(&cartItem)
 	return cartItem, result
 }
+
+func EditCartProducts(user_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
+	result := configs.DB.Model(models.CartItem{}).Where("user_id= ? AND product_id=?", user_id, product_id).Updates(payload)
+	return payload, result
+}

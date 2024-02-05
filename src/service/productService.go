@@ -7,6 +7,7 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
 
@@ -108,4 +109,19 @@ func DeleteCartProduct(user_id string, product_id string) (fiber.Map, int) {
 	}
 
 	return fiber.Map{"success": "Product Deleted Successfully", "DeletedProduct": cartItem}, http.StatusOK
+}
+
+func EditCartProducts(payload models.CartItem, user_id string, product_id string) (fiber.Map, int) {
+
+	cartItem, result := repositories.EditCartProducts(user_id, product_id, payload)
+
+	if result.Error != nil {
+		log.Info("Error saving user to the database:", result.Error)
+		return fiber.Map{"error": result.Error}, http.StatusBadGateway
+	}
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }

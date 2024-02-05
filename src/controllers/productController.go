@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/models"
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -64,5 +65,18 @@ func DeleteCartProduct(c *fiber.Ctx) error {
 	user_id := c.Query("user_id")
 	product_id := c.Query("product_id")
 	res, status := service.DeleteCartProduct(user_id, product_id)
+	return c.Status(status).JSON(res)
+}
+
+func EditCartProducts(c *fiber.Ctx) error {
+	user_id := c.Query("user_id")
+	product_id := c.Query("product_id")
+
+	var payload models.CartItem
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	}
+
+	res, status := service.EditCartProducts(payload, user_id, product_id)
 	return c.Status(status).JSON(res)
 }

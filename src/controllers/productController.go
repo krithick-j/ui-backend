@@ -69,7 +69,7 @@ func DeleteCartProduct(c *fiber.Ctx) error {
 }
 
 func EditCartProducts(c *fiber.Ctx) error {
-	user_id := c.Query("user_id")
+	distrib_id := c.Query("distrib_id")
 	product_id := c.Query("product_id")
 
 	var payload models.CartItem
@@ -77,7 +77,7 @@ func EditCartProducts(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	res, status := service.EditCartProducts(payload, user_id, product_id)
+	res, status := service.EditCartProducts(payload, distrib_id, product_id)
 	return c.Status(status).JSON(res)
 }
 

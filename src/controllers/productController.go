@@ -80,3 +80,14 @@ func EditCartProducts(c *fiber.Ctx) error {
 	res, status := service.EditCartProducts(payload, user_id, product_id)
 	return c.Status(status).JSON(res)
 }
+
+func CreateProduct(c *fiber.Ctx) error {
+
+	var payload dto.ProductIn
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	}
+
+	res, status := service.CreateProduct(payload)
+	return c.Status(status).JSON(res)
+}

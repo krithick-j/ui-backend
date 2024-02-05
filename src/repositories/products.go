@@ -41,17 +41,17 @@ func SaveToCart(product models.CartItem) error {
 	return nil
 }
 
-func GetAllCartProductsByUserID(user_id string, productsOut []dto.ProductsOut) ([]dto.ProductsOut, *gorm.DB) {
-	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity").Where("user_id= ?", user_id).Find(&productsOut)
+func GetAllCartProductsByDistribID(distrib_id string, productsOut []dto.ProductsOut) ([]dto.ProductsOut, *gorm.DB) {
+	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity").Where("distrib_id= ?", distrib_id).Find(&productsOut)
 	return productsOut, result
 }
 
-func DeleteCartProduct(user_id string, product_id string, cartItem models.CartItem) (models.CartItem, *gorm.DB) {
-	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("user_id= ? AND product_id=?", user_id, product_id).Delete(&cartItem)
+func DeleteCartProduct(distrib_id string, product_id string, cartItem models.CartItem) (models.CartItem, *gorm.DB) {
+	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("distrib_id= ? AND product_id=?", distrib_id, product_id).Delete(&cartItem)
 	return cartItem, result
 }
 
-func EditCartProducts(user_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
-	result := configs.DB.Model(models.CartItem{}).Where("user_id= ? AND product_id=?", user_id, product_id).Updates(payload)
+func EditCartProducts(distrib_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
+	result := configs.DB.Model(models.CartItem{}).Where("distrib_id= ? AND product_id=?", distrib_id, product_id).Updates(payload)
 	return payload, result
 }

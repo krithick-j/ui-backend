@@ -11,9 +11,10 @@ func ProductRouter(router fiber.Router) {
 	router.Post("/getProductsById", controllers.GetProductsById)
 	router.Post("/", controllers.CreateProduct)
 	router.Post("/addToCart", controllers.AddToCartController)
-	router.Get("/cartProducts/:user_id", controllers.GetCartProductsByUserId)
+	router.Get("/cartProducts/:distrib_id", controllers.GetCartProductsByUserId)
 	router.Put("/cartProducts/", controllers.EditCartProducts)
 	router.Delete("/cartProduct/", controllers.DeleteCartProduct)
 	router.Get("/categories", controllers.GetProductCategoriesController)
 	router.Get("/filterByCategory/:category_id", controllers.GetProductsByCategoryID)
+	router.Get("/orderDetails/", controllers.GetOrderDetails)
 }

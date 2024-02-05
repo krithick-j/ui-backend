@@ -69,7 +69,7 @@ func AddToCart(request dto.CartItemIn) fiber.Map {
 
 	for _, item := range request.Items {
 		product := models.CartItem{
-			UserID:    request.UserID,
+			DistribID: request.DistribID,
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 		}
@@ -79,11 +79,11 @@ func AddToCart(request dto.CartItemIn) fiber.Map {
 	return fiber.Map{"success": "Added to Cart Successfully"}
 }
 
-func GetCartProductsByUserId(user_id string) fiber.Map {
+func GetCartProductsByDistribId(user_id string) fiber.Map {
 
 	var products []dto.ProductsOut
 
-	products, result := repositories.GetAllCartProductsByUserID(user_id, products)
+	products, result := repositories.GetAllCartProductsByDistribID(user_id, products)
 
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}
@@ -129,4 +129,70 @@ func EditCartProducts(payload models.CartItem, user_id string, product_id string
 func CreateProduct(payload dto.ProductIn) (fiber.Map, int) {
 	//write product Logic
 	return fiber.Map{"data": ""}, http.StatusCreated
+}
+
+func GetOrderDetails(distrib_id string) (fiber.Map, int) {
+	var subTotal float64 = 0.0
+	var totalSandH float64 = 0.0
+	var orderProductArray []dto.OrderProduct
+	var orderDetails dto.OrderDetailsOut
+	var cartItems []dto.ProductsOut
+	var userData models.User
+
+	//1. Retrieving All Products in Cart
+	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	//2. Populating OrderProduct Array field
+	for _, item := range cartItems {
+		orderProduct := dto.OrderProduct{
+			Name:      item.Product.Name,
+			Quantity:  uint(item.Product.Quantity),
+			UnitPrice: uint64(item.Product.Price),
+			SandH:     item.Product.SandH,
+			SubTotal:  item.Product.Price * float64(item.Product.Quantity),
+		}
+
+		orderProductArray = append(orderProductArray, orderProduct)
+		subTotal += orderProduct.SubTotal
+		totalSandH += orderProduct.SandH
+	}
+	//Retrieving User Data for Delivery Address
+	userData, result = repositories.GetUserByID(distrib_id, userData)
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	deliveryAddress := dto.DeliveryAddress{
+		ContactName:   userData.Name,
+		ContactEmail:  userData.EmailAddress,
+		Address:       userData.Address1,
+		City:          userData.TownOrCity,
+		District:      userData.District,
+		State:         userData.StateOrProvince,
+		ZipCode:       userData.PinOrZipCode,
+		Country:       userData.Country,
+		HomePhoneNo:   userData.HomePhoneNo,
+		MobilePhoneNo: userData.MobilePhoneNo,
+	}
+	orderDetails = dto.OrderDetailsOut{
+		Items:           orderProductArray,
+		SubTotal:        subTotal,
+		TotalSandH:      totalSandH,
+		TotalAmount:     subTotal + totalSandH,
+		DeliveryAddress: deliveryAddress,
+	}
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	if result.RowsAffected == 0 {
+		return fiber.Map{"data": "No Products in Cart"}, http.StatusNoContent
+	}
+
+	return fiber.Map{"data": orderDetails}, http.StatusOK
 }

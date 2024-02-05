@@ -56,8 +56,8 @@ func GetProductsById(c *fiber.Ctx) error {
 }
 
 func GetCartProductsByUserId(c *fiber.Ctx) error {
-	user_id := c.Params("user_id")
-	res := service.GetCartProductsByUserId(user_id)
+	distrib_id := c.Params("distrib_id")
+	res := service.GetCartProductsByDistribId(distrib_id)
 	return c.Status(http.StatusOK).JSON(res)
 }
 
@@ -89,5 +89,12 @@ func CreateProduct(c *fiber.Ctx) error {
 	}
 
 	res, status := service.CreateProduct(payload)
+	return c.Status(status).JSON(res)
+}
+
+func GetOrderDetails(c *fiber.Ctx) error {
+	distrib_id := c.Query("distrib_id")
+	res, status := service.GetOrderDetails(distrib_id)
+
 	return c.Status(status).JSON(res)
 }

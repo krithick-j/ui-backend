@@ -125,3 +125,8 @@ func EditCartProducts(payload models.CartItem, user_id string, product_id string
 	}
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }
+
+func CreateProduct(payload dto.ProductIn) (fiber.Map, int) {
+	//write product Logic
+	return fiber.Map{"data": ""}, http.StatusCreated
+}

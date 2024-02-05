@@ -9,6 +9,7 @@ import (
 func ProductRouter(router fiber.Router) {
 	router.Get("/", controllers.GetProductsController)
 	router.Post("/getProductsById", controllers.GetProductsById)
+	router.Post("/", controllers.CreateProduct)
 	router.Post("/addToCart", controllers.AddToCartController)
 	router.Get("/cartProducts/:user_id", controllers.GetCartProductsByUserId)
 	router.Put("/cartProducts/", controllers.EditCartProducts)

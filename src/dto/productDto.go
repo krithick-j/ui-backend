@@ -17,3 +17,16 @@ type ProductsOut struct {
 	Product   models.Product
 	Quantity  uint
 }
+
+type ProductIn struct {
+	Name              string
+	Quantity          int
+	ProductImageID    uint
+	ShipmentTime      string
+	Price             float64
+	SandH             float64
+	RSP               int
+	BV                int `gorm:"default:null"`
+	ProductCategoryID int
+	EP                float64 `gorm:"default:null"`
+}

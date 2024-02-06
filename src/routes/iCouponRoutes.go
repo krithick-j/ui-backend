@@ -9,6 +9,6 @@ import (
 func ICouponRouter(router fiber.Router) {
 
 	router.Post("/:admin_name", controllers.CreateICoupon)
-	// router.Get("/:distrib_id",controllers.GetICouponsByDistribId)
-
+	router.Post("/validate/:distrib_id", controllers.ValidateICoupon)
+	// router.Get("/:distrib_id", controllers.GetICouponsByDistribId)
 }

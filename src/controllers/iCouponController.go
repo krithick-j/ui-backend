@@ -19,3 +19,23 @@ func CreateICoupon(c *fiber.Ctx) error {
 	res, status := service.AddICoupon(iCouponIn, adminName)
 	return c.Status(status).JSON(res)
 }
+
+// func GetICouponsByDistribId(c *fiber.Ctx) error {
+
+// 	distribID := c.Params("distrib_id")
+// 	// res, status := service.GetAllICouponsByDistribID(distribID, distribID)
+// 	return c.Status(status).JSON(res)
+// }
+
+func ValidateICoupon(c *fiber.Ctx) error {
+	var payload dto.ValidateICouponIn
+
+	distribID := c.Params("distrib_id")
+
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	res, status := service.ValidateICoupon(payload, distribID)
+	return c.Status(status).JSON(res)
+}

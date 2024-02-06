@@ -10,6 +10,7 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func generateUniqueHexCode(length int) string {
@@ -47,12 +48,37 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 		}
 	}
 
-	// if err := repositories.ProductSave(&newProduct); err != nil {
-	// 	log.Info("Error saving user to the database:", err)
-	// 	return fiber.Map{}
-	// }
-
-	// log.Info("Product uploaded successfully.")
-
 	return fiber.Map{"data": "ICoupons added successfully"}, http.StatusCreated
+}
+
+// func GetAllICouponsByDistribID(user_id string) fiber.Map {
+
+// 	var products []dto.
+
+// 	products, result := repositories.GetAllCartProductsByDistribID(user_id, products)
+
+// 	if result.Error != nil {
+// 		return fiber.Map{"error": result.Error}
+// 	}
+
+// 	if result.RowsAffected == 0 {
+// 		return fiber.Map{"data": "No Products in Cart"}
+// 	}
+
+// 	return fiber.Map{"data": products}
+// }
+
+func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
+
+	var iCoupon models.ICoupon
+
+	iCoupon, result := repositories.GetICoupon(payload.VID, payload.Pin, iCoupon, distribID)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"data": iCoupon}, http.StatusOK
 }

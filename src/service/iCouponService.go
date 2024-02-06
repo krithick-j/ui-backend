@@ -3,12 +3,14 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strings"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
+	"github.com/fmorenovr/gomail"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -26,9 +28,53 @@ func generateUniqueHexCode(length int) string {
 	return strings.ToUpper(hexCode)
 }
 
+func SendICouponMail(toMail string, VID string, Pin string) error {
+	m, err := gomail.NewGoMail()
+	if err != nil {
+		return err
+	}
+
+	m.Set("Username", "j.krithick@gmail.com")
+	m.Set("Password", "gior zeiv xgga lqky")
+
+	m.Set("Servername", "smtp.gmail.com:465")
+
+	m.Set("From", "j.krithick@gmail.com")
+	m.Set("From_name", "Krithick ")
+
+	m.Set("To", toMail)
+
+	m.Set("Subject", "Your new iCoupon")
+
+	m.Set("BodyMessage", fmt.Sprintf("This is a noreply email. Your ICoupon VID is %s and Pin is %s", VID, Pin))
+	// m.SetHeader("From", "srik9585a@gmail.com")
+
+	// m.SetHeader("To", toMail)
+
+	// m.SetHeader("Subject", "Your new iCoupon")
+
+	// m.SetBody("text/plain", fmt.Sprintf("This is a noreply email. Your ICoupon VID is %s and Pin is %s", VID, Pin))
+
+	// d := gomail.NewDialer("smtp.gmail.com", 587, "srik9585a@gmail.com", "SriKrishna1945!")
+
+	if err := m.SendMessage(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
+	result, email := repositories.GetUserEmailByDistribID(iCouponIn.DistribID)
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	if result.RowsAffected == 0 {
+		return fiber.Map{"data": "No emailID Found"}, http.StatusNotFound
+	}
 
 	for _, Coupon := range iCouponIn.Coupons {
 		for i := 0; i < int(Coupon.Quantity); i++ {
@@ -44,11 +90,16 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 				Value:     Coupon.Value,
 				AdminName: adminName,
 			}
+			err := SendICouponMail(email, hexVID, hexPin)
+			if err != nil {
+				fmt.Print(err)
+				return fiber.Map{"error1": err}, http.StatusInternalServerError
+			}
 			repositories.SaveICoupon(iCoupon)
 		}
 	}
 
-	return fiber.Map{"data": "ICoupons added successfully"}, http.StatusCreated
+	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
 }
 
 // func GetAllICouponsByDistribID(user_id string) fiber.Map {

@@ -14,3 +14,8 @@ type ICouponIn struct {
 	TxDetail  uint64   `json:"tx_detail"`
 	Coupons   []Coupon `json:"coupons"`
 }
+
+type ValidateICouponIn struct {
+	VID string `json:"v_id"`
+	Pin string `json:"pin"`
+}

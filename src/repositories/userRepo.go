@@ -86,3 +86,9 @@ func UpdateTC(tx *gorm.DB, distrib_id string, tracking_center string, center_cod
 	}
 	return nil
 }
+
+func GetUserEmailByDistribID(distribID string) (*gorm.DB, string) {
+	var email string
+	result := configs.DB.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email)
+	return result, email
+}

@@ -3,16 +3,14 @@ package dto
 import "time"
 
 type Coupon struct {
-	VID        string
-	Value      uint
-	ExpiryDate time.Time
+	Value     float64   `json:"value"`
+	Quantity  int64     `json:"quantity"`
+	DateOn    time.Time `json:"date_on"`
+	ExpiresOn time.Time `json:"expires_on"`
 }
 
-// ICoupon Input from Admin
 type ICouponIn struct {
-	DistribID string
-	DateOn    time.Time
-	TxDetail  string
-	AdminName string
-	Coupons   []Coupon
+	DistribID string   `json:"distrib_id"`
+	TxDetail  uint64   `json:"tx_detail"`
+	Coupons   []Coupon `json:"coupons"`
 }

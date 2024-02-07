@@ -2,12 +2,16 @@ module ui-back-end
 
 go 1.19
 
-require github.com/gofiber/fiber/v2 v2.52.0
+require (
+	github.com/fmorenovr/gomail v0.0.0-20190819174001-821728186f39
+	github.com/gofiber/fiber/v2 v2.52.0
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/jenazads/gomail v0.0.0-20190819174001-821728186f39 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -32,7 +36,6 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
-	github.com/lib/pq v1.10.9
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect

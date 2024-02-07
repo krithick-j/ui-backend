@@ -151,7 +151,7 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 	for _, item := range cartItems {
 		orderProduct := dto.OrderProduct{
 			Name:      item.Product.Name,
-			Quantity:  uint(item.Product.Quantity),
+			Quantity:  item.Quantity,
 			UnitPrice: uint64(item.Product.Price),
 			SandH:     item.Product.SandH,
 			SubTotal:  item.Product.Price * float64(item.Product.Quantity),

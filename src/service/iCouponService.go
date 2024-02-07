@@ -47,15 +47,6 @@ func SendICouponMail(toMail string, VID string, Pin string) error {
 	m.Set("Subject", "Your new iCoupon")
 
 	m.Set("BodyMessage", fmt.Sprintf("This is a noreply email. Your ICoupon VID is %s and Pin is %s", VID, Pin))
-	// m.SetHeader("From", "srik9585a@gmail.com")
-
-	// m.SetHeader("To", toMail)
-
-	// m.SetHeader("Subject", "Your new iCoupon")
-
-	// m.SetBody("text/plain", fmt.Sprintf("This is a noreply email. Your ICoupon VID is %s and Pin is %s", VID, Pin))
-
-	// d := gomail.NewDialer("smtp.gmail.com", 587, "srik9585a@gmail.com", "SriKrishna1945!")
 
 	if err := m.SendMessage(); err != nil {
 		return err

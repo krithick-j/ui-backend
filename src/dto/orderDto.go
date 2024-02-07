@@ -26,5 +26,6 @@ type OrderDetailsOut struct {
 	SubTotal        float64
 	TotalSandH      float64
 	TotalAmount     float64
+	TotalQuantity   float64
 	DeliveryAddress DeliveryAddress
 }

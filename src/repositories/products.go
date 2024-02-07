@@ -52,6 +52,6 @@ func DeleteCartProduct(distrib_id string, product_id string, cartItem models.Car
 }
 
 func EditCartProducts(distrib_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
-	result := configs.DB.Model(models.CartItem{}).Where("distrib_id= ? AND product_id=?", distrib_id, product_id).Updates(payload)
+	result := configs.DB.Model(models.CartItem{}).Where("distrib_id=? AND product_id=?", distrib_id, product_id).Updates(payload)
 	return payload, result
 }

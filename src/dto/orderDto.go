@@ -17,6 +17,7 @@ type OrderProduct struct {
 	Name      string
 	Quantity  uint
 	UnitPrice uint64
+	BV        int
 	SubTotal  float64
 	SandH     float64
 }
@@ -26,5 +27,7 @@ type OrderDetailsOut struct {
 	SubTotal        float64
 	TotalSandH      float64
 	TotalAmount     float64
+	TotalQuantity   float64
+	TotalBV         int
 	DeliveryAddress DeliveryAddress
 }

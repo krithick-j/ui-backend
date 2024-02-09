@@ -134,6 +134,7 @@ func CreateProduct(payload dto.ProductIn) (fiber.Map, int) {
 func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 	var subTotal float64 = 0.0
 	var totalSandH float64 = 0.0
+	var quantity uint = 0
 	var orderProductArray []dto.OrderProduct
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
@@ -150,7 +151,7 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 	for _, item := range cartItems {
 		orderProduct := dto.OrderProduct{
 			Name:      item.Product.Name,
-			Quantity:  uint(item.Product.Quantity),
+			Quantity:  item.Quantity,
 			UnitPrice: uint64(item.Product.Price),
 			SandH:     item.Product.SandH,
 			SubTotal:  item.Product.Price * float64(item.Product.Quantity),
@@ -159,6 +160,7 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 		orderProductArray = append(orderProductArray, orderProduct)
 		subTotal += orderProduct.SubTotal
 		totalSandH += orderProduct.SandH
+		quantity += item.Quantity
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
@@ -184,6 +186,7 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 		TotalSandH:      totalSandH,
 		TotalAmount:     subTotal + totalSandH,
 		DeliveryAddress: deliveryAddress,
+		TotalQuantity:   float64(quantity),
 	}
 
 	if result.Error != nil {

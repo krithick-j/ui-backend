@@ -5,6 +5,7 @@ go 1.19
 require github.com/gofiber/fiber/v2 v2.52.0
 
 require (
+	github.com/fmorenovr/gomail v0.0.0-20190819174001-821728186f39 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

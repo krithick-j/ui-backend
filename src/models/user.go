@@ -31,6 +31,7 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 	DistribID       string `json:"distrib_id"`
+	RefDistribID    string `json:"ref_distrib_id"`
 	Name            string `json:"name"`
 	Pass            string `json:"pass"`
 	Address1        string `json:"address1"`

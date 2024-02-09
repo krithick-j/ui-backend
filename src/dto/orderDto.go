@@ -7,10 +7,10 @@ type DeliveryAddress struct {
 	City          string
 	District      string
 	State         string
-	ZipCode       uint
+	ZipCode       uint64
 	Country       string
-	HomePhoneNo   string
-	MobilePhoneNo string
+	HomePhoneNo   uint64
+	MobilePhoneNo uint64
 }
 
 type OrderProduct struct {

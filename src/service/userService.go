@@ -136,9 +136,18 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	//Generate Next Available Distrib Number
 	distrib_id := FindNextAvailUserSeq()
 	user := models.User{
-		DistribID: distrib_id,
-		Name:      user_in.Name,
-		Pass:      fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
+		DistribID:     distrib_id,
+		Name:          user_in.Name,
+		Pass:          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
+		Address1:      user_in.Address1,
+		Address2:      user_in.Address2,
+		TownOrCity:    user_in.TownOrCity,
+		District:      user_in.District,
+		EmailAddress:  user_in.EmailAddress,
+		PinOrZipCode:  user_in.PinOrZipCode,
+		Country:       user_in.Country,
+		HomePhoneNo:   user_in.HomePhoneNo,
+		MobilePhoneNo: user_in.MobilePhoneNo,
 	}
 	tc1 := models.TrackingCenter{
 		Name:           user_in.Name,

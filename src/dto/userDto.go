@@ -2,11 +2,21 @@ package dto
 
 // User Input from Client
 type UserIn struct {
-	Name          string `json:"name"`
-	Pass          string `json:"pass"`
-	RefDistID     string `json:"ref_dist_id"`
-	RefCenterCode string `json:"ref_center_code"`
-	Place         string `json:"place"`
+	RefDistID       string `json:"ref_dist_id"`
+	Name            string `json:"name"`
+	Pass            string `json:"pass"`
+	RefCenterCode   string `json:"ref_center_code"`
+	Place           string `json:"place"`
+	Address1        string `json:"address1"`
+	Address2        string `json:"address2"`
+	TownOrCity      string `json:"town_or_city"`
+	District        string `json:"district"`
+	StateOrProvince string `json:"state_or_province"`
+	EmailAddress    string `json:"email_address"`
+	PinOrZipCode    uint64 `json:"pin_or_zip_code"`
+	Country         string `json:"country"`
+	HomePhoneNo     uint64 `json:"home_phone_no"`
+	MobilePhoneNo   uint64 `json:"mobile_phone_no"`
 }
 
 type UserOut struct {

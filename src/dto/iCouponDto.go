@@ -1,12 +1,10 @@
 package dto
 
-import "time"
-
 type Coupon struct {
-	Value     float64   `json:"value"`
-	Quantity  int64     `json:"quantity"`
-	DateOn    time.Time `json:"date_on"`
-	ExpiresOn time.Time `json:"expires_on"`
+	Value     float64 `json:"value"`
+	Quantity  int64   `json:"quantity"`
+	DateOn    string  `json:"date_on"`
+	ExpiresOn string  `json:"expires_on"`
 }
 
 type ICouponIn struct {

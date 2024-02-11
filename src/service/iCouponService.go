@@ -93,22 +93,18 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
 }
 
-// func GetAllICouponsByDistribID(user_id string) fiber.Map {
+func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
+	var iCoupons []models.ICoupon
+	result, iCoupons := repositories.GetAllICouponsByDistribID(DistribID, iCoupons)
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"data": iCoupons}, http.StatusOK
 
-// 	var products []dto.
-
-// 	products, result := repositories.GetAllCartProductsByDistribID(user_id, products)
-
-// 	if result.Error != nil {
-// 		return fiber.Map{"error": result.Error}
-// 	}
-
-// 	if result.RowsAffected == 0 {
-// 		return fiber.Map{"data": "No Products in Cart"}
-// 	}
-
-// 	return fiber.Map{"data": products}
-// }
+}
 
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
 

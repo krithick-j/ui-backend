@@ -7,10 +7,12 @@ import (
 	"ui-back-end/src/controllers"
 	"ui-back-end/src/routes"
 
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	_ "github.com/golang-jwt/jwt/v5"
 )
 
 func init() {
@@ -28,13 +30,17 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 
-	// auth := app.Group("/auth")
-	// auth.Route("/user", routes.UserAuthRouter)
-
 	api := app.Group("/api")
+	api.Post("/auth/login", controllers.Login)
+
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
+	}))
+
+	/* Hereafter all the endpoints will be secured */
+	api.Route("/user", routes.UserRouter)
 	api.Route("/cpa", routes.CpaRouter)
 	api.Route("/iCoupon", routes.ICouponRouter)
-	api.Route("/user", routes.UserRouter)
 	api.Route("/product", routes.ProductRouter)
 	api.Get("/allGrVisual", controllers.GetAllGrVisual)
 	api.Get("/allGrVisualByDate", controllers.GetAllGrVisualByDate)

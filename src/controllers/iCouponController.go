@@ -20,12 +20,12 @@ func CreateICoupon(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
-// func GetICouponsByDistribId(c *fiber.Ctx) error {
+func GetICouponsByDistribId(c *fiber.Ctx) error {
 
-// 	distribID := c.Params("distrib_id")
-// 	// res, status := service.GetAllICouponsByDistribID(distribID, distribID)
-// 	return c.Status(status).JSON(res)
-// }
+	DistribId := c.Params("distrib_id") //searching distrib_id parameter exists in the URL
+	res, status := service.GetAllICouponsByDistribId(DistribId)
+	return c.Status(status).JSON(res)
+}
 
 func ValidateICoupon(c *fiber.Ctx) error {
 	var payload dto.ValidateICouponIn

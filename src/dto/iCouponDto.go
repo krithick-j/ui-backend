@@ -17,3 +17,7 @@ type ValidateICouponIn struct {
 	VID string `json:"v_id"`
 	Pin string `json:"pin"`
 }
+
+type ValidateICouponOut struct {
+	Value int `json:"value"`
+}

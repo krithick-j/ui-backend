@@ -7,11 +7,10 @@ import (
 )
 
 func UserRouter(router fiber.Router) {
-	router.Post("/login", controllers.Login)
+	
 	//User Crud
 	router.Get("/", controllers.GetAllUsers)
 	router.Get("/:dist_id", controllers.GetUserByDistId)
-	router.Post("/", controllers.UserRegistration)
 
 	//User Chain
 	router.Get("/tree/:dist_id", controllers.GetUserTreeByDistId)

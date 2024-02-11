@@ -18,11 +18,11 @@ func SaveICoupon(iCoupon models.ICoupon) error {
 	return nil
 }
 
-func GetAllICouponsByDistribID(distribID string, iCoupon []models.ICoupon) (*gorm.DB, []models.ICoupon) {
-	result := configs.DB.Find(&iCoupon, "distrib_id=?", distribID)
-	return result, iCoupon
-}
+func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*gorm.DB, []models.ICoupon) {
+	result := configs.DB.Find(&iCoupons, "distrib_id=?", distribID)
+	return result, iCoupons
 
+}
 func GetICoupon(VID string, Pin string, iCoupon models.ICoupon, distribID string) (models.ICoupon, *gorm.DB) {
 	result := configs.DB.First(&iCoupon, "v_id=? AND pin=? AND distrib_id=?", VID, Pin, distribID)
 	return iCoupon, result

@@ -8,7 +8,10 @@ import (
 
 func ICouponRouter(router fiber.Router) {
 
-	router.Post("/:admin_name", controllers.CreateICoupon)
-	router.Post("/validate/:distrib_id", controllers.ValidateICoupon)
+	router.Post("/:admin_name", controllers.CreateICoupon)            // /admin --> path parameter syntax ("/:variable_name")
+	router.Post("/validate/:distrib_id", controllers.ValidateICoupon) //validate/IN-00015
+	router.Get("/:distrib_id", controllers.GetICouponsByDistribId)
 	// router.Get("/:distrib_id", controllers.GetICouponsByDistribId)
 }
+
+// http://localhost:8080/api/iCoupon/IN-00015

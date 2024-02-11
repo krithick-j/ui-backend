@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"ui-back-end/configs"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
@@ -23,7 +24,7 @@ func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*go
 	return result, iCoupons
 
 }
-func GetICoupon(VID string, Pin string, iCoupon models.ICoupon, distribID string) (models.ICoupon, *gorm.DB) {
-	result := configs.DB.First(&iCoupon, "v_id=? AND pin=? AND distrib_id=?", VID, Pin, distribID)
-	return iCoupon, result
+func GetICoupon(VID string, Pin string, iCouponsOut dto.ValidateICouponOut, distribID string) (dto.ValidateICouponOut, *gorm.DB) {
+	result := configs.DB.Table("i_coupons").Select("value").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Find(&iCouponsOut)
+	return iCouponsOut, result
 }

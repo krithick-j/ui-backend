@@ -1,10 +1,12 @@
 package routes
 
-// import "github.com/gofiber/fiber"
+import (
+	"ui-back-end/src/controllers"
 
-// func BuyerAuthRouter(router fiber.Router) {
+	"github.com/gofiber/fiber/v2"
+)
 
-// 	router.Post("/signup", controllers.CreateUser)
-// 	router.Post("/login", controllers.SignBuyer)
-// 	// router.Get("/logout", middlewares.SignOutCookie)
-// }
+func NoAuthRouter(router fiber.Router) {
+	router.Post("/", controllers.UserRegistration)
+	router.Post("/login", controllers.Login)
+}

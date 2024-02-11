@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +33,21 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, http.StatusUnauthorized
 	}
-	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID}
+	claims := jwt.MapClaims{
+		"name":  res.Name,
+		"admin": false,
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	// Create token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	tokenstring, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
+	}
+	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring}
 	return fiber.Map{"data": authout}, http.StatusAccepted
 
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/models"
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -46,4 +47,18 @@ func UserRegistration(c *fiber.Ctx) error {
 	} else {
 		return c.Status(http.StatusCreated).JSON(resp)
 	}
+}
+
+func EditUserByDistId(c *fiber.Ctx) error {
+
+	DistribID := c.Params("distrib_id")
+
+	var user_in models.User
+
+	if err := c.BodyParser(&user_in); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.EditUserByDistId(DistribID, user_in)
+
+	return c.Status(status).JSON(res)
 }

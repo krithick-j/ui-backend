@@ -42,8 +42,8 @@ type User struct {
 	EmailAddress    string `json:"email_address"`
 	PinOrZipCode    uint64 `json:"pin_or_zip_code"`
 	Country         string `json:"country"`
-	HomePhoneNo     uint64 `json:"home_phone_no"`
-	MobilePhoneNo   uint64 `json:"mobile_phone_no"`
+	HomePhoneNo     string `json:"home_phone_no"`
+	MobilePhoneNo   string `json:"mobile_phone_no"`
 }
 
 type TrackingCenter struct {

@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -28,7 +30,7 @@ func generateUniqueHexCode(length int) string {
 	return strings.ToUpper(hexCode)
 }
 
-func SendICouponMail(toMail string, VID string, Pin string) error {
+func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	m, err := gomail.NewGoMail()
 	if err != nil {
 		return err
@@ -46,7 +48,23 @@ func SendICouponMail(toMail string, VID string, Pin string) error {
 
 	m.Set("Subject", "Your new iCoupon")
 
-	m.Set("BodyMessage", fmt.Sprintf("This is a noreply email. Your ICoupon VID is %s and Pin is %s", VID, Pin))
+	// Construct the body message
+	var body strings.Builder
+	body.WriteString("This is a noreply email. Your iCoupons are:\n\n")
+	body.WriteString("<table border=\"1\">\n")
+	body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th></tr>\n")
+	for _, coupon := range coupons {
+		body.WriteString("<tr><td>")
+		body.WriteString(coupon.VID)
+		body.WriteString("</td><td>")
+		body.WriteString(coupon.Pin)
+		body.WriteString("</td></td>\n")
+		body.WriteString(strconv.FormatFloat(coupon.Value, 'f', -1, 64))
+		body.WriteString("</td></tr>\n")
+	}
+	body.WriteString("</table>")
+
+	m.Set("BodyMessage", body.String())
 
 	if err := m.SendMessage(); err != nil {
 		return err
@@ -57,6 +75,8 @@ func SendICouponMail(toMail string, VID string, Pin string) error {
 func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
+	var iCoupons []dto.SendCoupon
+
 	result, email := repositories.GetUserEmailByDistribID(iCouponIn.DistribID)
 
 	if result.Error != nil {
@@ -75,19 +95,27 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 				VID:       hexVID,
 				Pin:       hexPin,
 				DistribID: iCouponIn.DistribID,
-				DateOn:    Coupon.DateOn,
+				DateOn:    time.Now(),
 				TxDetail:  iCouponIn.TxDetail,
-				ExpiresOn: Coupon.ExpiresOn,
+				ExpiresOn: time.Now().AddDate(0, 6, 0),
 				Value:     Coupon.Value,
 				AdminName: adminName,
 			}
-			err := SendICouponMail(email, hexVID, hexPin)
-			if err != nil {
-				fmt.Print(err)
-				return fiber.Map{"error1": err}, http.StatusInternalServerError
+
+			SendCoupon := dto.SendCoupon{
+				VID:   iCoupon.VID,
+				Pin:   iCoupon.Pin,
+				Value: iCoupon.Value,
 			}
+			iCoupons = append(iCoupons, SendCoupon)
 			repositories.SaveICoupon(iCoupon)
 		}
+	}
+
+	err := SendICouponMail(email, iCoupons)
+	if err != nil {
+		fmt.Print(err)
+		return fiber.Map{"error1": err}, http.StatusInternalServerError
 	}
 
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated

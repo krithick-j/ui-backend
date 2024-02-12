@@ -1,10 +1,8 @@
 package dto
 
 type Coupon struct {
-	Value     float64 `json:"value"`
-	Quantity  int64   `json:"quantity"`
-	DateOn    string  `json:"date_on"`
-	ExpiresOn string  `json:"expires_on"`
+	Value    float64 `json:"value"`
+	Quantity int64   `json:"quantity"`
 }
 
 type ICouponIn struct {
@@ -20,4 +18,10 @@ type ValidateICouponIn struct {
 
 type ValidateICouponOut struct {
 	Value int `json:"value"`
+}
+
+type SendCoupon struct {
+	VID   string
+	Pin   string
+	Value float64
 }

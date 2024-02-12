@@ -13,6 +13,7 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
@@ -207,4 +208,20 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	tx.Commit()
 	rspdata := dto.UserOut{DistribID: distrib_id}
 	return fiber.Map{"data": rspdata}, nil
+}
+
+func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
+
+	var user models.User
+	user, result := repositories.EditUserByDistId(DistribId, userIn, user)
+
+	if result.Error != nil {
+		log.Info("Error saving user to the database:", result.Error)
+		return fiber.Map{"error": result.Error}, http.StatusBadGateway
+	}
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
 }

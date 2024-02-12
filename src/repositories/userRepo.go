@@ -92,3 +92,8 @@ func GetUserEmailByDistribID(distribID string) (*gorm.DB, string) {
 	result := configs.DB.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email)
 	return result, email
 }
+
+func EditUserByDistId(distrib_id string, userIn models.User, user models.User) (models.User, *gorm.DB) {
+	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Updates(userIn)
+	return userIn, result
+}

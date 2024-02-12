@@ -47,22 +47,22 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	m.Set("To", toMail)
 
 	m.Set("Subject", "Your new iCoupon")
-
+	fmt.Println(coupons)
 	// Construct the body message
 	var body strings.Builder
 	body.WriteString("This is a noreply email. Your iCoupons are:\n\n")
-	body.WriteString("<table border=\"1\">\n")
-	body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th></tr>\n")
+	body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th><th>Date On</th><th>Expires On</th></tr>\n")
 	for _, coupon := range coupons {
-		body.WriteString("<tr><td>")
-		body.WriteString(coupon.VID)
-		body.WriteString("</td><td>")
-		body.WriteString(coupon.Pin)
-		body.WriteString("</td></td>\n")
-		body.WriteString(strconv.FormatFloat(coupon.Value, 'f', -1, 64))
-		body.WriteString("</td></tr>\n")
+		DateOnFormat := coupon.DateOn.Format("02-01-06")
+		ExpireOnFormat := coupon.ExpiresOn.Format("02-01-06")
+		body.WriteString("<tr>")
+		body.WriteString("<td>" + coupon.VID + "</td>")
+		body.WriteString("<td>" + coupon.Pin + "</td>")
+		body.WriteString("<td>" + strconv.FormatFloat(coupon.Value, 'f', -1, 64) + "</td>")
+		body.WriteString(fmt.Sprintf("<td> %s </td>", DateOnFormat))
+		body.WriteString(fmt.Sprintf("<td> %s </td>", ExpireOnFormat))
+		body.WriteString("</tr>\n")
 	}
-	body.WriteString("</table>")
 
 	m.Set("BodyMessage", body.String())
 
@@ -103,9 +103,11 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 			}
 
 			SendCoupon := dto.SendCoupon{
-				VID:   iCoupon.VID,
-				Pin:   iCoupon.Pin,
-				Value: iCoupon.Value,
+				VID:       iCoupon.VID,
+				Pin:       iCoupon.Pin,
+				Value:     iCoupon.Value,
+				DateOn:    iCoupon.DateOn,
+				ExpiresOn: iCoupon.ExpiresOn,
 			}
 			iCoupons = append(iCoupons, SendCoupon)
 			repositories.SaveICoupon(iCoupon)

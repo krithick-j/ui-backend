@@ -9,8 +9,8 @@ type DeliveryAddress struct {
 	State         string
 	ZipCode       uint64
 	Country       string
-	HomePhoneNo   uint64
-	MobilePhoneNo uint64
+	HomePhoneNo   string
+	MobilePhoneNo string
 }
 
 type OrderProduct struct {

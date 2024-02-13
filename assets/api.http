@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00012",
+	"username": "IN-00015",
 	"password": "1234"
 }
 
@@ -30,3 +30,31 @@ content-type: application/json
 ###
 GET {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
+
+###
+POST {{host}}/order/IN-00015 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"products": [
+		{
+		"product_id": 1
+		},
+		{
+		"product_id": 2
+		},
+		{
+		"product_id": 3
+		}
+	],
+	"coupons": [
+		{
+		"v_id": "A86E4A7AA7"
+		},
+		{
+		"v_id": "BF8CC60240"
+		}
+	],
+	"total_amount": 1210.0
+}

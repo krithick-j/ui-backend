@@ -31,3 +31,16 @@ type OrderDetailsOut struct {
 	TotalBV         int
 	DeliveryAddress DeliveryAddress
 }
+
+type PlaceOrderCoupon struct {
+	VID string `json:"v_id"`
+}
+
+type ProductId struct {
+	Productid uint `json:"product_id"`
+}
+type PlaceOrderIn struct {
+	Products []ProductId        `json:"products"`
+	Coupons  []PlaceOrderCoupon `json:"coupons"`
+	// TotalAmount float64            `json:"total_amount"`
+}

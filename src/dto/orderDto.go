@@ -33,14 +33,14 @@ type OrderDetailsOut struct {
 }
 
 type PlaceOrderCoupon struct {
-	VID string
+	VID string `json:"v_id"`
 }
 
 type ProductId struct {
-	Productid []uint
+	Productid uint `json:"product_id"`
 }
 type PlaceOrderIn struct {
-	Products    []ProductId
-	Coupons     []PlaceOrderCoupon
-	TotalAmount float64
+	Products []ProductId        `json:"products"`
+	Coupons  []PlaceOrderCoupon `json:"coupons"`
+	// TotalAmount float64            `json:"total_amount"`
 }

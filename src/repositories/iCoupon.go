@@ -7,6 +7,7 @@ import (
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func SaveICoupon(iCoupon models.ICoupon) error {
@@ -27,4 +28,9 @@ func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*go
 func GetICoupon(VID string, Pin string, iCouponsOut dto.ValidateICouponOut, distribID string) (dto.ValidateICouponOut, *gorm.DB) {
 	result := configs.DB.Table("i_coupons").Select("value").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Find(&iCouponsOut)
 	return iCouponsOut, result
+}
+
+func DeleteICoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
+	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("v_id=?", coupon.VID).Delete(&coupon)
+	return coupon, result
 }

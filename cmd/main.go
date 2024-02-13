@@ -42,6 +42,7 @@ func main() {
 	api.Route("/cpa", routes.CpaRouter)
 	api.Route("/iCoupon", routes.ICouponRouter)
 	api.Route("/product", routes.ProductRouter)
+	api.Route("/order", routes.OrdersRouter)
 	api.Get("/allGrVisual", controllers.GetAllGrVisual)
 	api.Get("/allGrVisualByDate", controllers.GetAllGrVisualByDate)
 	api.Get("/carousalImages", controllers.CarousalImages)

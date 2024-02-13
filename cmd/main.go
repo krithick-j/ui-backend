@@ -47,7 +47,6 @@ func main() {
 	api.Get("/allGrVisualByDate", controllers.GetAllGrVisualByDate)
 	api.Get("/carousalImages", controllers.CarousalImages)
 	api.Get("/trackShipment", controllers.TrackShipment)
-	api.Get("/orderAndPayment", controllers.OrderAndPayment)
 	api.Get("/newReferrals", controllers.NewReferrals)
 	api.Get("/allReferrals", controllers.AllReferrals)
 

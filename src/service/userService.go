@@ -1,5 +1,12 @@
 package service
 
+/**
+
+A center code is a tc code which will have three values of 001,002,003 and will be created
+by default. The same center code if referred in other places called place
+
+**/
+
 import (
 	"crypto/sha256"
 	"fmt"
@@ -23,7 +30,7 @@ type RecursiveUser struct {
 	TrackingCenter string         `json:"tracking_center"`
 	LeftPoint      string         `json:"left_point"`
 	RightPoint     string         `json:"right_point"`
-	BV             string         `json:"bv"`
+	BV             int            `json:"bv"`
 	Left           *RecursiveUser `json:"left"`
 	Right          *RecursiveUser `json:"right"`
 }
@@ -88,7 +95,7 @@ func FindRecursiveTC(ruser *RecursiveUser, dist_id string, center_code string, s
 	nuser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
 	nuser.LeftPoint = "2500"
 	nuser.RightPoint = "3500"
-	nuser.BV = "5"
+	nuser.BV = tc.Bv
 	if tc.LeftDistribID != "" {
 		FindRecursiveTC(nuser, tc.LeftDistribID, tc.LeftPlace, "left")
 	}
@@ -110,8 +117,14 @@ func GetTreeUserByDistId(dist_id string) fiber.Map {
 	ruser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
 	ruser.LeftPoint = "25500"
 	ruser.RightPoint = "34500"
-	ruser.BV = "10"
+	ruser.BV = tc.Bv
 
+	// payload := dto.BvTransactionIn{
+	// 	DistribId:      "IN-00003",
+	// 	Place:          "003",
+	// 	TotalProductBV: 3,
+	// }
+	// UpdateBvInTreeAfterPlaceOrder(payload)
 	if tc.LeftDistribID != "" {
 		FindRecursiveTC(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
 	}
@@ -166,11 +179,15 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		HomePhoneNo:   user_in.HomePhoneNo,
 		MobilePhoneNo: user_in.MobilePhoneNo,
 	}
+	//if not empty don't overwrite but find next available free slot
+	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+
 	tc1 := models.TrackingCenter{
 		Name:           user_in.Name,
 		DistribID:      distrib_id,
 		CenterCode:     "001",
-		RefDistribID:   user_in.RefDistID,
+		PDistribId:     parent_distrib_id,
+		PPlace:         parent_ref_place,
 		LeftDistribID:  distrib_id,
 		LeftPlace:      "002",
 		RightDistribID: distrib_id,
@@ -180,14 +197,17 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
 		CenterCode: "002",
+		PDistribId: distrib_id,
+		PPlace:     "001",
 	}
 	tc3 := models.TrackingCenter{
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
 		CenterCode: "003",
+		PDistribId: distrib_id,
+		PPlace:     "001",
 	}
-	//if not empty don't overwrite but find next available free slot
-	new_ref_distrib_id, new_ref_center_code := FindNextAvailSlot(user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+
 	//Succeed all or fail all
 	tx := configs.DB.Begin()
 	res := repositories.CreateUser(tx, user)
@@ -200,7 +220,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
-	res = repositories.UpdateTC(tx, distrib_id, new_ref_distrib_id, new_ref_center_code, user_in.Place)
+	res = repositories.UpdateTC(tx, distrib_id, parent_distrib_id, parent_ref_place, user_in.Place)
 	if res != nil {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
@@ -224,4 +244,47 @@ func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
+}
+
+// Find Tree Up
+func UpdateBvInTreeAfterPlaceOrder(orderId string, distrib_id string, place string, totalProductBV int) (fiber.Map, int) {
+
+	var currentBV int
+
+	for {
+
+		//Getting Current BV from tc table
+		currentBV, result := repositories.GetCurrentBvFromTc(distrib_id, place, currentBV)
+		if result.Error != nil {
+			return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		}
+		//adding currentbv and currently ordered product bv
+		finalTotalBV := currentBV + totalProductBV
+
+		//Updating each tc's BV from current tc to Upward tc
+		if result := repositories.UpdateFinalBvToTc(distrib_id, place, finalTotalBV); result.Error != nil {
+			return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		}
+
+		//record transaction in BV Transaction table
+		tx := models.BvTransaction{
+			DisribId:     distrib_id,
+			Place:        place,
+			OrderId:      orderId,
+			Date:         time.Now(),
+			BvValue:      finalTotalBV,
+			ActivateDate: time.Now().AddDate(0, 0, 7),
+		}
+		repositories.RecordBvTx(tx)
+
+		//Get Next parent tracking center(upward)
+		tc := repositories.GetTrackingCenter(distrib_id, place)
+		//terminate condition of for loop
+		if tc.PDistribId == "" {
+			return fiber.Map{"data": "Success"}, http.StatusOK
+		}
+		//update parameters
+		distrib_id = tc.PDistribId
+		place = tc.PPlace
+	}
 }

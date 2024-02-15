@@ -16,4 +16,5 @@ type ICoupon struct {
 	Value     float64   `json:"value"`
 	ExpiresOn time.Time `json:"expires_on"`
 	Pin       string    `json:"pin"`
+	Active    bool      `json:"active" default:"true"`
 }

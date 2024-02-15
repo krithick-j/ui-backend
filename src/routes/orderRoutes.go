@@ -8,5 +8,5 @@ import (
 
 func OrdersRouter(router fiber.Router) {
 
-	router.Post("/:distrib_id", controllers.PlaceOrder)
+	router.Post("/", controllers.PlaceOrder)
 }

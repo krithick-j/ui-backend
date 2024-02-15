@@ -50,10 +50,12 @@ type TrackingCenter struct {
 	gorm.Model
 	DistribID      string `json:"distrib_id"`
 	Name           string `json:"name"`
-	RefDistribID   string `json:"ref_distrib_id"`
+	PDistribId     string `json:"p_distrib_id"`
+	PPlace         string `json:"p_place"`
 	LeftDistribID  string `json:"left_distrib_id"`
 	LeftPlace      string `json:"left_place"`
 	RightDistribID string `json:"right_distrib_id"`
 	RightPlace     string `json:"right_place"`
 	CenterCode     string `json:"center_code"`
+	Bv             int    `json:"bv"`
 }

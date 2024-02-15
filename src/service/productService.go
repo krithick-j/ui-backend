@@ -131,7 +131,7 @@ func CreateProduct(payload dto.ProductIn) (fiber.Map, int) {
 	return fiber.Map{"data": ""}, http.StatusCreated
 }
 
-func GetOrderDetails(distrib_id string) (fiber.Map, int) {
+func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var subTotal float64 = 0.0
 	var totalSandH float64 = 0.0
 	var quantity uint = 0
@@ -139,12 +139,14 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
 	var userData models.User
+	var totalBv int = 0
 
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
 
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		println(fiber.Map{"error": result.Error})
+		return orderDetails, http.StatusInternalServerError
 	}
 
 	//2. Populating OrderProduct Array field
@@ -155,17 +157,20 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 			UnitPrice: uint64(item.Product.Price),
 			SandH:     item.Product.SandH,
 			SubTotal:  item.Product.Price * float64(item.Product.Quantity),
+			BV:        item.Product.BV,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
 		subTotal += orderProduct.SubTotal
 		totalSandH += orderProduct.SandH
 		quantity += item.Quantity
+		totalBv += orderProduct.BV
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		println(fiber.Map{"error": result.Error})
+		return orderDetails, http.StatusInternalServerError
 	}
 
 	deliveryAddress := dto.DeliveryAddress{
@@ -187,15 +192,20 @@ func GetOrderDetails(distrib_id string) (fiber.Map, int) {
 		TotalAmount:     subTotal + totalSandH,
 		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
+		TotalBV:         totalBv,
+		DistribId:       distrib_id,
 	}
+	print("distrib id from getORderDetails", orderDetails.DistribId)
 
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		print(fiber.Map{"error": result.Error})
+		return orderDetails, http.StatusInternalServerError
 	}
 
 	if result.RowsAffected == 0 {
-		return fiber.Map{"data": "No Products in Cart"}, http.StatusNoContent
+		print(fiber.Map{"data": "No Products in Cart"})
+		return orderDetails, http.StatusNoContent
 	}
 
-	return fiber.Map{"data": orderDetails}, http.StatusOK
+	return orderDetails, http.StatusOK
 }

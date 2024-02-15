@@ -92,9 +92,16 @@ func CreateProduct(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+var orderDetailsMap dto.OrderDetailsOut
+
 func GetOrderDetails(c *fiber.Ctx) error {
 	distrib_id := c.Query("distrib_id")
 	res, status := service.GetOrderDetails(distrib_id)
 
-	return c.Status(status).JSON(res)
+	orderDetailsMap = res
+	if status == http.StatusInternalServerError {
+		return c.Status(status).JSON(fiber.Map{"error": res})
+	}
+
+	return c.Status(status).JSON(fiber.Map{"data": res})
 }

@@ -1,46 +1,50 @@
 package dto
 
 type DeliveryAddress struct {
-	ContactName   string
-	ContactEmail  string
-	Address       string
-	City          string
-	District      string
-	State         string
-	ZipCode       uint64
-	Country       string
-	HomePhoneNo   string
-	MobilePhoneNo string
+	ContactName   string `json:"contact_name"`
+	ContactEmail  string `json:"contact_email"`
+	Address       string `json:"address"`
+	City          string `json:"city"`
+	District      string `json:"district"`
+	State         string `json:"state"`
+	ZipCode       uint64 `json:"zip_code"`
+	Country       string `json:"country"`
+	HomePhoneNo   string `json:"home_phone_no"`
+	MobilePhoneNo string `json:"mobile_phone_no"`
 }
 
 type OrderProduct struct {
-	Name      string
-	Quantity  uint
-	UnitPrice uint64
-	BV        int
-	SubTotal  float64
-	SandH     float64
+	Name      string  `json:"name"`
+	Quantity  uint    `json:"quantity"`
+	UnitPrice uint64  `json:"unit_price"`
+	BV        int     `json:"bv"`
+	SubTotal  float64 `json:"sub_total"`
+	SandH     float64 `json:"s_and_h"`
 }
 
 type OrderDetailsOut struct {
-	Items           []OrderProduct
-	SubTotal        float64
-	TotalSandH      float64
-	TotalAmount     float64
-	TotalQuantity   float64
-	TotalBV         int
-	DeliveryAddress DeliveryAddress
+	DistribId       string
+	Items           []OrderProduct  `json:"items"`
+	SubTotal        float64         `json:"sub_total"`
+	TotalSandH      float64         `json:"total_s_and_h"`
+	TotalAmount     float64         `json:"total_amount"`
+	TotalQuantity   float64         `json:"total_quantity"`
+	TotalBV         int             `json:"total_bv"`
+	DeliveryAddress DeliveryAddress `json:"delivery_address"`
 }
 
 type PlaceOrderCoupon struct {
-	VID string `json:"v_id"`
+	VID            string  `json:"v_id"`
+	Pin            string  `json:"pin"`
+	AmountDetected float64 `json:"amount_detected"`
 }
 
 type ProductId struct {
 	Productid uint `json:"product_id"`
 }
+
 type PlaceOrderIn struct {
-	Products []ProductId        `json:"products"`
-	Coupons  []PlaceOrderCoupon `json:"coupons"`
-	// TotalAmount float64            `json:"total_amount"`
+	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"` //Coupons Applied
+	Place          string             `json:"place"`           //Order HeaderIn
+	TotalAmount    float64            `json:"total_amount"`
 }

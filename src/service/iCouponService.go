@@ -138,15 +138,23 @@ func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
 
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
 
-	var iCouponsOut dto.ValidateICouponOut //Our output data structure
-
-	iCouponsOut, result := repositories.GetICoupon(payload.VID, payload.Pin, iCouponsOut, distribID)
+	active, _ := repositories.ValidateICoupon(payload.VID, payload.Pin, distribID)
+	if !active {
+		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK
+	}
+	balance, result := repositories.GetICouponBalance(payload.VID, payload.Pin, distribID)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound
 	}
+
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
+
+	iCouponsOut := dto.ValidateICouponOut{
+		Value: balance,
+	}
+
 	return fiber.Map{"data": iCouponsOut}, http.StatusOK
 }

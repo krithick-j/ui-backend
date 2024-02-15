@@ -3,11 +3,9 @@ package repositories
 import (
 	"fmt"
 	"ui-back-end/configs"
-	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func SaveICoupon(iCoupon models.ICoupon) error {
@@ -25,12 +23,38 @@ func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*go
 	return result, iCoupons
 
 }
-func GetICoupon(VID string, Pin string, iCouponsOut dto.ValidateICouponOut, distribID string) (dto.ValidateICouponOut, *gorm.DB) {
-	result := configs.DB.Table("i_coupons").Select("value").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Find(&iCouponsOut)
-	return iCouponsOut, result
+
+// remaining Balance of the Coupon
+func GetICouponBalance(VID string, Pin string, distribID string) (float64, *gorm.DB) {
+	var balance float64
+	result := configs.DB.Table("i_coupon_transactions").Select("balance").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Take(&balance)
+	return balance, result
 }
 
-func DeleteICoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
-	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("v_id=?", coupon.VID).Delete(&coupon)
+// Validate Coupon
+func ValidateICoupon(VID string, Pin string, distribID string) (bool, *gorm.DB) {
+	var active bool
+	result := configs.DB.Table("i_coupons").Select("active").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Take(&active)
+	return active, result
+}
+
+// value means initial or Total value when coupon generated
+func GetICouponValue(VID string, Pin string) float64 {
+	var couponValue float64
+	result := configs.DB.Table("i_coupons").Select("value").Where("v_id=? and pin=?", VID, Pin).Take(&couponValue)
+	if result.Error != nil {
+		fmt.Printf("Error %v\n", result.Error.Error())
+	}
+
+	return couponValue
+}
+
+func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
+	result := configs.DB.Where("v_id=?", coupon.VID).Delete(&coupon)
 	return coupon, result
+}
+
+func CloseCoupon(VID string) *gorm.DB {
+	result := configs.DB.Table("i_coupons").Where("v_id=?", VID).Update("active", false) //0 means coupon closed //1 means active
+	return result
 }

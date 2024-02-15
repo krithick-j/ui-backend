@@ -6,7 +6,7 @@ type UserIn struct {
 	Name            string `json:"name"`
 	Pass            string `json:"pass"`
 	RefCenterCode   string `json:"ref_center_code"`
-	Place           string `json:"place"`
+	Place           string `json:"place"` //the place or tc in which the user sits in the tree
 	Address1        string `json:"address1"`
 	Address2        string `json:"address2"`
 	TownOrCity      string `json:"town_or_city"`

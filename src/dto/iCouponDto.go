@@ -19,7 +19,7 @@ type ValidateICouponIn struct {
 }
 
 type ValidateICouponOut struct {
-	Value int `json:"value"`
+	Value float64 `json:"value"`
 }
 
 type SendCoupon struct {

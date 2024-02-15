@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00015",
+	"username": "IN-00003",
 	"password": "1234"
 }
 
@@ -32,29 +32,65 @@ GET {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 
 ###
-POST {{host}}/order/IN-00015 HTTP/1.1
+GET  {{host}}/product/orderDetails?distrib_id=IN-00003 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+POST {{host}}/order HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
-	"products": [
+	"applied_coupons": [
 		{
-		"product_id": 1
+			"v_id": "4F4B03E725",
+			"pin": "20EAC76C2B",
+			"amount_detected": 10
 		},
 		{
-		"product_id": 2
-		},
-		{
-		"product_id": 3
+			"v_id": "9A423AF320",
+			"pin": "F2F97EC443",
+			"amount_detected": 10
 		}
 	],
-	"coupons": [
-		{
-		"v_id": "A86E4A7AA7"
-		},
-		{
-		"v_id": "BF8CC60240"
-		}
-	],
-	"total_amount": 1210.0
+	"place": "003",
+	"total_amount": 14049.00
+}
+
+###
+POST {{host}}/auth/register HTTP/1.1
+content-type: application/json
+
+{
+    "ref_dist_id": "IN-00001",
+    "name": "Harini",
+    "pass": "1234",
+    "ref_center_code": "003",
+    "place": "left",
+    "address1": "123 Main St",
+    "address2": "Apt 101",
+    "town_or_city": "Chennai",
+    "district": "Chennai",
+    "state_or_province": "TamilNadu",
+    "email_address": "siva@gmail.com",
+    "pin_or_zip_code": 560001,
+    "country": "India",
+    "home_phone_no": "080-12345678",
+    "mobile_phone_no": "+91-9876543210"
+}
+
+###
+GET  {{host}}/product/cartProducts/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+POST {{host}}/iCoupon/validate/IN-00003 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"v_id": "4F4B03E725",
+	"pin": "20EAC76C2B"
 }

@@ -4,8 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"net/http"
-	"strconv"
+	"os"
 	"strings"
 	"time"
 	"ui-back-end/src/dto"
@@ -31,6 +32,32 @@ func generateUniqueHexCode(length int) string {
 }
 
 func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
+
+	// Parse the email template
+	tmpl, err := template.ParseFiles("/home/mighty/ui-network/ui-backend/src/service/email_template.html")
+	if err != nil {
+		return err
+	}
+
+	// Create a new file to store the rendered email content
+	file, err := os.Create("email.html")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Execute the template with the coupons data and write it to the file
+	err = tmpl.Execute(file, coupons)
+	if err != nil {
+		return err
+	}
+
+	// Read the contents of the rendered HTML file
+	renderedEmail, err := os.ReadFile("email.html")
+	if err != nil {
+		return err
+	}
+
 	m, err := gomail.NewGoMail()
 	if err != nil {
 		return err
@@ -48,23 +75,24 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 
 	m.Set("Subject", "Your new iCoupon")
 	fmt.Println(coupons)
-	// Construct the body message
-	var body strings.Builder
-	body.WriteString("This is a noreply email. Your iCoupons are:\n\n")
-	body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th><th>Date On</th><th>Expires On</th></tr>\n")
-	for _, coupon := range coupons {
-		DateOnFormat := coupon.DateOn.Format("02-01-06")
-		ExpireOnFormat := coupon.ExpiresOn.Format("02-01-06")
-		body.WriteString("<tr>")
-		body.WriteString("<td>" + coupon.VID + "</td>")
-		body.WriteString("<td>" + coupon.Pin + "</td>")
-		body.WriteString("<td>" + strconv.FormatFloat(coupon.Value, 'f', -1, 64) + "</td>")
-		body.WriteString(fmt.Sprintf("<td> %s </td>", DateOnFormat))
-		body.WriteString(fmt.Sprintf("<td> %s </td>", ExpireOnFormat))
-		body.WriteString("</tr>\n")
-	}
 
-	m.Set("BodyMessage", body.String())
+	// Construct the body message
+	// var body strings.Builder
+	// body.WriteString("This is a noreply email. Your iCoupons are:\n\n")
+	// body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th><th>Date On</th><th>Expires On</th></tr>\n")
+	// for _, coupon := range coupons {
+	// 	DateOnFormat := coupon.DateOn.Format("02-01-06")
+	// 	ExpireOnFormat := coupon.ExpiresOn.Format("02-01-06")
+	// 	body.WriteString("<tr>")
+	// 	body.WriteString("<td>" + coupon.VID + "</td>")
+	// 	body.WriteString("<td>" + coupon.Pin + "</td>")
+	// 	body.WriteString("<td>" + strconv.FormatFloat(coupon.Value, 'f', -1, 64) + "</td>")
+	// 	body.WriteString(fmt.Sprintf("<td> %s </td>", DateOnFormat))
+	// 	body.WriteString(fmt.Sprintf("<td> %s </td>", ExpireOnFormat))
+	// 	body.WriteString("</tr>\n")
+	// }
+
+	m.Set("BodyMessage", string(renderedEmail))
 
 	if err := m.SendMessage(); err != nil {
 		return err

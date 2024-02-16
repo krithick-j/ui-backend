@@ -28,4 +28,5 @@ type SendCoupon struct {
 	Value     float64
 	DateOn    time.Time
 	ExpiresOn time.Time
+	Active    bool
 }

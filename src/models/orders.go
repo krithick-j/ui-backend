@@ -9,25 +9,6 @@ type OrdersHeader struct {
 	DistribId   string
 	Place       string
 	OrderId     string
-	OrdersLiner []OrdersLiner
-}
-
-type OrdersLiner struct {
-	gorm.Model
-	OrdersHeaderID uint
-	Name           string
-	Quantity       uint
-	UnitPrice      uint64
-	BV             int
-	SubTotal       float64
-	SandH          float64
-	OrderFooterID  uint
-	OrderFooter    OrderFooter
-}
-
-type OrderFooter struct {
-	gorm.Model
-	OrdersHeaderID uint
 	SubTotal       float64
 	TotalSandH     float64
 	TotalAmount    float64
@@ -43,4 +24,16 @@ type OrderFooter struct {
 	Country        string
 	HomePhoneNo    string
 	MobilePhoneNo  string
+	OrdersLiner []OrdersLiner
+}
+
+type OrdersLiner struct {
+	gorm.Model
+	OrdersHeaderID uint
+	Name           string
+	Quantity       uint
+	UnitPrice      uint64
+	BV             int
+	SubTotal       float64
+	SandH          float64
 }

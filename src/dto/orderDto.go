@@ -45,6 +45,7 @@ type ProductId struct {
 
 type PlaceOrderIn struct {
 	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"` //Coupons Applied
-	Place          string             `json:"place"`           //Order HeaderIn
+	DistribId      string             `json:"distrib_id"`
+	Place          string             `json:"place"` //Order HeaderIn
 	TotalAmount    float64            `json:"total_amount"`
 }

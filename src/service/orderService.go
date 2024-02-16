@@ -9,43 +9,42 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func PlaceOrder(OrderIn dto.PlaceOrderIn, orderDetails dto.OrderDetailsOut) (fiber.Map, int) {
+func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	//Generating unique Order ID
 	orderId := generateUniqueHexCode(10)
 
+	res, status := GetOrderDetails(OrderIn.DistribId)
+	if status != http.StatusOK {
+		return fiber.Map{"data": "Something gone wrong"}, http.StatusInternalServerError
+	}
+
 	//Placing Order
 	//1.Adding in Header Table
 	OrderHeaderObj := &models.OrdersHeader{
-		DistribId: orderDetails.DistribId,
-		Place:     OrderIn.Place,
-		OrderId:   orderId,
+		DistribId:     OrderIn.DistribId,
+		Place:         OrderIn.Place,
+		OrderId:       orderId,
+		SubTotal:      res.SubTotal,
+		TotalSandH:    res.TotalSandH,
+		TotalAmount:   OrderIn.TotalAmount, //total amount after applying coupon
+		TotalQuantity: res.TotalQuantity,
+		TotalBV:       res.TotalBV,
+		ContactName:   res.DeliveryAddress.ContactName,
+		ContactEmail:  res.DeliveryAddress.ContactEmail,
+		Address:       res.DeliveryAddress.Address,
+		City:          res.DeliveryAddress.City,
+		District:      res.DeliveryAddress.District,
+		State:         res.DeliveryAddress.State,
+		ZipCode:       res.DeliveryAddress.ZipCode,
+		Country:       res.DeliveryAddress.Country,
+		HomePhoneNo:   res.DeliveryAddress.HomePhoneNo,
+		MobilePhoneNo: res.DeliveryAddress.MobilePhoneNo,
 	}
 	repositories.SaveOrderHeader(OrderHeaderObj)
 
-	//2. Adding in Footer Table
-	OrderFooterObj := &models.OrderFooter{
-		OrdersHeaderID: OrderHeaderObj.ID,
-		SubTotal:       orderDetails.SubTotal,
-		TotalSandH:     orderDetails.TotalSandH,
-		TotalAmount:    OrderIn.TotalAmount, //total amount after applying coupon
-		TotalQuantity:  orderDetails.TotalQuantity,
-		TotalBV:        orderDetails.TotalBV,
-		ContactName:    orderDetails.DeliveryAddress.ContactName,
-		ContactEmail:   orderDetails.DeliveryAddress.ContactEmail,
-		Address:        orderDetails.DeliveryAddress.Address,
-		City:           orderDetails.DeliveryAddress.City,
-		District:       orderDetails.DeliveryAddress.District,
-		State:          orderDetails.DeliveryAddress.State,
-		ZipCode:        orderDetails.DeliveryAddress.ZipCode,
-		Country:        orderDetails.DeliveryAddress.Country,
-		HomePhoneNo:    orderDetails.DeliveryAddress.HomePhoneNo,
-		MobilePhoneNo:  orderDetails.DeliveryAddress.MobilePhoneNo,
-	}
-	repositories.SaveOrderFooter(OrderFooterObj)
-
 	// 3. Adding in Liner Table
-	for _, product := range orderDetails.Items {
+	for _, product := range res.Items {
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
 			Name:           product.Name,
@@ -54,7 +53,6 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, orderDetails dto.OrderDetailsOut) (fib
 			BV:             product.BV,
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
-			OrderFooterID:  OrderFooterObj.ID,
 		}
 		repositories.SaveOrderLiner(OrderLinerObj)
 	}
@@ -62,7 +60,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, orderDetails dto.OrderDetailsOut) (fib
 	// Close Coupon if coupon balance is 0
 	for _, orderCoupon := range OrderIn.AppliedCoupons {
 		totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)
-		balance, result := repositories.GetICouponBalance(orderCoupon.VID, orderCoupon.Pin, orderDetails.DistribId)
+		balance, result := repositories.GetICouponBalance(orderCoupon.VID)
 		if result.Error != nil {
 			return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 		}
@@ -70,13 +68,16 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, orderDetails dto.OrderDetailsOut) (fib
 		//Recording in ICoupon Transaction table
 		tx := models.ICouponTransaction{
 			OrderId:        orderId,
-			DistribId:      orderDetails.DistribId,
+			DistribId:      OrderIn.DistribId,
 			VID:            orderCoupon.VID,
 			Pin:            orderCoupon.Pin,
 			TotalValue:     totalValue,
 			AmountDetected: orderCoupon.AmountDetected,
 			Balance:        balance - orderCoupon.AmountDetected,
 		}
+
+		//Updating balance in icoupons Transaction table
+		repositories.UpdateBalanceInICoupons(orderCoupon.VID, tx.Balance)
 
 		//Closing coupon if balance is over
 		if tx.Balance == 0 {
@@ -87,7 +88,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, orderDetails dto.OrderDetailsOut) (fib
 	}
 
 	// //Adding BV to the tree
-	UpdateBvInTreeAfterPlaceOrder(orderId, orderDetails.DistribId, OrderIn.Place, orderDetails.TotalBV)
+	UpdateBvInTreeAfterPlaceOrder(orderId, OrderIn.DistribId, OrderIn.Place, res.TotalBV)
 
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }

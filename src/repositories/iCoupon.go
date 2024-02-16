@@ -25,9 +25,9 @@ func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*go
 }
 
 // remaining Balance of the Coupon
-func GetICouponBalance(VID string, Pin string, distribID string) (float64, *gorm.DB) {
+func GetICouponBalance(VID string) (float64, *gorm.DB) {
 	var balance float64
-	result := configs.DB.Table("i_coupon_transactions").Select("balance").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Take(&balance)
+	result := configs.DB.Table("i_coupons").Select("balance").Where("v_id=?", VID).Take(&balance)
 	return balance, result
 }
 
@@ -49,6 +49,8 @@ func GetICouponValue(VID string, Pin string) float64 {
 	return couponValue
 }
 
+//updating iCoupon Balance in Icoupons table
+
 func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
 	result := configs.DB.Where("v_id=?", coupon.VID).Delete(&coupon)
 	return coupon, result
@@ -57,4 +59,10 @@ func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
 func CloseCoupon(VID string) *gorm.DB {
 	result := configs.DB.Table("i_coupons").Where("v_id=?", VID).Update("active", false) //0 means coupon closed //1 means active
 	return result
+}
+
+// Update Balance of the Coupon in ICoupons table
+func UpdateBalanceInICoupons(VID string, balance float64) (float64, *gorm.DB) {
+	result := configs.DB.Table("i_coupons").Where("v_id=?", VID).Update("balance", balance)
+	return balance, result
 }

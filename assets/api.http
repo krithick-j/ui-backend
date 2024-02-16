@@ -42,20 +42,21 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
+	"distrib_id": "IN-00003",
 	"applied_coupons": [
 		{
-			"v_id": "4F4B03E725",
-			"pin": "20EAC76C2B",
-			"amount_detected": 10
+			"v_id": "F429D99978",
+			"pin": "6D5F3F603B",
+			"amount_detected": 100
 		},
 		{
-			"v_id": "9A423AF320",
-			"pin": "F2F97EC443",
-			"amount_detected": 10
+			"v_id": "742AF55C93",
+			"pin": "A9B18D831F",
+			"amount_detected": 100
 		}
 	],
 	"place": "003",
-	"total_amount": 14049.00
+	"total_amount": 113999.00
 }
 
 ###

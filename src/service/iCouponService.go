@@ -34,7 +34,7 @@ func generateUniqueHexCode(length int) string {
 func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 
 	// Parse the email template
-	tmpl, err := template.ParseFiles("/home/mighty/ui-network/ui-backend/src/service/email_template.html")
+	tmpl, err := template.ParseFiles("/home/mighty/ui-network/ui-backend/assets/templates/email_template.html")
 	if err != nil {
 		return err
 	}

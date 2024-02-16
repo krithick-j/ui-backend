@@ -14,7 +14,7 @@ func PlaceOrder(c *fiber.Ctx) error {
 	if err := c.BodyParser(&OrderIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	println("distrib id from place order controller", orderDetailsMap.DistribId)
-	res, status := service.PlaceOrder(OrderIn, orderDetailsMap)
+
+	res, status := service.PlaceOrder(OrderIn)
 	return c.Status(status).JSON(res)
 }

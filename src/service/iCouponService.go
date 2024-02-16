@@ -76,22 +76,6 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	m.Set("Subject", "Your new iCoupon")
 	fmt.Println(coupons)
 
-	// Construct the body message
-	// var body strings.Builder
-	// body.WriteString("This is a noreply email. Your iCoupons are:\n\n")
-	// body.WriteString("<tr><th>VID</th><th>PIN</th><th>Value</th><th>Date On</th><th>Expires On</th></tr>\n")
-	// for _, coupon := range coupons {
-	// 	DateOnFormat := coupon.DateOn.Format("02-01-06")
-	// 	ExpireOnFormat := coupon.ExpiresOn.Format("02-01-06")
-	// 	body.WriteString("<tr>")
-	// 	body.WriteString("<td>" + coupon.VID + "</td>")
-	// 	body.WriteString("<td>" + coupon.Pin + "</td>")
-	// 	body.WriteString("<td>" + strconv.FormatFloat(coupon.Value, 'f', -1, 64) + "</td>")
-	// 	body.WriteString(fmt.Sprintf("<td> %s </td>", DateOnFormat))
-	// 	body.WriteString(fmt.Sprintf("<td> %s </td>", ExpireOnFormat))
-	// 	body.WriteString("</tr>\n")
-	// }
-
 	m.Set("BodyMessage", string(renderedEmail))
 
 	if err := m.SendMessage(); err != nil {
@@ -127,7 +111,9 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 				TxDetail:  iCouponIn.TxDetail,
 				ExpiresOn: time.Now().AddDate(0, 6, 0),
 				Value:     Coupon.Value,
+				Balance:   Coupon.Value,
 				AdminName: adminName,
+				Active:    true,
 			}
 
 			SendCoupon := dto.SendCoupon{
@@ -136,6 +122,7 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 				Value:     iCoupon.Value,
 				DateOn:    iCoupon.DateOn,
 				ExpiresOn: iCoupon.ExpiresOn,
+				Active:    iCoupon.Active,
 			}
 			iCoupons = append(iCoupons, SendCoupon)
 			repositories.SaveICoupon(iCoupon)
@@ -170,7 +157,7 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	if !active {
 		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK
 	}
-	balance, result := repositories.GetICouponBalance(payload.VID, payload.Pin, distribID)
+	balance, result := repositories.GetICouponBalance(payload.VID)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound

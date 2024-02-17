@@ -111,6 +111,21 @@ func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 	return fiber.Map{"success": "Product Deleted Successfully", "DeletedProduct": cartItem}, http.StatusOK
 }
 
+func DeleteAllCartProduct(distrib_id string) (fiber.Map, int) {
+	var cartItem []models.CartItem
+	cartItem, result := repositories.DeleteAllCartProduct(distrib_id, cartItem)
+
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, http.StatusNoContent
+	}
+
+	return fiber.Map{"success": "All Products in Cart Deleted Successfully", "deleted_products": cartItem}, http.StatusOK
+}
+
 func EditCartProducts(payload models.CartItem, distrib_id string, product_id string) (fiber.Map, int) {
 
 	cartItem, result := repositories.EditCartProducts(distrib_id, product_id, payload)

@@ -119,12 +119,6 @@ func GetTreeUserByDistId(dist_id string) fiber.Map {
 	ruser.RightPoint = "34500"
 	ruser.BV = tc.Bv
 
-	// payload := dto.BvTransactionIn{
-	// 	DistribId:      "IN-00003",
-	// 	Place:          "003",
-	// 	TotalProductBV: 3,
-	// }
-	// UpdateBvInTreeAfterPlaceOrder(payload)
 	if tc.LeftDistribID != "" {
 		FindRecursiveTC(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
 	}
@@ -289,7 +283,6 @@ func UpdateBvInTreeAfterPlaceOrder(orderId string, distrib_id string, place stri
 		place = tc.PPlace
 	}
 }
-
 
 func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 

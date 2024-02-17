@@ -156,7 +156,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 			Quantity:  item.Quantity,
 			UnitPrice: uint64(item.Product.Price),
 			SandH:     item.Product.SandH,
-			SubTotal:  item.Product.Price * float64(item.Product.Quantity),
+			SubTotal:  item.Product.Price * float64(item.Quantity),
 			BV:        item.Product.BV,
 		}
 

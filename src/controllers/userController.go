@@ -33,7 +33,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 }
 
 func GetUserTreeByDistId(c *fiber.Ctx) error {
-	id := c.Params("dist_id")
+	id := c.Params("distrib_id")
 	res := service.GetTreeUserByDistId(id)
 	return c.Status(http.StatusOK).JSON(res)
 }
@@ -60,5 +60,11 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	}
 	res, status := service.EditUserByDistId(DistribID, user_in)
 
+	return c.Status(status).JSON(res)
+}
+
+func NewReferrals(c *fiber.Ctx) error {
+	distrib_id := c.Params("distrib_id")
+	res, status := service.GetNewReferrals(distrib_id)
 	return c.Status(status).JSON(res)
 }

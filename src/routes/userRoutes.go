@@ -13,8 +13,7 @@ func UserRouter(router fiber.Router) {
 	router.Get("/:dist_id", controllers.GetUserByDistId)
 	router.Put("/:distrib_id", controllers.EditUserByDistId)
 	//User Chain
-	router.Get("/tree/:dist_id", controllers.GetUserTreeByDistId)
-
-	//User Reports
-
+	router.Get("/tree/:distrib_id", controllers.GetUserTreeByDistId)
+	router.Get("/newReferral/:distrib_id", controllers.NewReferrals)
+	router.Get("/allReferrals", controllers.AllReferrals)
 }

@@ -9,4 +9,6 @@ import (
 func OrdersRouter(router fiber.Router) {
 
 	router.Post("/", controllers.PlaceOrder)
+
+	router.Get("/trackShipment", controllers.TrackShipment)
 }

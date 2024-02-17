@@ -97,3 +97,8 @@ func EditUserByDistId(distrib_id string, userIn models.User, user models.User) (
 	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Updates(userIn)
 	return userIn, result
 }
+
+func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User, *gorm.DB) {
+	result := configs.DB.Where("ref_distrib_id", distrib_id).Find(&user)
+	return user, result
+}

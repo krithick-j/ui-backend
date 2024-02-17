@@ -56,7 +56,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		}
 		repositories.SaveOrderLiner(OrderLinerObj)
 	}
-
+	//validate coupon balance
 	// Close Coupon if coupon balance is 0
 	for _, orderCoupon := range OrderIn.AppliedCoupons {
 		totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)

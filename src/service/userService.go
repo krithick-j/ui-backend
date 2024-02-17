@@ -275,6 +275,7 @@ func UpdateBvInTreeAfterPlaceOrder(orderId string, distrib_id string, place stri
 			BvValue:      finalTotalBV,
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 		}
+		//change name to add
 		repositories.RecordBvTx(tx)
 
 		//Get Next parent tracking center(upward)
@@ -287,4 +288,21 @@ func UpdateBvInTreeAfterPlaceOrder(orderId string, distrib_id string, place stri
 		distrib_id = tc.PDistribId
 		place = tc.PPlace
 	}
+}
+
+
+func GetNewReferrals(distrib_id string) (fiber.Map, int) {
+
+	var user []models.User
+	var result *gorm.DB
+
+	user, result = repositories.GetUserByRefDistribId(distrib_id, user)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"data": user}, http.StatusOK
 }

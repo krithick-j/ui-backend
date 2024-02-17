@@ -32,10 +32,10 @@ func GetICouponBalance(VID string) (float64, *gorm.DB) {
 }
 
 // Validate Coupon
-func ValidateICoupon(VID string, Pin string, distribID string) (bool, *gorm.DB) {
-	var active bool
-	result := configs.DB.Table("i_coupons").Select("active").Where("distrib_id=? and v_id=? and pin=?", distribID, VID, Pin).Take(&active)
-	return active, result
+func ValidateICoupon(VID string, Pin string, iCoupon models.ICoupon) models.ICoupon {
+
+	configs.DB.Table("i_coupons").Where("v_id=? and pin=?", VID, Pin).First(&iCoupon)
+	return iCoupon
 }
 
 // value means initial or Total value when coupon generated

@@ -34,6 +34,7 @@ func generateUniqueHexCode(length int) string {
 func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 
 	// Parse the email template
+	//relative path should be added
 	tmpl, err := template.ParseFiles("/home/mighty/ui-network/ui-backend/assets/templates/email_template.html")
 	if err != nil {
 		return err
@@ -152,11 +153,17 @@ func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
 }
 
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
+	var iCoupon models.ICoupon
+	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
 
-	active, _ := repositories.ValidateICoupon(payload.VID, payload.Pin, distribID)
-	if !active {
+	if iCoupon.DistribID != distribID {
+		return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
+	}
+
+	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK
 	}
+	//date expiry condition
 	balance, result := repositories.GetICouponBalance(payload.VID)
 
 	if result.Error == gorm.ErrRecordNotFound {

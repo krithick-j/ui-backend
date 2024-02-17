@@ -43,6 +43,7 @@ content-type: application/json
 
 {
 	"distrib_id": "IN-00003",
+	"place": "003",
 	"applied_coupons": [
 		{
 			"v_id": "F429D99978",
@@ -55,7 +56,6 @@ content-type: application/json
 			"amount_detected": 100
 		}
 	],
-	"place": "003",
 	"total_amount": 113999.00
 }
 

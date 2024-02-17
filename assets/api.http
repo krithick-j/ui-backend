@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00003",
+	"username": "IN-00001",
 	"password": "1234"
 }
 
@@ -95,3 +95,8 @@ content-type: application/json
 	"v_id": "4F4B03E725",
 	"pin": "20EAC76C2B"
 }
+
+###
+GET  {{host}}/user/tree/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json

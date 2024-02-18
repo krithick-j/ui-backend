@@ -9,7 +9,7 @@ import (
 )
 
 func GetCurrentBvFromTc(distrib_id string, place string, bv int) (int, *gorm.DB) {
-	result := configs.DB.Table("tracking_centers").Select("bv").Where("distrib_id=? AND center_code=?", distrib_id, place).Take(&bv)
+	result := configs.DB.Table("tracking_centers").Select("bv").Where("distrib_id=? AND place=?", distrib_id, place).Take(&bv)
 	return bv, result
 }
 

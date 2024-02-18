@@ -1,5 +1,7 @@
 package dto
 
+import "ui-back-end/src/models"
+
 type DeliveryAddress struct {
 	ContactName   string `json:"contact_name"`
 	ContactEmail  string `json:"contact_email"`
@@ -48,4 +50,9 @@ type PlaceOrderIn struct {
 	DistribId      string             `json:"distrib_id"`
 	Place          string             `json:"place"` //Order HeaderIn
 	TotalAmount    float64            `json:"total_amount"`
+}
+
+type OrdersOut struct {
+	OrderHeader models.OrdersHeader
+	OrderLiners models.OrdersLiner
 }

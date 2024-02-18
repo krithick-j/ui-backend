@@ -88,11 +88,11 @@ func GetUsers() fiber.Map {
 	return fiber.Map{"data": users}
 }
 
-func FindRecursiveTC(ruser *RecursiveUser, dist_id string, center_code string, side string) {
-	tc := repositories.GetTrackingCenter(dist_id, center_code)
+func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side string) {
+	tc := repositories.GetTrackingCenter(dist_id, place)
 	var nuser *RecursiveUser = new(RecursiveUser)
 	nuser.Name = tc.Name
-	nuser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
+	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
 	nuser.LeftPoint = "2500"
 	nuser.RightPoint = "3500"
 	nuser.BV = tc.Bv
@@ -109,12 +109,12 @@ func FindRecursiveTC(ruser *RecursiveUser, dist_id string, center_code string, s
 	}
 }
 
-func GetTreeUserByDistId(dist_id string) fiber.Map {
+func GetTreeUserByDistId(distrib_id string) fiber.Map {
 
 	ruser := new(RecursiveUser)
-	tc := repositories.GetTrackingCenter(dist_id, "001")
+	tc := repositories.GetTrackingCenter(distrib_id, "001")
 	ruser.Name = tc.Name
-	ruser.TrackingCenter = tc.DistribID + " " + tc.CenterCode
+	ruser.TrackingCenter = tc.DistribID + " " + tc.Place
 	ruser.LeftPoint = "25500"
 	ruser.RightPoint = "34500"
 	ruser.BV = tc.Bv
@@ -134,7 +134,7 @@ func FindNextAvailUserSeq() string {
 	return fmt.Sprintf("IN-%05d", distrib_no+1)
 }
 
-func FindNextAvailSlot(distrib_id string, center_code string, side string) (string, string) {
+func FindNextAvailSlot(distrib_id string, place string, side string) (string, string) {
 	/**
 		On a Pyramid network, a reference can only be added either on left or right
 		if a person adds thrid person an so on, the actual referree becomes the person below
@@ -145,13 +145,14 @@ func FindNextAvailSlot(distrib_id string, center_code string, side string) (stri
 	**/
 	fmt.Println("Finding Next Slot")
 	var old_distrib_id string
-	var old_center_code string
+	var old_place string
 	for {
-		old_distrib_id, old_center_code = distrib_id, center_code
-		distrib_id, center_code = repositories.GetNextItem(distrib_id, center_code, side)
-		fmt.Println("D: ", distrib_id, "C:", center_code)
+		old_distrib_id, old_place = distrib_id, place
+		distrib_id, place = repositories.GetNextItem(distrib_id, place, side)
+		fmt.Println("D: ", distrib_id, "C:", place)
 		if distrib_id == "" {
-			return old_distrib_id, old_center_code
+			fmt.Printf("**************************************distrib %v place %v", old_distrib_id, old_place)
+			return old_distrib_id, old_place
 		}
 	}
 }
@@ -160,26 +161,28 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	//Generate Next Available Distrib Number
 	distrib_id := FindNextAvailUserSeq()
 	user := models.User{
-		DistribID:     distrib_id,
-		Name:          user_in.Name,
-		Pass:          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
-		Address1:      user_in.Address1,
-		Address2:      user_in.Address2,
-		TownOrCity:    user_in.TownOrCity,
-		District:      user_in.District,
-		EmailAddress:  user_in.EmailAddress,
-		PinOrZipCode:  user_in.PinOrZipCode,
-		Country:       user_in.Country,
-		HomePhoneNo:   user_in.HomePhoneNo,
-		MobilePhoneNo: user_in.MobilePhoneNo,
+		Name:            user_in.Name,
+		Pass:            fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
+		RefDistribID:    user_in.RefDistribID,
+		DistribID:       distrib_id,
+		Address1:        user_in.Address1,
+		Address2:        user_in.Address2,
+		TownOrCity:      user_in.TownOrCity,
+		District:        user_in.District,
+		StateOrProvince: user_in.StateOrProvince,
+		EmailAddress:    user_in.EmailAddress,
+		PinOrZipCode:    user_in.PinOrZipCode,
+		Country:         user_in.Country,
+		HomePhoneNo:     user_in.HomePhoneNo,
+		MobilePhoneNo:   user_in.MobilePhoneNo,
 	}
 	//if not empty don't overwrite but find next available free slot
-	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefDistID, user_in.RefCenterCode, user_in.Place)
+	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefPlacementDistribId, user_in.RefPlacementPlace, user_in.Side)
 
 	tc1 := models.TrackingCenter{
 		Name:           user_in.Name,
 		DistribID:      distrib_id,
-		CenterCode:     "001",
+		Place:          "001",
 		PDistribId:     parent_distrib_id,
 		PPlace:         parent_ref_place,
 		LeftDistribID:  distrib_id,
@@ -190,14 +193,14 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	tc2 := models.TrackingCenter{
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
-		CenterCode: "002",
+		Place:      "002",
 		PDistribId: distrib_id,
 		PPlace:     "001",
 	}
 	tc3 := models.TrackingCenter{
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
-		CenterCode: "003",
+		Place:      "003",
 		PDistribId: distrib_id,
 		PPlace:     "001",
 	}
@@ -214,7 +217,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
-	res = repositories.UpdateTC(tx, distrib_id, parent_distrib_id, parent_ref_place, user_in.Place)
+	res = repositories.UpdateTC(tx, distrib_id, parent_distrib_id, parent_ref_place, user_in.Side)
 	if res != nil {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res

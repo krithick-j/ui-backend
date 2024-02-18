@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
@@ -33,7 +34,7 @@ func GetLastId() string {
 	return lastNo
 }
 
-func GetNextItem(distrib_id string, center_code string, place string) (string, string) {
+func GetNextItem(distrib_id string, place string, side string) (string, string) {
 	next_item := struct {
 		LeftDistribID  string
 		LeftPlace      string
@@ -41,17 +42,20 @@ func GetNextItem(distrib_id string, center_code string, place string) (string, s
 		RightPlace     string
 	}{}
 
-	configs.DB.Table("tracking_centers").Where("distrib_id=? AND center_code=?", distrib_id, center_code).First(&next_item)
-	if place == "left" {
+	configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, place).First(&next_item)
+	fmt.Println("place -------------->", place)
+	if side == "left" {
 		return next_item.LeftDistribID, next_item.LeftPlace
-	} else {
+	} else if side == "right" {
 		return next_item.RightDistribID, next_item.RightPlace
+	} else {
+		return fmt.Sprintf("SIDE NOT PROPERLY GIVEN %v", side), "error"
 	}
 }
 
-func GetTrackingCenter(distrib_id, center_id string) *models.TrackingCenter {
+func GetTrackingCenter(distrib_id, place string) *models.TrackingCenter {
 	tc := new(models.TrackingCenter)
-	configs.DB.First(tc, "distrib_id = ? AND center_code = ?", distrib_id, center_id)
+	configs.DB.First(tc, "distrib_id = ? AND place = ?", distrib_id, place)
 	return tc
 }
 
@@ -73,14 +77,17 @@ func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
 	return nil
 }
 
-func UpdateTC(tx *gorm.DB, distrib_id string, tracking_center string, center_code string, side string) error {
+func UpdateTC(tx *gorm.DB, distrib_id string, parent_distrib_id string, place string, side string) error {
 	var updatecols models.TrackingCenter
 	if side == "left" {
+		fmt.Print("hi inside if left")
 		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: "001"}
-	} else {
+	} else if side == "right" {
 		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: "001"}
+	} else {
+		return fmt.Errorf("ERROR IN UPDATE TC, SIDE VALUE IS %v", side)
 	}
-	res := tx.Table("tracking_centers").Where("distrib_id=? AND center_code =?", tracking_center, center_code).Updates(updatecols)
+	res := tx.Table("tracking_centers").Where("distrib_id=? AND place =?", parent_distrib_id, place).Updates(updatecols)
 	if res.Error != nil {
 		return res.Error
 	}

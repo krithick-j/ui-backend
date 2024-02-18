@@ -33,6 +33,7 @@ func main() {
 	api := app.Group("/api")
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)
+	api.Get("/user/:dist_id", controllers.GetUserByDistId)
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
 	}))

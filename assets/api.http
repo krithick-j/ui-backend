@@ -64,17 +64,18 @@ POST {{host}}/auth/register HTTP/1.1
 content-type: application/json
 
 {
-    "ref_dist_id": "IN-00001",
-    "name": "Harini",
+    "ref_distrib_id": "IN-00001",
+    "name": "Odin",
     "pass": "1234",
-    "ref_center_code": "003",
-    "place": "left",
+    "ref_placement_distrib_id": "IN-00017",
+    "ref_placement_place": "001",
+    "side": "left",
     "address1": "123 Main St",
     "address2": "Apt 101",
     "town_or_city": "Chennai",
     "district": "Chennai",
     "state_or_province": "TamilNadu",
-    "email_address": "siva@gmail.com",
+    "email_address": "henry@gmail.com",
     "pin_or_zip_code": 560001,
     "country": "India",
     "home_phone_no": "080-12345678",

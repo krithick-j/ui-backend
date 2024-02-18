@@ -37,6 +37,9 @@ type RecursiveUser struct {
 
 func LoginUser(username string, password string) (fiber.Map, int) {
 	pass := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	if username == "admin" {
+		username = "IN-00001" //temporarily set IN-00001 as admin
+	}
 	res, err := repositories.AuthUser(username, pass)
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, http.StatusUnauthorized

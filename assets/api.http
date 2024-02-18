@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00001",
+	"username": "admin",
 	"password": "1234"
 }
 
@@ -99,5 +99,10 @@ content-type: application/json
 
 ###
 GET  {{host}}/user/tree/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+GET  {{host}}/order/IN-00003 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json

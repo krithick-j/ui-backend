@@ -7,6 +7,7 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
@@ -91,4 +92,20 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	UpdateBvInTreeAfterPlaceOrder(orderId, OrderIn.DistribId, OrderIn.Place, res.TotalBV)
 
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
+}
+
+func GetOrdersByDistribId(distrib_id string) (fiber.Map, int) {
+
+	var order []models.OrdersHeader
+	var result *gorm.DB
+
+	order, result = repositories.GetOrderByDistribId(distrib_id, order)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"data": order}, http.StatusOK
 }

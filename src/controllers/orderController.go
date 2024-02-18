@@ -18,3 +18,12 @@ func PlaceOrder(c *fiber.Ctx) error {
 	res, status := service.PlaceOrder(OrderIn)
 	return c.Status(status).JSON(res)
 }
+
+func GetOrdersByDistribId(c *fiber.Ctx) error {
+
+	distrib_id := c.Params("distrib_id")
+
+	res, status := service.GetOrdersByDistribId(distrib_id)
+	return c.Status(status).JSON(res)
+
+}

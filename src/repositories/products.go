@@ -12,7 +12,7 @@ import (
 
 // has many
 func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Model(&models.Product{}).Preload("ProductImage").Find(&product)
+	result := configs.DB.Model(&models.Product{}).Preload("ProductImage").Preload("ProductImages").Find(&product)
 	return product, result
 }
 
@@ -59,4 +59,24 @@ func DeleteAllCartProduct(distrib_id string, cartItem []models.CartItem) ([]mode
 func EditCartProducts(distrib_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
 	result := configs.DB.Model(models.CartItem{}).Where("distrib_id=? AND product_id=?", distrib_id, product_id).Updates(payload)
 	return payload, result
+}
+
+func SaveProductImage(productImage *models.ProductImage) error {
+
+	result := configs.DB.Create(&productImage)
+	if result.Error != nil {
+		fmt.Printf("Error %v\n", result.Error.Error())
+	}
+
+	return nil
+}
+
+func SaveProduct(product *models.Product) *models.Product {
+
+	result := configs.DB.Create(&product)
+	if result.Error != nil {
+		fmt.Printf("Error %v\n", result.Error.Error())
+	}
+
+	return product
 }

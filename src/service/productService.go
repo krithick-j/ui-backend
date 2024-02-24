@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -141,9 +142,31 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }
 
-func CreateProduct(payload dto.ProductIn) (fiber.Map, int) {
-	//write product Logic
-	return fiber.Map{"data": ""}, http.StatusCreated
+func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
+
+	//saving product
+	product := &models.Product{
+		Name:              payload.Name,
+		Quantity:          payload.Quantity,
+		ShipmentTime:      payload.ShipmentTime,
+		Price:             payload.Price,
+		SandH:             payload.SandH,
+		BV:                payload.BV,
+		ProductCategoryID: payload.ProductCategoryID,
+		RSP:               payload.RSP,
+		AdminName:         adminName,
+	}
+	product = repositories.SaveProduct(product)
+	fmt.Printf("--------------_>	product ID %d", product.ID)
+	//group of pictures stores in product image table
+	for _, image := range payload.ProductImages {
+		productImage := &models.ProductImage{
+			Image:     image.Image,
+			ProductID: product.ID,
+		}
+		repositories.SaveProductImage(productImage)
+	}
+	return fiber.Map{"data": "Product Successfully created"}, http.StatusCreated
 }
 
 func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {

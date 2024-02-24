@@ -20,14 +20,16 @@ type ProductsOut struct {
 }
 
 type ProductIn struct {
-	Name              string
-	Quantity          int
-	ProductImageID    uint
-	ShipmentTime      string
-	Price             float64
-	SandH             float64
-	RSP               int
-	BV                int `gorm:"default:null"`
-	ProductCategoryID int
-	EP                float64 `gorm:"default:null"`
+	Name          string `json:"name"`
+	Quantity      int    `json:"quantity"`
+	ProductImages []struct {
+		Image string `json:"image"`
+	} `json:"product_images"`
+	ShipmentTime      string  `json:"shipment_time"`
+	Price             float64 `json:"price"`
+	SandH             float64 `json:"s_and_h"`
+	RSP               int     `json:"rsp"`
+	BV                int     `gorm:"default:null" json:"bv"`
+	ProductCategoryID uint    `json:"product_category_id"`
+	EP                float64 `gorm:"default:null" json:"ep"`
 }

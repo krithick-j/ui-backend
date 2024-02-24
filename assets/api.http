@@ -13,7 +13,7 @@ content-type: application/json
 
 ###
 
-@authToken = {{login.response.body.data.auth_token}}
+@authToken = {{login.response.body.data.auth_token}}	
 
 ###
 POST {{host}}/user HTTP/1.1
@@ -104,5 +104,38 @@ content-type: application/json
 
 ###
 GET  {{host}}/order/IN-00003 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+POST {{host}}/product/Admin HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"name": "Apple Watch",
+	"quantity": 20,
+	"product_images": [
+		{
+			"image": "/assets/productImages/appleWatch1.png"
+		},
+		{
+			"image": "/assets/productImages/appleWatch2.png"
+		},
+		{
+			"image": "/assets/productImages/appleWatch3.png"
+		}
+	],
+	"shipment_time": "19:20+5ist",
+	"price": 94000.00,
+	"s_and_h": 200.00,
+	"bv": 1000,
+	"rsp": 25,
+	"ep": 70.00,
+	"product_category_id": 1
+}
+
+###
+GET {{host}}/product HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json

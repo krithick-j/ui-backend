@@ -27,7 +27,7 @@ func GetProductsByCategoryID(c *fiber.Ctx) error {
 }
 
 func AddToCartController(c *fiber.Ctx) error {
-
+	println("Hello")
 	var request dto.CartItemIn
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
@@ -88,6 +88,7 @@ func EditCartProducts(c *fiber.Ctx) error {
 }
 
 func CreateProduct(c *fiber.Ctx) error {
+	println("Hello from create product")
 	adminName := c.Params("admin_name")
 	var payload dto.ProductIn
 	if err := c.BodyParser(&payload); err != nil {

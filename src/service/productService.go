@@ -67,7 +67,7 @@ func GetProductsByIds(ids []uint) ([]models.Product, error) {
 }
 
 func AddToCart(request dto.CartItemIn) fiber.Map {
-
+	println("hello from add to cart")
 	for _, item := range request.Items {
 		product := models.CartItem{
 			DistribID: request.DistribID,
@@ -143,7 +143,7 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 }
 
 func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
-
+	println("hello from create product")
 	//saving product
 	product := &models.Product{
 		Name:              payload.Name,

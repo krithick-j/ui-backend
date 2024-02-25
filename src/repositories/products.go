@@ -32,8 +32,8 @@ func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product,
 }
 
 func SaveToCart(product models.CartItem) error {
-
-	result := configs.DB.Create(&product)
+	println("hello from save to cart")
+	result := configs.DB.Table("cart_items").Create(&product)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}
@@ -72,7 +72,7 @@ func SaveProductImage(productImage *models.ProductImage) error {
 }
 
 func SaveProduct(product *models.Product) *models.Product {
-
+	println("hello from save product")
 	result := configs.DB.Create(&product)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())

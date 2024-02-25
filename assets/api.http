@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "admin",
+	"username": "IN-00001",
 	"password": "1234"
 }
 
@@ -139,3 +139,20 @@ content-type: application/json
 GET {{host}}/product HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+###
+POST {{host}}/product/addToCart HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"items": [
+		{
+			"product_id": 1
+		},
+		{
+			"product_id": 2
+		}
+	]
+}

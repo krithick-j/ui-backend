@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00001",
+	"username": "IN-00010",
 	"password": "1234"
 }
 
@@ -42,21 +42,29 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
-	"distrib_id": "IN-00003",
-	"place": "003",
+	"distrib_id": "IN-00010",
 	"applied_coupons": [
 		{
-			"v_id": "F429D99978",
-			"pin": "6D5F3F603B",
-			"amount_detected": 100
-		},
-		{
-			"v_id": "742AF55C93",
-			"pin": "A9B18D831F",
-			"amount_detected": 100
+			"v_id": "62A009AF2C",
+			"pin": "91D73A94C9",
+			"amount_detected": 50
 		}
 	],
-	"total_amount": 113999.00
+	"total_amount": 113999.00,
+	"place_bvs": [
+		{
+			"place": "001",
+			"add_bv": 1900
+		},
+		{
+			"place": "002",
+			"add_bv": 1800
+		},
+		{
+			"place": "003",
+			"add_bv": 2300
+		}
+	]
 }
 
 ###
@@ -156,3 +164,8 @@ content-type: application/json
 		}
 	]
 }
+
+###
+GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json

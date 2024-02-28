@@ -202,7 +202,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		subTotal += orderProduct.SubTotal
 		totalSandH += orderProduct.SandH
 		quantity += item.Quantity
-		totalBv += orderProduct.BV
+		totalBv += orderProduct.BV * int(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)

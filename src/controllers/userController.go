@@ -68,3 +68,10 @@ func NewReferrals(c *fiber.Ctx) error {
 	res, status := service.GetNewReferrals(distrib_id)
 	return c.Status(status).JSON(res)
 }
+
+func GetTrackingCenters(c *fiber.Ctx) error {
+	distrib_id := c.Params("distrib_id")
+
+	res, status := service.GetTrackingCentersByDistribId(distrib_id)
+	return c.Status(status).JSON(res)
+}

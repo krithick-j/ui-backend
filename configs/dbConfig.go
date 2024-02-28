@@ -29,10 +29,10 @@ func DbConnect(config *Config) {
 	db.Logger.Info(context.Background(), "\x1b[32m🚀Successfully connected to Database\x1b[0m")
 
 	//create tables if not exists
-	// if err := db.AutoMigrate(&models.CartItem{}); err != nil {
-	// 	db.Logger.Info(context.Background(), "\x1b[31mAuto Migration failed\x1b[0m")
-	// 	os.Exit(1)
-	// }
+	if err := db.AutoMigrate(&models.TrackingCenter{}); err != nil {
+		db.Logger.Info(context.Background(), "\x1b[31mAuto Migration failed\x1b[0m")
+		os.Exit(1)
+	}
 
 	DB = db
 

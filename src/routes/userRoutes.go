@@ -16,4 +16,5 @@ func UserRouter(router fiber.Router) {
 	router.Get("/tree/:distrib_id", controllers.GetUserTreeByDistId)
 	router.Get("/newReferral/:distrib_id", controllers.NewReferrals)
 	router.Get("/allReferrals", controllers.AllReferrals)
+	router.Get("/getTrackingCenters/:distrib_id", controllers.GetTrackingCenters)
 }

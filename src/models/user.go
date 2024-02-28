@@ -32,4 +32,6 @@ type TrackingCenter struct {
 	RightPlace     string `json:"right_place"`
 	Place          string `json:"place"`
 	Bv             int    `json:"bv"`
+	LeftPoint      int    `json:"left_point" gorm:"default:0"`
+	RightPoint     int    `json:"right_point" gorm:"default:0"`
 }

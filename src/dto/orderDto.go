@@ -45,11 +45,16 @@ type ProductId struct {
 	Productid uint `json:"product_id"`
 }
 
+type PlaceBv struct {
+	Place string `json:"place"`
+	AddBv int `json:"add_bv"`
+}
 type PlaceOrderIn struct {
 	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"` //Coupons Applied
 	DistribId      string             `json:"distrib_id"`
-	Place          string             `json:"place"` //Order HeaderIn
+	// Place          string             `json:"place"` //Order HeaderIn
 	TotalAmount    float64            `json:"total_amount"`
+	PlaceBvs []PlaceBv `json:"place_bvs"`
 }
 
 type OrdersOut struct {

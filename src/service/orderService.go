@@ -24,7 +24,6 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	//1.Adding in Header Table
 	OrderHeaderObj := &models.OrdersHeader{
 		DistribId:     OrderIn.DistribId,
-		Place:         OrderIn.Place,
 		OrderId:       orderId,
 		SubTotal:      res.SubTotal,
 		TotalSandH:    res.TotalSandH,
@@ -59,38 +58,41 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	}
 	//validate coupon balance
 	// Close Coupon if coupon balance is 0
-	for _, orderCoupon := range OrderIn.AppliedCoupons {
-		totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)
-		balance, result := repositories.GetICouponBalance(orderCoupon.VID)
-		if result.Error != nil {
-			return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	if OrderIn.AppliedCoupons != nil {
+		for _, orderCoupon := range OrderIn.AppliedCoupons {
+			totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)
+			balance, result := repositories.GetICouponBalance(orderCoupon.VID)
+			if result.Error != nil {
+				return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+			}
+
+			//Recording in ICoupon Transaction table
+			tx := models.ICouponTransaction{
+				OrderId:        orderId,
+				DistribId:      OrderIn.DistribId,
+				VID:            orderCoupon.VID,
+				Pin:            orderCoupon.Pin,
+				TotalValue:     totalValue,
+				AmountDetected: orderCoupon.AmountDetected,
+				Balance:        balance - orderCoupon.AmountDetected,
+			}
+
+			//Updating balance in icoupons Transaction table
+			repositories.UpdateBalanceInICoupons(orderCoupon.VID, tx.Balance)
+
+			//Closing coupon if balance is over
+			if tx.Balance == 0 {
+				repositories.CloseCoupon(orderCoupon.VID)
+			}
+			repositories.RecordICouponTx(tx)
+
 		}
 
-		//Recording in ICoupon Transaction table
-		tx := models.ICouponTransaction{
-			OrderId:        orderId,
-			DistribId:      OrderIn.DistribId,
-			VID:            orderCoupon.VID,
-			Pin:            orderCoupon.Pin,
-			TotalValue:     totalValue,
-			AmountDetected: orderCoupon.AmountDetected,
-			Balance:        balance - orderCoupon.AmountDetected,
-		}
-
-		//Updating balance in icoupons Transaction table
-		repositories.UpdateBalanceInICoupons(orderCoupon.VID, tx.Balance)
-
-		//Closing coupon if balance is over
-		if tx.Balance == 0 {
-			repositories.CloseCoupon(orderCoupon.VID)
-		}
-		repositories.RecordICouponTx(tx)
-
+		UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
+		UpdateTreePlaceValuesByDistribId(OrderIn.DistribId)
 	}
 
-	// //Adding BV to the tree
-	UpdateBvInTreeAfterPlaceOrder(orderId, OrderIn.DistribId, OrderIn.Place, res.TotalBV)
-
+	// UpdateBvInTreeAfterPlaceOrder(orderId, OrderIn.DistribId, OrderIn.PlaceBvs)
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }
 

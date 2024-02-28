@@ -7,7 +7,6 @@ import (
 type OrdersHeader struct {
 	gorm.Model
 	DistribId   string
-	Place       string
 	OrderId     string
 	SubTotal       float64
 	TotalSandH     float64

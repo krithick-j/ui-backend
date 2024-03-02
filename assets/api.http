@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00010",
+	"username": "IN-00013",
 	"password": "1234"
 }
 
@@ -42,7 +42,7 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
-	"distrib_id": "IN-00010",
+	"distrib_id": "IN-00013",
 	"applied_coupons": [
 		{
 			"v_id": "62A009AF2C",
@@ -75,8 +75,8 @@ content-type: application/json
     "ref_distrib_id": "IN-00001",
     "name": "Odin",
     "pass": "1234",
-    "ref_placement_distrib_id": "IN-00017",
-    "ref_placement_place": "001",
+    "ref_placement_distrib_id": "IN-00012",
+    "ref_placement_place": "002",
     "side": "left",
     "address1": "123 Main St",
     "address2": "Apt 101",
@@ -154,7 +154,7 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
-	"distrib_id": "IN-00001",
+	"distrib_id": "IN-00013",
 	"items": [
 		{
 			"product_id": 1

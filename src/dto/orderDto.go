@@ -22,6 +22,7 @@ type OrderProduct struct {
 	BV        int     `json:"bv"`
 	SubTotal  float64 `json:"sub_total"`
 	SandH     float64 `json:"s_and_h"`
+	Rsp       int     `json:"rsp"`
 }
 
 type OrderDetailsOut struct {
@@ -32,6 +33,7 @@ type OrderDetailsOut struct {
 	TotalAmount     float64         `json:"total_amount"`
 	TotalQuantity   float64         `json:"total_quantity"`
 	TotalBV         int             `json:"total_bv"`
+	TotalRsp        int             `json:"total_rsp"`
 	DeliveryAddress DeliveryAddress `json:"delivery_address"`
 }
 
@@ -47,14 +49,13 @@ type ProductId struct {
 
 type PlaceBv struct {
 	Place string `json:"place"`
-	AddBv int `json:"add_bv"`
+	AddBv int    `json:"add_bv"`
 }
 type PlaceOrderIn struct {
 	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"` //Coupons Applied
 	DistribId      string             `json:"distrib_id"`
-	// Place          string             `json:"place"` //Order HeaderIn
 	TotalAmount    float64            `json:"total_amount"`
-	PlaceBvs []PlaceBv `json:"place_bvs"`
+	PlaceBvs       []PlaceBv          `json:"place_bvs"`
 }
 
 type OrdersOut struct {

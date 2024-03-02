@@ -13,10 +13,10 @@ type CartItemIn struct {
 }
 
 type ProductsOut struct {
-	ProductID uint `json:"product_id"`
+	ProductID uint           `json:"product_id"`
 	Product   models.Product `json:"product"`
-	Quantity  uint `json:"quantity"`
-	SubTotal  float64 `json:"sub_total"`
+	Quantity  uint           `json:"quantity"`
+	SubTotal  float64        `json:"sub_total"`
 }
 
 type ProductIn struct {

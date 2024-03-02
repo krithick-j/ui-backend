@@ -92,7 +92,10 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		UpdateTreePlaceValuesByDistribId(OrderIn.DistribId)
 	}
 
-	// UpdateBvInTreeAfterPlaceOrder(orderId, OrderIn.DistribId, OrderIn.PlaceBvs)
+	//Cleaning cart after buying
+	var cartItems []models.CartItem
+	repositories.DeleteAllCartProduct(OrderIn.DistribId, cartItems)
+
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }
 

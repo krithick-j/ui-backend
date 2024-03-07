@@ -178,6 +178,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var cartItems []dto.ProductsOut
 	var userData models.User
 	var totalBv int = 0
+	var totalRsp int = 0
 
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
@@ -196,6 +197,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 			SandH:     item.Product.SandH,
 			SubTotal:  item.Product.Price * float64(item.Quantity),
 			BV:        item.Product.BV,
+			Rsp:       item.Product.RSP,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
@@ -203,6 +205,8 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		totalSandH += orderProduct.SandH
 		quantity += item.Quantity
 		totalBv += orderProduct.BV * int(item.Quantity)
+		totalRsp += orderProduct.Rsp * int(item.Quantity)
+
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
@@ -232,6 +236,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalQuantity:   float64(quantity),
 		TotalBV:         totalBv,
 		DistribId:       distrib_id,
+		TotalRsp:        totalRsp,
 	}
 	print("distrib id from getORderDetails", orderDetails.DistribId)
 

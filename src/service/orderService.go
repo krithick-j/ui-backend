@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -15,6 +16,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	//Generating unique Order ID
 	orderId := generateUniqueHexCode(10)
 
+	//sum product value
 	res, status := GetOrderDetails(OrderIn.DistribId)
 	if status != http.StatusOK {
 		return fiber.Map{"data": "Something gone wrong"}, http.StatusInternalServerError
@@ -87,16 +89,25 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			repositories.RecordICouponTx(tx)
 
 		}
-
-		UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
-		UpdateTreePlaceValuesByDistribId(OrderIn.DistribId)
+		//if len(bv)=0 then rsp transaction if not bv transaction
+		if len(OrderIn.PlaceBvs) != 0 {
+			//insert directbv in rsptransaction 
+			repositories.AddDirectBvTx(OrderIn.DistribId,orderId,res.TotalBV)
+			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
+			UpdateTreePlaceValuesByDistribId(OrderIn.DistribId)
+		} else {
+			//save rsp transaction
+			fmt.Println("total rsp from service", res.TotalRsp)
+			repositories.AddRspTx(OrderIn.DistribId, orderId, res.TotalRsp)
+		}
 	}
-
+	
 	//Cleaning cart after buying
 	var cartItems []models.CartItem
 	repositories.DeleteAllCartProduct(OrderIn.DistribId, cartItems)
 
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
+
 }
 
 func GetOrdersByDistribId(distrib_id string) (fiber.Map, int) {

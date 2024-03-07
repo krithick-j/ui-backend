@@ -51,20 +51,7 @@ content-type: application/json
 		}
 	],
 	"total_amount": 113999.00,
-	"place_bvs": [
-		{
-			"place": "001",
-			"add_bv": 1900
-		},
-		{
-			"place": "002",
-			"add_bv": 1800
-		},
-		{
-			"place": "003",
-			"add_bv": 2300
-		}
-	]
+	"place_bvs": []
 }
 
 ###
@@ -157,15 +144,20 @@ content-type: application/json
 	"distrib_id": "IN-00013",
 	"items": [
 		{
-			"product_id": 1
+			"product_id": 6
 		},
 		{
-			"product_id": 2
+			"product_id": 7
 		}
 	]
 }
 
 ###
 GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+GET {{host}}/rsp/IN-00013 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json

@@ -161,3 +161,39 @@ content-type: application/json
 GET {{host}}/rsp/IN-00013 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+###
+GET {{host}}/user/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+###
+POST {{host}}/enquiryType/ HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"name": [
+	"Apply ID Card",
+	"Bank Account Validation",
+	"Commission/ GR Related Enquiry",
+	"Ecard/ Evoucher Enquiry",
+	"General Enquiry",
+	"Grievanvces",
+	"GST Enquiry",
+	"KYC Submission",
+	"P&P Related Issues",
+	"Product Enquiry",
+	"Q Account/Password/Security Q&W Enquiry",
+	"QVI Enquiry",
+	"Refund Request",
+	"RSP Enquiry",
+	"TDS Enquiry",
+	"Telegraphic Transfer Enquiry",
+	"Update Personal Information Enquiry"
+	],
+	"admin_name":"admin"
+}
+###
+GET {{host}}/enquiryType HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json

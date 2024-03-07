@@ -14,7 +14,14 @@ func AddEnquiryType(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	res := service.AddEnquiryType(request)
+	res, status := service.AddEnquiryType(request)
+
+	return c.Status(status).JSON(res)
+}
+
+func GetAllEnquiryType(c *fiber.Ctx) error {
+	
+	res := service.GetAllEnquiryType()
 
 	return c.Status(http.StatusOK).JSON(res)
 }

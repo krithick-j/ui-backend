@@ -91,6 +91,8 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		}
 		//if len(bv)=0 then rsp transaction if not bv transaction
 		if len(OrderIn.PlaceBvs) != 0 {
+			//insert directbv in rsptransaction 
+			repositories.AddDirectBvTx(OrderIn.DistribId,orderId,res.TotalBV)
 			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
 			UpdateTreePlaceValuesByDistribId(OrderIn.DistribId)
 		} else {
@@ -99,7 +101,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			repositories.AddRspTx(OrderIn.DistribId, orderId, res.TotalRsp)
 		}
 	}
-
+	
 	//Cleaning cart after buying
 	var cartItems []models.CartItem
 	repositories.DeleteAllCartProduct(OrderIn.DistribId, cartItems)

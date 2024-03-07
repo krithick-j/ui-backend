@@ -8,4 +8,5 @@ import (
 
 func EnquiryRouter(router fiber.Router) {
 	router.Post("/", controllers.AddEnquiryType)
+	router.Get("/", controllers.GetAllEnquiryType)
 }

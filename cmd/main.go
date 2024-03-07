@@ -34,10 +34,7 @@ func main() {
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)
 	api.Get("/user/:dist_id", controllers.GetUserByDistId)
-	api.Get("/greetings/:name", func(c *fiber.Ctx) error {
-		myName := c.Params("name")
-		return c.SendString(fmt.Sprintf("Hello %s", myName))
-	})
+
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
 	}))
@@ -48,6 +45,7 @@ func main() {
 	api.Route("/iCoupon", routes.ICouponRouter)
 	api.Route("/product", routes.ProductRouter)
 	api.Route("/order", routes.OrdersRouter)
+	api.Route("/rsp", routes.RspRouter)
 	api.Route("/ui", routes.UiRouter)
 
 	app.Listen(":8080")

@@ -193,7 +193,101 @@ content-type: application/json
 	],
 	"admin_name":"admin"
 }
+
+
 ###
 GET {{host}}/enquiryType HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+//both less than 4000
+###
+POST {{host}}/cheque/available HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "002",
+	"l_tc": {
+		"distrib_id": "IN-00002",
+		"l_point": 500,
+		"r_point": 1000,
+		"bv_point": 500
+	},
+	"r_tc": {
+		"distrib_id": "IN-00003",
+		"l_point": 500,
+		"r_point": 1000,
+		"bv_point": 500
+	}
+}
+
+//left less than 4000
+###
+POST {{host}}/cheque/available HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "002",
+	"l_tc": {
+		"distrib_id": "IN-00002",
+		"l_point": 500,
+		"r_point": 1000,
+		"bv_point": 500
+	},
+	"r_tc": {
+		"distrib_id": "IN-00003",
+		"l_point": 500,
+		"r_point": 1000,
+		"bv_point": 3000
+	}
+}
+
+//right less than 4000
+###
+POST {{host}}/cheque/available HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "002",
+	"l_tc": {
+		"distrib_id": "IN-00002",
+		"l_point": 1000,
+		"r_point": 3000,
+		"bv_point": 500
+	},
+	"r_tc": {
+		"distrib_id": "IN-00003",
+		"l_point": 500,
+		"r_point": 1000,
+		"bv_point": 500
+	}
+}
+
+//both greater than 4000
+###
+POST {{host}}/cheque/available HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "002",
+	"l_tc": {
+		"distrib_id": "IN-00002",
+		"l_point": 500,
+		"r_point": 3000,
+		"bv_point": 500
+	},
+	"r_tc": {
+		"distrib_id": "IN-00003",
+		"l_point": 500,
+		"r_point": 3000,
+		"bv_point": 500
+	}
+}

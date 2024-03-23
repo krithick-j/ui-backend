@@ -194,6 +194,23 @@ content-type: application/json
 	"admin_name":"admin"
 }
 ###
-GET {{host}}/enquiryType HTTP/1.1
+POST {{host}}/contactCenter/enquiryType HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"name": "Apply ID Card",
+	"admin_name": "Admin",
+	"fields": [
+		{
+			"name": "query",
+			"type": "longtext",
+			"required": true
+		}
+	]
+}
+
+###	
+GET {{host}}/contactCenter/allEnquiryType HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json

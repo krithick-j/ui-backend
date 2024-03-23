@@ -301,7 +301,7 @@ func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
 		//Get RightTc
 		rightTc := repositories.GetTrackingCenter(RightDistribID, rightPlace)
 		//ParentPlace left and right point final values
-		parentPlace.LeftPoint = leftTc.RightPoint + leftTc.LeftPoint + leftTc.Bv
+		parentPlace.LeftPoint =  leftTc.RightPoint + leftTc.LeftPoint + leftTc.Bv
 		parentPlace.RightPoint = rightTc.RightPoint + rightTc.LeftPoint + rightTc.Bv
 		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
 

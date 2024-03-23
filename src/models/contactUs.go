@@ -11,10 +11,11 @@ type ContactUs struct {
 	ContactNumber string `json:"contact_number"`
 	EmailAddress  string `json:"email_address"`
 	EnquiryType
-	AadhaarFront string `json:"aadhaar_front"`
-	AadhaarBack  string `json:"aadhaar_back"`
-	PanCard      string `json:"pan_card"`
-	PassportSize string `json:"passport_size"`
+	EnquiryTypeID uint   `json:"enquiry_type_id"`
+	AadhaarFront  string `json:"aadhaar_front"`
+	AadhaarBack   string `json:"aadhaar_back"`
+	PanCard       string `json:"pan_card"`
+	PassportSize  string `json:"passport_size"`
 }
 
 type EnquiryType struct {
@@ -30,4 +31,10 @@ type Field struct {
 	Name          string `json:"name"`
 	Type          string `json:"type"`
 	Required      bool   `json:"required"`
+}
+
+type Enquiry struct {
+	gorm.Model
+	EnquiryTypeID uint
+	EnquiryData   map[string]interface{}
 }

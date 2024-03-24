@@ -2,8 +2,6 @@ package service
 
 import (
 	"ui-back-end/src/dto"
-	"ui-back-end/src/models"
-	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -11,23 +9,23 @@ import (
 
 func AddEnquiryType(request dto.EnquiryTypeIn) (fiber.Map, int) {
 
-	enquiryObj := &models.EnquiryType{
-		Name:      request.Name,
-		AdminName: request.AdminName,
-	}
+	// enquiryObj := &models.EnquiryType{
+	// 	Name:      request.Name,
+	// 	AdminName: request.AdminName,
+	// }
 
-	repositories.SaveToEnquiryType(enquiryObj)
+	// repositories.SaveToEnquiryType(enquiryObj)
 
-	for _, field := range request.Fields {
+	// for _, field := range request.Fields {
 
-		enquiryFieldObj := &models.Field{
-			EnquiryTypeID: enquiryObj.ID,
-			Name:          field.Name,
-			Type:          field.Type,
-			Required:      field.Required,
-		}
-		repositories.SaveToEnquiryField(enquiryFieldObj)
-	}
+	// 	enquiryFieldObj := &models.Field{
+	// 		EnquiryTypeID: enquiryObj.ID,
+	// 		Name:          field.Name,
+	// 		Type:          field.Type,
+	// 		Required:      field.Required,
+	// 	}
+	// 	repositories.SaveToEnquiryField(enquiryFieldObj)
+	// }
 
 	return fiber.Map{"success": "Enquiry type added successfully"}, 200
 }
@@ -36,7 +34,7 @@ func GetAllEnquiryType() fiber.Map {
 
 	var result *gorm.DB
 
-	enquiryTypes, result := repositories.GetAllEnquiryType()
+	// enquiryTypes, result := repositories.GetAllEnquiryType()
 
 	if result.Error == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": "Not Found"}
@@ -44,7 +42,7 @@ func GetAllEnquiryType() fiber.Map {
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}
 	}
-	return fiber.Map{"data": enquiryTypes}
+	return fiber.Map{"data": ""}
 }
 
 func SubmitContactUsQuery(request dto.ContactUsIn) (fiber.Map, int) {

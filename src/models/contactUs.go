@@ -7,17 +7,17 @@ import "gorm.io/gorm"
 type ContactUs struct {
 	gorm.Model
 	ContactUsBasicDetails
-	EnquiryTypeID uint
+	EnquiryTypeID uint `form:"enquiry_type_id" json:"enquiry_type_id"`
 	EnquiryField
 	ContactQueryFile
 }
 
 type ContactUsBasicDetails struct {
-	Name          string `form:"name"`
-	DistribId     string `form:"distrib_id"`
-	Country       string `form:"country"`
-	ContactNumber string `form:"contact_number"`
-	EmailAddress  string `form:"email_address"`
+	Name          string `form:"name" json:"name"`
+	DistribId     string `form:"distrib_id" json:"distrib_id"`
+	Country       string `form:"country" json:"country"`
+	ContactNumber string `form:"contact_number" json:"contact_number"`
+	EmailAddress  string `form:"email_address" json:"email_address"`
 }
 
 type ContactQueryFile struct {

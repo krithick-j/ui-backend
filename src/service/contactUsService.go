@@ -1,8 +1,9 @@
 package service
 
 import (
-	"mime/multipart"
+	"path/filepath"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
@@ -37,40 +38,53 @@ func GetAllEnquiryType() fiber.Map {
 	return fiber.Map{"data": enquiryTypes}
 }
 
-func SubmitContactUsQuery(form *multipart.Form) (fiber.Map, int) {
+func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUsIn) (fiber.Map, models.ContactQueryFile, int) {
+	var contactQueryFileObj models.ContactQueryFile
+	var AadhaarBackFileName, AadhaarFrontFileName, PanCardFileName, PassportSizeFileName string
 
-	// enquiryFields := models.EnquiryField{
-	// 	YourQuery: form.Value["your_query"],
-	// }
+	//mapping textField
+	enquiryFields := models.EnquiryField{
+		YourQuery:             textfield.YourQuery,
+		BankAccountValidation: textfield.BankAccountValidation,
+		RefundRequest:         textfield.RefundRequest,
+	}
 
 	//create unique name
-	// AadhaarBack, err := middleware.GenerateUniqueFilename(request.DistribId, filepath.Ext(request.AadhaarBack.Filename))
-	// if err != nil {
-	// 	return fiber.Map{"error": "Failed to generate filename"}, 500
-	// }
-	// AadhaarFront, err := middleware.GenerateUniqueFilename(request.DistribId, filepath.Ext(request.AadhaarFront.Filename))
-	// if err != nil {
-	// 	return fiber.Map{"error": "Failed to generate filename"}, 500
-	// }
-	// PanCard, err := middleware.GenerateUniqueFilename(request.DistribId, filepath.Ext(request.PanCard.Filename))
-	// if err != nil {
-	// 	return fiber.Map{"error": "Failed to generate filename"}, 500
-	// }
-	// PassportSize, err := middleware.GenerateUniqueFilename(request.DistribId, filepath.Ext(request.PassportSize.Filename))
-	// if err != nil {
-	// 	return fiber.Map{"error": "Failed to generate filename"}, 500
-	// }
+	AadhaarBackFileName, err := middleware.GenerateUniqueFilename(textfield.DistribId,"aadhaarBack", filepath.Ext(form.AadhaarBack.Filename))
+	if err != nil {
+		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+	}
+	AadhaarFrontFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "aadhaarFront",filepath.Ext(form.AadhaarFront.Filename))
+	if err != nil {
+		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+	}
+	PanCardFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "panCard",filepath.Ext(form.PanCard.Filename))
+	if err != nil {
+		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+	}
 
-	// //save file to server
-	// //save filepath to db
-	// contactUsObj := &models.ContactUs{
-	// 	ContactUsBasicDetails: request.ContactUsBasicDetails,
-	// 	EnquiryTypeID:         request.EnquiryTypeID,
-	// 	EnquiryField:          enquiryFields,
-	// 	ContactQueryFile:      request.ContactQueryFile,
-	// }
+	PassportSizeFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "passportSize",filepath.Ext(form.PassportSize.Filename))
+	if err != nil {
+		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+	}
 
-	// repositories.SaveContactUsQuery(contactUsObj)
-	return fiber.Map{"success": form}, 200
+	//mapping filename to struct
+	contactQueryFileObj = models.ContactQueryFile{
+		AadhaarFront: AadhaarFrontFileName,
+		AadhaarBack:  AadhaarBackFileName,
+		PanCard:      PanCardFileName,
+		PassportSize: PassportSizeFileName,
+	}
+
+	//save filepath to db
+	contactUsObj := &models.ContactUs{
+		ContactUsBasicDetails: textfield.ContactUsBasicDetails,
+		EnquiryTypeID:         textfield.EnquiryTypeID,
+		EnquiryField:          enquiryFields,
+		ContactQueryFile:      contactQueryFileObj,
+	}
+
+	repositories.SaveContactUsQuery(contactUsObj)
+	return fiber.Map{"success": "File Uploaded successfully"}, contactQueryFileObj, 200
 
 }

@@ -2,55 +2,43 @@ package middleware
 
 import (
 	"fmt"
+	"mime/multipart"
 	"time"
+	"ui-back-end/src/dto"
+	"ui-back-end/src/models"
 )
 
-func GenerateUniqueFilename(distribId string, ext string) (string, error) {
-	timestamp := time.Now().Format("2006-01-02T15-04-05")
-	filename := fmt.Sprintf("%s_%s.%s", distribId, timestamp, ext)
-	return filename, nil
+func GenerateUniqueFilename(distribId string, fileName string, ext string) (string, error) {
+	println("ext-->", ext)
+	if ext != "" {
+		timestamp := time.Now().Format("2006-01-02T15-04-05")
+		filename := fmt.Sprintf("%s_%s_%s%s", distribId, timestamp, fileName, ext)
+		return filename, nil
+	}
+	return "", nil
 }
 
-// func uploadHandler(objectFiles dto.ContactQueryFileMime) error {
+func UploadFileToServer(fileName dto.ContactQueryFileForm, file models.ContactQueryFile) error {
 
-// 	// Set size limit (optional)
-// 	err := c.ParseMultipartForm(32 << 20) // Limit to 32 MB (adjust as needed)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-// 	}
+	//Upload to contactQueryUploads
+	// Success response
+	return nil
+}
 
-// 	// Access uploaded file
-// 	file, err := c.FormFile("file") // Replace "file" with your actual form field name
-// 	if err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No file uploaded"})
-// 	}
-// 	defer file.Close()
+func ParseForm(form map[string][]*multipart.FileHeader) (*dto.ContactQueryFileForm, error) {
+	obj := new(dto.ContactQueryFileForm)
+	if form["aadhaar_front"] != nil {
+		obj.AadhaarFront = *form["aadhaar_front"][0]
+	}
+	if form["aadhaar_back"] != nil {
+		obj.AadhaarBack = *form["aadhaar_back"][0]
+	}
+	if form["pan_card"] != nil {
+		obj.PanCard = *form["pan_card"][0]
+	}
+	if form["passport_size"] != nil {
+		obj.PassportSize = *form["passport_size"][0]
+	}
 
-// 	// Generate unique filename
-// 	filename, err := generateUniqueFilename("uploaded_file", filepath.Ext(file.Filename))
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate filename"})
-// 	}
-
-// 	// Define destination directory (ensure proper permissions)
-// 	destinationDir := "./uploads" // Replace with your desired directory
-
-// 	// Create destination path
-// 	destinationPath := filepath.Join(destinationDir, filename)
-
-// 	// Open destination file for writing
-// 	destinationFile, err := os.Create(destinationPath)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create file"})
-// 	}
-// 	defer destinationFile.Close()
-
-// 	// Write file content
-// 	_, err = io.Copy(destinationFile, file)
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save file"})
-// 	}
-
-// 	// Success response
-// 	return c.JSON(fiber.StatusOK, fiber.Map{"message": "File uploaded successfully"})
-// }
+	return obj, nil
+}

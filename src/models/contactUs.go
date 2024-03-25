@@ -13,11 +13,11 @@ type ContactUs struct {
 }
 
 type ContactUsBasicDetails struct {
-	Name          string `json:"name"`
-	DistribId     string `json:"distrib_id"`
-	Country       string `json:"country"`
-	ContactNumber string `json:"contact_number"`
-	EmailAddress  string `json:"email_address"`
+	Name          string `form:"name"`
+	DistribId     string `form:"distrib_id"`
+	Country       string `form:"country"`
+	ContactNumber string `form:"contact_number"`
+	EmailAddress  string `form:"email_address"`
 }
 
 type ContactQueryFile struct {
@@ -43,7 +43,7 @@ type BankAccountValidation struct {
 	PanNumber         string `json:"pan_number"`
 	AccountHolderName string `json:"account_holder_name"`
 	AccountNumber     string `json:"account_number"`
-	BankNameID        string `json:"bank_name_id"`
+	BankNameID        uint   `json:"bank_name_id"`
 	BankIFSCCode      string `json:"bank_ifsc_code"`
 	BankBranch        string `json:"bank_branch"`
 }

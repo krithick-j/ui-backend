@@ -1,21 +1,26 @@
 package dto
 
+import (
+	"mime/multipart"
+	"ui-back-end/src/models"
+)
+
 type ContactUsIn struct {
-	Name          string `json:"name"`
-	DistribId     string `json:"distrib_id"`
-	Country       string `json:"country"`
-	ContactNumber string `json:"contact_number"`
-	EmailAddress  string `json:"email_address"`
-	EnquiryTypeID uint   `json:"enquiry_type_id"`
-	AadhaarFront  string `json:"aadhaar_front"`
-	AadhaarBack   string `json:"aadhaar_back"`
-	PanCard       string `json:"pan_card"`
-	PassportSize  string `json:"passport_size"`
+	models.ContactUsBasicDetails
+	EnquiryTypeID uint `form:"enquiry_type_id"`
+	models.EnquiryField
+}
+
+type ContactQueryFileForm struct {
+	// AadhaarFront *multipart.File `form:"aadhaar_front"`
+	// AadhaarBack  *multipart.File `form:"aadhaar_back"`
+	// PanCard      *multipart.File `form:"pan_card"`
+	PassportSize *multipart.File `json:"passport_size"`
 }
 
 type EnquiryTypeIn struct {
-	Name      string `json:"name"`
-	AdminName string `json:"admin_name"`
+	Name      string           `json:"name"`
+	AdminName string           `json:"admin_name"`
 	Fields    []EnquiryFieldIn `json:"fields"`
 }
 

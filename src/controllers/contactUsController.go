@@ -26,13 +26,13 @@ func GetAllEnquiryType(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(res)
 }
 
+
 func SubmitContactUsQuery(c *fiber.Ctx) error {
-	var request dto.ContactUsIn
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+
+	if form, err := c.MultipartForm(); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid form format", "err": err.Error()})
+	} else {
+		res, status := service.SubmitContactUsQuery(form)
+		return c.Status(status).JSON(res)
 	}
-
-	res, status := service.SubmitContactUsQuery(request)
-
-	return c.Status(status).JSON(res)
 }

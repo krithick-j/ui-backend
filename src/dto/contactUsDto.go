@@ -12,10 +12,10 @@ type ContactUsIn struct {
 }
 
 type ContactQueryFileForm struct {
-	// AadhaarFront *multipart.File `form:"aadhaar_front"`
-	// AadhaarBack  *multipart.File `form:"aadhaar_back"`
-	// PanCard      *multipart.File `form:"pan_card"`
-	PassportSize *multipart.File `json:"passport_size"`
+	AadhaarFront multipart.FileHeader `form:"aadhaar_front"`
+	AadhaarBack  multipart.FileHeader `form:"aadhaar_back"`
+	PanCard      multipart.FileHeader `form:"pan_card"`
+	PassportSize multipart.FileHeader `json:"passport_size"`
 }
 
 type EnquiryTypeIn struct {

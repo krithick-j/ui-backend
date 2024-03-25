@@ -12,5 +12,4 @@ func CpaRouter(router fiber.Router) {
 	router.Get("/loadRequest", controllers.GetLoadRequest)
 	router.Get("/myAccountSummary", controllers.GetMyAccountSummary)
 	router.Get("/transactionSummary", controllers.GetTransactionSummary)
-
 }

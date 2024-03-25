@@ -194,6 +194,48 @@ content-type: application/json
 	"admin_name":"admin"
 }
 ###
-GET {{host}}/enquiryType HTTP/1.1
+POST {{host}}/contactCenter/enquiryType HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+{
+	"name": "Apply ID Card",
+	"admin_name": "Admin",
+	"fields": [
+		{
+			"name": "query",
+			"type": "longtext",
+			"required": true
+		}
+	]
+}
+
+###	
+GET {{host}}/contactCenter/allEnquiryType HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+POST {{host}}/contactCenter/submitContactUsQuery HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"name": "Jega",
+	"distrib_id": "IN-00001",
+	"country": "India",
+	"contact_number": "+918056034174",
+	"email_address": "jega@jega.in",
+	"enquiry_type_id": 19,
+	"your_query": "I dont like to be in Top 1",
+	"pan_number": "MGQP324324KK",
+	"account_holder_name": "MALATHI J",
+	"account_number": "735154685123",
+	"bank_name_id": 1,
+	"bank_ifsc_code": "IN34234200",
+	"bank_branch": "Thiruvanmiyur",
+	"aadhaar_front": "aadhaar_front.png",
+	"aadhaar_back": "aadhaar_back.png",
+	"pan_card": "pan_card.png",
+	"passport_size": "passport_size.png"
+}

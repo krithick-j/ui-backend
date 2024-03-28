@@ -51,5 +51,4 @@ func main() {
 	api.Route("/cheque", routes.CheckoutRouter)
 
 	app.Listen(":8080")
-
 }

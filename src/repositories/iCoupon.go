@@ -19,7 +19,7 @@ func SaveICoupon(iCoupon models.ICoupon) error {
 }
 
 func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*gorm.DB, []models.ICoupon) {
-	result := configs.DB.Where("active=?", true).Find(&iCoupons, "distrib_id=?", distribID)
+	result := configs.DB.Find(&iCoupons, "distrib_id=?", distribID)
 	return result, iCoupons
 
 }

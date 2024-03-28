@@ -33,3 +33,23 @@ func SaveContactUsQuery(tx *models.ContactUs) {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}
 }
+
+func GetAllContactQueries() ([]models.ContactUs, *gorm.DB) {
+	var obj []models.ContactUs
+
+	result := configs.DB.Find(&obj)
+	return obj, result
+}
+
+func GetContactQueryStatusById(id string) (bool, *gorm.DB) {
+	var status bool
+
+	result := configs.DB.Model(models.ContactUs{}).Select("status").Find(&status, id)
+	return status, result
+}
+
+func SwitchContactQueryStatusById(id string) *gorm.DB {
+	status, _ := GetContactQueryStatusById(id)
+	result := configs.DB.Model(models.ContactUs{}).Where("id=?", id).Update("status", !status)
+	return result
+}

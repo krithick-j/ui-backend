@@ -66,3 +66,17 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 		}
 	}
 }
+
+func GetAllContactQueries(c *fiber.Ctx) error {
+
+	res, status := service.GetAllContactQueries()
+
+	return c.Status(status).JSON(res)
+}
+
+func SwitchContactQueryStatus(c *fiber.Ctx) error {
+	id := c.Params("id")
+	res, status := service.SwitchContactQueryStatus(id)
+
+	return c.Status(status).JSON(res)
+}

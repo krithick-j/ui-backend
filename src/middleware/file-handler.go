@@ -5,7 +5,6 @@ import (
 	"mime/multipart"
 	"time"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/models"
 )
 
 func GenerateUniqueFilename(distribId string, fileName string, ext string) (string, error) {
@@ -16,13 +15,6 @@ func GenerateUniqueFilename(distribId string, fileName string, ext string) (stri
 		return filename, nil
 	}
 	return "", nil
-}
-
-func UploadFileToServer(fileName dto.ContactQueryFileForm, file models.ContactQueryFile) error {
-
-	//Upload to contactQueryUploads
-	// Success response
-	return nil
 }
 
 func ParseForm(form map[string][]*multipart.FileHeader) (*dto.ContactQueryFileForm, error) {

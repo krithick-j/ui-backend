@@ -47,8 +47,8 @@ func main() {
 	api.Route("/order", routes.OrdersRouter)
 	api.Route("/rsp", routes.RspRouter)
 	api.Route("/ui", routes.UiRouter)
-	api.Route("/enquiryType", routes.EnquiryRouter)
 	api.Route("/cheque", routes.CheckoutRouter)
+	api.Route("/contactCenter", routes.ContactCenter)
 
 	app.Listen(":8080")
 }

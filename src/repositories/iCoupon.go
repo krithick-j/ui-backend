@@ -62,7 +62,7 @@ func CloseCoupon(VID string) *gorm.DB {
 }
 
 // Update Balance of the Coupon in ICoupons table
-func UpdateBalanceInICoupons(VID string, balance float64) (float64, *gorm.DB) {
+func UpdateBalanceInICoupons(VID string, balance float64,tx *gorm.DB) (float64, *gorm.DB, error) {
 	result := configs.DB.Table("i_coupons").Where("v_id=?", VID).Update("balance", balance)
-	return balance, result
+	return balance, result , result.Error
 }

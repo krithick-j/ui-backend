@@ -6,9 +6,9 @@ import (
 	"ui-back-end/src/models"
 )
 
-func SaveBvTransaction(tx models.BvTransaction) {
+func SaveBvTransaction(BVtx models.BvTransaction) {
 
-	result := configs.DB.Create(&tx)
+	result := configs.DB.Create(&BVtx)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}

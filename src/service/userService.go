@@ -237,32 +237,36 @@ func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
 
 	if result.Error != nil {
 		log.Info("Error saving user to the database:", result.Error)
-		return fiber.Map{"error": result.Error}, http.StatusBadGateway
-	}
-
-	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
 }
 
 func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string) (fiber.Map, int) {
-	var value int
+	var (
+		tx = configs.DB.Begin()
+		value int
+		res *gorm.DB
+	)
 	//Adding Bv Points from the product to the tree
 	for _, placeBv := range placeBvs {
 		if placeBv.Place == "001" {
-			_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
+			//_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
 		} else if placeBv.Place == "002" {
-			_, value = repositories.UpdateLeftPointPlaceBv(distrib_id, placeBv)
+			res, value = repositories.UpdateLeftPointPlaceBv(distrib_id, placeBv, tx)
 		} else if placeBv.Place == "003" {
-			_, value = repositories.UpdateRightPointPlaceBv(distrib_id, placeBv)
+			res, value = repositories.UpdateRightPointPlaceBv(distrib_id, placeBv, tx)
 		} else {
+			tx.Rollback()
 			fmt.Println("Error in updating values of Place")
 			return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
 		}
-
+		if res.Error != nil {
+			tx.Rollback()
+			return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
+		}
 		//record transaction in BV Transaction table
-		tx := models.BvTransaction{
+		BVtx := models.BvTransaction{
 			DisribId:     distrib_id,
 			Place:        placeBv.Place,
 			OrderId:      orderId,
@@ -271,21 +275,22 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 		}
 		//change name to add
-		repositories.SaveBvTransaction(tx)
+		repositories.SaveBvTransaction(BVtx)
 	}
-
+	tx.Commit()
 	return fiber.Map{"data": "Data Successfully Updated"}, http.StatusOK
 }
 
 func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
 
-	var place string = "001"
-	var i int = 0
+	var (
+		place string = "001"
+		tx = configs.DB.Begin()
+	)
+
 	for {
 		//Get Next parent tracking center(upward)
 		parentPlace := repositories.GetTrackingCenter(distrib_id, place)
-		fmt.Println("hello", i)
-		i = i + 1
 		//terminate condition of for loop
 		if parentPlace.PDistribId == "" {
 			return fiber.Map{"data": "Data successfully updated in the tree"}, http.StatusOK
@@ -303,7 +308,7 @@ func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
 		//ParentPlace left and right point final values
 		parentPlace.LeftPoint =  leftTc.RightPoint + leftTc.LeftPoint + leftTc.Bv
 		parentPlace.RightPoint = rightTc.RightPoint + rightTc.LeftPoint + rightTc.Bv
-		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
+		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place, tx)
 
 		//update parameters
 		distrib_id = parentPlace.PDistribId

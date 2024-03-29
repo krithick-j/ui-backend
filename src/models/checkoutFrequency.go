@@ -2,8 +2,10 @@ package models
 
 import "gorm.io/gorm"
 
-type CheckoutFrequency struct {
+//ChequeFrequencies check for valid cheque draw
+type ChequeFrequencies struct {
 	gorm.Model
-	DistribId string `json:"distrib_id"`
+	DistribID string `json:"distrib_id"`
 	Frequency int    `json:"frequency"`
+	TrackingCenter string    `json:"tracking_center"`
 }

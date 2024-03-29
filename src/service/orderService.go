@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -15,7 +16,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	//Generating unique Order ID
 	orderId := generateUniqueHexCode(10)
-
+	tx := configs.DB.Begin()
 	//sum product value
 	res, status := GetOrderDetails(OrderIn.DistribId)
 	if status != http.StatusOK {
@@ -43,8 +44,11 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		HomePhoneNo:   res.DeliveryAddress.HomePhoneNo,
 		MobilePhoneNo: res.DeliveryAddress.MobilePhoneNo,
 	}
-	repositories.SaveOrderHeader(OrderHeaderObj)
-
+	err := repositories.SaveOrderHeader(OrderHeaderObj, tx)
+	if err != nil {
+		tx.Rollback()
+		return fiber.Map{"error": err}, 0
+	}
 	// 3. Adding in Liner Table
 	for _, product := range res.Items {
 		OrderLinerObj := &models.OrdersLiner{
@@ -56,7 +60,11 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
 		}
-		repositories.SaveOrderLiner(OrderLinerObj)
+		err := repositories.SaveOrderLiner(OrderLinerObj, tx)
+		if err != nil {
+			tx.Rollback()
+			return fiber.Map{"error": err}, 0
+		}
 	}
 	//validate coupon balance
 	// Close Coupon if coupon balance is 0
@@ -69,7 +77,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			}
 
 			//Recording in ICoupon Transaction table
-			tx := models.ICouponTransaction{
+			ICtx := models.ICouponTransaction{
 				OrderId:        orderId,
 				DistribId:      OrderIn.DistribId,
 				VID:            orderCoupon.VID,
@@ -80,13 +88,16 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			}
 
 			//Updating balance in icoupons Transaction table
-			repositories.UpdateBalanceInICoupons(orderCoupon.VID, tx.Balance)
-
+			_,_,err :=repositories.UpdateBalanceInICoupons(orderCoupon.VID, ICtx.Balance, tx)
+			if err !=  nil {
+				tx.Rollback()
+				return fiber.Map{"error": err}, 0 
+			}
 			//Closing coupon if balance is over
-			if tx.Balance == 0 {
+			if ICtx.Balance == 0 {
 				repositories.CloseCoupon(orderCoupon.VID)
 			}
-			repositories.RecordICouponTx(tx)
+			repositories.RecordICouponTx(ICtx)
 
 		}
 		//if len(bv)=0 then rsp transaction if not bv transaction
@@ -100,6 +111,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			fmt.Println("total rsp from service", res.TotalRsp)
 			repositories.AddRspTx(OrderIn.DistribId, orderId, res.TotalRsp)
 		}
+		tx.Commit()
 	}
 	
 	//Cleaning cart after buying

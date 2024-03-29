@@ -8,19 +8,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func SaveOrderHeader(order *models.OrdersHeader) error {
+func SaveOrderHeader(order *models.OrdersHeader, tx *gorm.DB) error {
 
-	result := configs.DB.Create(&order)
+	result := tx.Create(&order)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}
-
 	return nil
 }
 
-func SaveOrderLiner(order *models.OrdersLiner) error {
+func SaveOrderLiner(order *models.OrdersLiner, tx *gorm.DB) error {
 
-	result := configs.DB.Create(&order)
+	result := tx.Create(&order)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}

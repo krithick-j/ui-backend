@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CheckoutRouter(router fiber.Router) {
-
-	router.Post("/available", controllers.IsCheckqueAvailable)
+func ChequeRouter(router fiber.Router) {
+	router.Post("/available", controllers.IsChequeAvailable)
 }

@@ -8,7 +8,7 @@ type Config struct {
 	DBUserName     string `mapstructure:"MYSQL_USER"`
 	DBUserPassword string `mapstructure:"MYSQL_PASSWORD"`
 	DBName         string `mapstructure:"MYSQL_DB"`
-	DBAddress      string `mapstructure:"MYSQL_ADDRESS"`
+	DBHost      string `mapstructure:"MYSQL_HOST"`
 	DBPort         int    `mapstructure:"MYSQL_PORT"`
 }
 

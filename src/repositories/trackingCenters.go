@@ -38,7 +38,7 @@ func UpdateLeftPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, i
 	var currentLeftPoint int
 	currentLeftPoint, _ = GetCurrentLeftPointFromTc(distrib_id, placeBv.Place, currentLeftPoint)
 	currentLeftPoint += placeBv.AddBv
-	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("left_point", placeBv.AddBv)
+	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("left_point", currentLeftPoint)
 	return result, currentLeftPoint
 }
 
@@ -46,7 +46,7 @@ func UpdateRightPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, 
 	var currentRightPoint int
 	currentRightPoint, _ = GetCurrentRightPointFromTc(distrib_id, placeBv.Place, currentRightPoint)
 	currentRightPoint += placeBv.AddBv
-	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("right_point", placeBv.AddBv)
+	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("right_point", currentRightPoint)
 	return result, currentRightPoint
 }
 

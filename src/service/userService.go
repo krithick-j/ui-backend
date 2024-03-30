@@ -251,7 +251,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 	//Adding Bv Points from the product to the tree
 	for _, placeBv := range placeBvs {
 		if placeBv.Place == "001" {
-			_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
+			//_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
 		} else if placeBv.Place == "002" {
 			_, value = repositories.UpdateLeftPointPlaceBv(distrib_id, placeBv)
 		} else if placeBv.Place == "003" {
@@ -280,12 +280,9 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
 
 	var place string = "001"
-	var i int = 0
 	for {
 		//Get Next parent tracking center(upward)
 		parentPlace := repositories.GetTrackingCenter(distrib_id, place)
-		fmt.Println("hello", i)
-		i = i + 1
 		//terminate condition of for loop
 		if parentPlace.PDistribId == "" {
 			return fiber.Map{"data": "Data successfully updated in the tree"}, http.StatusOK
@@ -301,8 +298,8 @@ func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
 		//Get RightTc
 		rightTc := repositories.GetTrackingCenter(RightDistribID, rightPlace)
 		//ParentPlace left and right point final values
-		parentPlace.LeftPoint =  leftTc.RightPoint + leftTc.LeftPoint + leftTc.Bv
-		parentPlace.RightPoint = rightTc.RightPoint + rightTc.LeftPoint + rightTc.Bv
+		parentPlace.LeftPoint =  leftTc.RightPoint + leftTc.LeftPoint 
+		parentPlace.RightPoint = rightTc.RightPoint + rightTc.LeftPoint 
 		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
 
 		//update parameters

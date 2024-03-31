@@ -9,6 +9,7 @@ by default. The same center code if referred in other places called place
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -93,11 +94,18 @@ func GetUsers() fiber.Map {
 
 func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side string) {
 	tc := repositories.GetTrackingCenter(dist_id, place)
+	tcbv, _ := repositories.GetBVforTC(dist_id, place)
 	var nuser *RecursiveUser = new(RecursiveUser)
 	nuser.Name = tc.Name
 	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
-	nuser.LeftPoint = tc.LeftPoint
-	nuser.RightPoint = tc.RightPoint
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			nuser.LeftPoint = val.BValue
+		}
+		if val.Side == "right" {
+			nuser.RightPoint = val.BValue
+		}
+	}
 	nuser.BV = tc.Bv
 	if tc.LeftDistribID != "" {
 		FindRecursiveTC(nuser, tc.LeftDistribID, tc.LeftPlace, "left")
@@ -116,10 +124,17 @@ func GetTreeUserByDistId(distrib_id string) fiber.Map {
 
 	ruser := new(RecursiveUser)
 	tc := repositories.GetTrackingCenter(distrib_id, "001")
+	tcbv, _ := repositories.GetBVforTC(distrib_id, "001")
 	ruser.Name = tc.Name
 	ruser.TrackingCenter = tc.DistribID + " " + tc.Place
-	ruser.LeftPoint = tc.LeftPoint
-	ruser.RightPoint = tc.RightPoint
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			ruser.LeftPoint = val.BValue
+		}
+		if val.Side == "right" {
+			ruser.RightPoint = val.BValue
+		}
+	}
 	ruser.BV = tc.Bv
 
 	if tc.LeftDistribID != "" {
@@ -154,7 +169,6 @@ func FindNextAvailSlot(distrib_id string, place string, side string) (string, st
 		distrib_id, place = repositories.GetNextItem(distrib_id, place, side)
 		fmt.Println("D: ", distrib_id, "C:", place)
 		if distrib_id == "" {
-			fmt.Printf("**************************************distrib %v place %v", old_distrib_id, old_place)
 			return old_distrib_id, old_place
 		}
 	}
@@ -246,68 +260,96 @@ func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
 	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
 }
 
+func prettyPrint(i interface{}) string {
+	s, _ := json.MarshalIndent(i, "", "\t")
+	return string(s)
+}
+
 func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string) (fiber.Map, int) {
-	var value int
 	//Adding Bv Points from the product to the tree
 	for _, placeBv := range placeBvs {
+		if placeBv.AddBv == 0 {
+			//Skip updating for empty values
+			continue
+		}
+		var side string
 		if placeBv.Place == "001" {
-			//_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
+			continue
+			//side = "left"
 		} else if placeBv.Place == "002" {
-			_, value = repositories.UpdateLeftPointPlaceBv(distrib_id, placeBv)
+			side = "left"
 		} else if placeBv.Place == "003" {
-			_, value = repositories.UpdateRightPointPlaceBv(distrib_id, placeBv)
+			side = "right"
 		} else {
 			fmt.Println("Error in updating values of Place")
 			return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
 		}
+		place := placeBv.Place
+		rdistrib_id := distrib_id
+		nside := side
+		for {
+			currentTc := repositories.GetTrackingCenter(rdistrib_id, place)
+			parentPlace := repositories.GetTrackingCenter(currentTc.DistribID, currentTc.PPlace)
+			//Swapping left or right
 
-		//record transaction in BV Transaction table
-		tx := models.BvTransaction{
-			DisribId:     distrib_id,
-			Place:        placeBv.Place,
-			OrderId:      orderId,
-			Date:         time.Now(),
-			BvValue:      value,
-			ActivateDate: time.Now().AddDate(0, 0, 7),
+			if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
+				nside = "right"
+			}
+			if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
+				nside = "left"
+			}
+			tx := models.BvTransaction{
+				DisribId:     rdistrib_id,
+				Place:        place,
+				OrderId:      orderId,
+				Date:         time.Now(),
+				BvValue:      placeBv.AddBv,
+				ActivateDate: time.Now().AddDate(0, 0, 7),
+				Side:         nside,
+			}
+			repositories.SaveBvTransaction(tx)
+			if currentTc.PDistribId == "" {
+				break
+			}
+			rdistrib_id = currentTc.PDistribId
+			place = currentTc.PPlace
 		}
-		//change name to add
-		repositories.SaveBvTransaction(tx)
 	}
 
 	return fiber.Map{"data": "Data Successfully Updated"}, http.StatusOK
 }
 
-func UpdateTreePlaceValuesByDistribId(distrib_id string, placeBvs []dto.PlaceBv) (fiber.Map, int) {
-	var (
-		leftBv,rightBv int 
-		place string = "001"
-	)
-	for _, placeBv := range placeBvs {
-		if placeBv.Place == "002" {
-			leftBv +=placeBv.AddBv 
-		}
-		if placeBv.Place == "003" {
-			rightBv +=placeBv.AddBv 
-		}
-	}
-	for {
-		//Get Next parent tracking center(upward)
-		parentPlace := repositories.GetTrackingCenter(distrib_id, place)
-		//terminate condition of for loop
-		if parentPlace.PDistribId == "" {
-			return fiber.Map{"data": "Data successfully updated in the tree"}, http.StatusOK
-		}
+// func UpdateTreePlaceValuesByDistribId(distrib_id string, placeBvs []dto.PlaceBv) (fiber.Map, int) {
+// 	var (
+// 		leftBv, rightBv int
+// 		place           string = "001"
+// 	)
+// 	for _, placeBv := range placeBvs {
+// 		if placeBv.Place == "002" {
+// 			leftBv += placeBv.AddBv
+// 		}
+// 		if placeBv.Place == "003" {
+// 			rightBv += placeBv.AddBv
+// 		}
+// 	}
+// 	for {
+// 		//Get Next parent tracking center(upward)
+// 		parentPlace := repositories.GetTrackingCenter(distrib_id, place)
+// 		//terminate condition of for loop
+// 		if parentPlace.PDistribId == "" {
+// 			return fiber.Map{"data": "Data successfully updated in the tree"}, http.StatusOK
+// 		}
 
-		//ParentPlace left and right point final values
-		parentPlace.LeftPoint +=  leftBv
-		parentPlace.RightPoint += rightBv
-		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
+// 		//ParentPlace left and right point final values
+// 		parentPlace.LeftPoint += leftBv
+// 		parentPlace.RightPoint += rightBv
+// 		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
 
-		//update parameters
-		distrib_id = parentPlace.PDistribId
-		place = parentPlace.PPlace
-	}
-}
+// 		//update parameters
+// 		distrib_id = parentPlace.PDistribId
+// 		place = parentPlace.PPlace
+// 	}
+// }
 
 func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 

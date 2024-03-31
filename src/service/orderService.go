@@ -94,7 +94,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			//insert directbv in rsptransaction 
 			repositories.AddDirectBvTx(OrderIn.DistribId,orderId,res.TotalBV)
 			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
-			UpdateTreePlaceValuesByDistribId(OrderIn.DistribId, OrderIn.PlaceBvs)
+			//UpdateTreePlaceValuesByDistribId(OrderIn.DistribId, OrderIn.PlaceBvs)
 		} else {
 			//save rsp transaction
 			fmt.Println("total rsp from service", res.TotalRsp)

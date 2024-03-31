@@ -14,4 +14,5 @@ type BvTransaction struct {
 	Date         time.Time `json:"date"`
 	BvValue      int       `json:"bv_value"`
 	ActivateDate time.Time `json:"activate_date"`
+	Side         string    `json:"side"`
 }

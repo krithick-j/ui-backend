@@ -35,3 +35,9 @@ type TrackingCenter struct {
 	LeftPoint      int    `json:"left_point" gorm:"default:0"`
 	RightPoint     int    `json:"right_point" gorm:"default:0"`
 }
+
+type TCBv struct {
+	DistribID string
+	Side      string
+	BValue    int
+}

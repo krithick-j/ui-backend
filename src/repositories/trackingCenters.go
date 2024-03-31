@@ -76,3 +76,8 @@ func GetTrackingCenter(distrib_id, place string) *models.TrackingCenter {
 	configs.DB.First(tc, "distrib_id = ? AND place = ?", distrib_id, place)
 	return tc
 }
+
+func ActivateTC(distrib_id string, place string) error {
+	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, place).Updates(map[string]interface{}{"is_active": 1}).Error
+	return result
+}

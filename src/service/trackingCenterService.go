@@ -43,6 +43,39 @@ func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side st
 	}
 }
 
+// only return tracking centers with respect to distrib id
+func FindRecursiveTCOnlyDistribId(ruser *RecursiveUser, dist_id string, place string, side string) {
+	tc := repositories.GetTrackingCenter(dist_id, place)
+	tcbv, _ := repositories.GetBVforTC(dist_id, place)
+	var nuser *RecursiveUser = new(RecursiveUser)
+	nuser.Name = tc.Name
+	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
+	nuser.IsActive = tc.IsActive
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			nuser.LeftPoint = val.BValue
+		}
+		if val.Side == "right" {
+			nuser.RightPoint = val.BValue
+		}
+		if val.Side == "bv" {
+			nuser.BV = val.BValue
+		}
+	}
+
+	if tc.LeftDistribID == tc.DistribID {
+		FindRecursiveTCOnlyDistribId(nuser, tc.LeftDistribID, tc.LeftPlace, "left")
+	}
+	if tc.RightDistribID == tc.DistribID {
+		FindRecursiveTCOnlyDistribId(nuser, tc.RightDistribID, tc.RightPlace, "right")
+	}
+	if side == "left" {
+		ruser.Left = nuser
+	} else {
+		ruser.Right = nuser
+	}
+}
+
 func GetTreeUserByDistId(distrib_id string) fiber.Map {
 
 	ruser := new(RecursiveUser)

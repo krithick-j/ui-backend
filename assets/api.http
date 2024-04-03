@@ -298,5 +298,5 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 {
-	"distrib_id": "IN-00001"
+	"distrib_id": "IN-00020"
 }

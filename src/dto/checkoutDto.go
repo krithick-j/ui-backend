@@ -13,3 +13,7 @@ type ChequeAvailableIn struct {
 	LTc       Tc     `json:"l_tc"`
 	RTc       Tc     `json:"r_tc"`
 }
+
+type CheckoutIn struct {
+	DistribId string `json:"distrib_id"`
+}

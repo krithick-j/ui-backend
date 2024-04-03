@@ -9,4 +9,5 @@ import (
 func CheckoutRouter(router fiber.Router) {
 
 	router.Post("/available", controllers.IsCheckqueAvailable)
+	router.Post("/takeCheque", controllers.TakeChequeByDistribId)
 }

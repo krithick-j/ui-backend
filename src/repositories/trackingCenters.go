@@ -70,3 +70,14 @@ func GetCurrentRightPointFromTc(distrib_id string, place string, rightPoint int)
 	result := configs.DB.Table("tracking_centers").Select("right_point").Where("distrib_id=? AND place=?", distrib_id, place).Take(&rightPoint)
 	return rightPoint, result
 }
+
+func GetTrackingCenter(distrib_id, place string) *models.TrackingCenter {
+	tc := new(models.TrackingCenter)
+	configs.DB.First(tc, "distrib_id = ? AND place = ?", distrib_id, place)
+	return tc
+}
+
+func ActivateTC(distrib_id string, place string) error {
+	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, place).Updates(map[string]interface{}{"is_active": 1}).Error
+	return result
+}

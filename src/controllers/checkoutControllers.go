@@ -17,3 +17,14 @@ func IsCheckqueAvailable(c *fiber.Ctx) error {
 	res, status := service.IsCheckqueAvailable(chequeAvailableIn)
 	return c.Status(status).JSON(res)
 }
+
+func TakeChequeByDistribId(c *fiber.Ctx) error {
+
+	var TakeChequeIn dto.CheckoutIn
+
+	if err := c.BodyParser(&TakeChequeIn); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.TotalChequeValueByDistribId(TakeChequeIn)
+	return c.Status(status).JSON(res)
+}

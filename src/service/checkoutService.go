@@ -3,6 +3,7 @@ package service
 import (
 	"time"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
@@ -53,4 +54,29 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 	} else {
 		return fiber.Map{"error": "cannot checkout"}, 400
 	}
+}
+
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
+	parentTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "001")
+	LeftTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "002")
+	RightTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "003")
+	CHECKOUT_VALUE := 4000
+	var totalPoints float32 = 0.0
+	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
+	println("rank-->", rank)
+	TcArr := []*models.TrackingCenter{parentTc, LeftTc, RightTc}
+
+	for _, tc := range TcArr {
+		leftInt := tc.LeftPoint / CHECKOUT_VALUE
+		rightInt := tc.RightPoint / CHECKOUT_VALUE
+
+		min := middleware.MinInt(leftInt, rightInt)
+
+		totalPoints += float32(min*CHECKOUT_VALUE) * rank
+		println("total points", totalPoints)
+		println("left int", leftInt)
+		println("right int", rightInt)
+		println("min", min)
+	}
+	return fiber.Map{"data": totalPoints}, 200
 }

@@ -291,3 +291,12 @@ content-type: application/json
 		"bv_point": 500
 	}
 }
+
+###
+POST {{host}}/cheque/takeCheque HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001"
+}

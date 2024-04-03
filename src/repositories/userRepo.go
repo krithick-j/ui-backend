@@ -53,12 +53,6 @@ func GetNextItem(distrib_id string, place string, side string) (string, string) 
 	}
 }
 
-func GetTrackingCenter(distrib_id, place string) *models.TrackingCenter {
-	tc := new(models.TrackingCenter)
-	configs.DB.First(tc, "distrib_id = ? AND place = ?", distrib_id, place)
-	return tc
-}
-
 func CreateUser(tx *gorm.DB, user models.User) error {
 	res := tx.Create(&user)
 	if res.Error != nil {
@@ -108,4 +102,15 @@ func EditUserByDistId(distrib_id string, userIn models.User, user models.User) (
 func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User, *gorm.DB) {
 	result := configs.DB.Where("ref_distrib_id", distrib_id).Find(&user)
 	return user, result
+}
+
+func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
+	var tcbv []models.TCBv
+	result := configs.DB.Table("bv_transactions").
+		Select("side, sum(bv_value) as BValue").
+		Where("disrib_id = ? AND place = ? ", distrib_id, tc).
+		Group("side").
+		Scan(&tcbv)
+	println(tcbv)
+	return tcbv, result
 }

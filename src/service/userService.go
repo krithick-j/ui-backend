@@ -63,6 +63,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	return fiber.Map{"data": authout}, http.StatusAccepted
 
 }
+
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
 	var user models.User

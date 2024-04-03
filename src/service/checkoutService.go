@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
@@ -57,26 +58,46 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 }
 
 func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
-	parentTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "001")
-	LeftTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "002")
-	RightTc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "003")
-	CHECKOUT_VALUE := 4000
+
 	var totalPoints float32 = 0.0
+	CHECKOUT_VALUE := 4000
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
-	println("rank-->", rank)
-	TcArr := []*models.TrackingCenter{parentTc, LeftTc, RightTc}
 
-	for _, tc := range TcArr {
-		leftInt := tc.LeftPoint / CHECKOUT_VALUE
-		rightInt := tc.RightPoint / CHECKOUT_VALUE
+	ruser := new(RecursiveUser)
+	tc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "001")
+	tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, "001")
 
-		min := middleware.MinInt(leftInt, rightInt)
+	//print ruser for better understanding
+	ruser.Name = tc.Name
+	ruser.TrackingCenter = tc.DistribID + " " + tc.Place
+	ruser.IsActive = tc.IsActive
+	for _, val := range tcbv {
 
-		totalPoints += float32(min*CHECKOUT_VALUE) * rank
-		println("total points", totalPoints)
-		println("left int", leftInt)
-		println("right int", rightInt)
-		println("min", min)
+		if val.Side == "left" {
+			ruser.LeftPoint = val.BValue
+		}
+		if val.Side == "right" {
+			ruser.RightPoint = val.BValue
+		}
+		if val.Side == "bv" {
+			ruser.BV = val.BValue
+		}
 	}
+
+	if tc.LeftDistribID == tc.DistribID {
+		FindRecursiveTCOnlyDistribId(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
+	}
+	if tc.RightDistribID == tc.DistribID {
+		FindRecursiveTCOnlyDistribId(ruser, tc.RightDistribID, tc.RightPlace, "right")
+	}
+
+	parentTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.LeftPoint, ruser.RightPoint, CHECKOUT_VALUE)
+	leftTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.Left.LeftPoint, ruser.Left.RightPoint, CHECKOUT_VALUE)
+	rightTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.Right.LeftPoint, ruser.Right.RightPoint, CHECKOUT_VALUE)
+
+	totalCheckoutFrequency := parentTCCheckoutFrequency + leftTCCheckoutFrequency + rightTCCheckoutFrequency
+
+	totalPoints = float32(totalCheckoutFrequency*CHECKOUT_VALUE) * rank
+
 	return fiber.Map{"data": totalPoints}, 200
 }

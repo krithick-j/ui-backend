@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"net/http"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/repositories"
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,13 +20,39 @@ func IsCheckqueAvailable(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func TotalChequeValueByDistribId(c *fiber.Ctx) error {
+
+	var CheckoutIn dto.CheckoutIn
+
+	if err := c.BodyParser(&CheckoutIn); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
+	return c.Status(status).JSON(res)
+}
+
 func TakeChequeByDistribId(c *fiber.Ctx) error {
 
-	var TakeChequeIn dto.CheckoutIn
+	var TakeChequeIn dto.TakeChequeIn
 
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, status := service.TotalChequeValueByDistribId(TakeChequeIn)
-	return c.Status(status).JSON(res)
+
+	count, _ := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId)
+	
+	if count < 5 {
+
+		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn)
+		err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, count)
+
+		if err.Error != nil {
+			return c.Status(http.StatusInternalServerError).JSON(err)
+		}
+
+		return c.Status(status).JSON(res)
+
+	} else {
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Maximum checkout limit reached!"})
+	}
 }

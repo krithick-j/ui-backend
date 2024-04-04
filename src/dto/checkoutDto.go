@@ -14,6 +14,11 @@ type ChequeAvailableIn struct {
 	RTc       Tc     `json:"r_tc"`
 }
 
+type TakeChequeIn struct {
+	DistribId string `json:"distrib_id"`
+	Place string `json:"place"`
+}
+
 type CheckoutIn struct {
 	DistribId string `json:"distrib_id"`
 }

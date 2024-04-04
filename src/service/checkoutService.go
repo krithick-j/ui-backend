@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"time"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
@@ -62,6 +61,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 	var totalPoints float32 = 0.0
 	CHECKOUT_VALUE := 4000
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
+	COUNT := 2 //Left and Right inside the tracking center
 
 	ruser := new(RecursiveUser)
 	tc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "001")
@@ -97,7 +97,39 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	totalCheckoutFrequency := parentTCCheckoutFrequency + leftTCCheckoutFrequency + rightTCCheckoutFrequency
 
-	totalPoints = float32(totalCheckoutFrequency*CHECKOUT_VALUE) * rank
+	totalPoints = float32(totalCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
 
 	return fiber.Map{"data": totalPoints}, 200
+}
+
+func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, int) {
+
+	checkoutId := generateUniqueHexCode(10)
+
+	LeftObj := models.BvTransaction{
+		DisribId: TakeChequeIn.DistribId,
+		Place:    TakeChequeIn.Place,
+		OrderId:  checkoutId,
+		Date:     time.Now(),
+		BvValue:  -4000,
+		Side:     "left",
+	}
+
+	RightObj := models.BvTransaction{
+		DisribId:     TakeChequeIn.DistribId,
+		Place:        TakeChequeIn.Place,
+		OrderId:      checkoutId,
+		Date:         time.Now(),
+		BvValue:      -4000,
+		ActivateDate: time.Now().AddDate(0, 0, 7),
+		Side:         "left",
+	}
+
+	repositories.SaveBvTransaction(LeftObj)
+	repositories.SaveBvTransaction(RightObj)
+
+	//generate coupon code and send mail
+	
+
+	return fiber.Map{"data": "Check Taken successfully"}, 200
 }

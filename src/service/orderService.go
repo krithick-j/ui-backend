@@ -14,7 +14,7 @@ import (
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	//Generating unique Order ID
-	orderId := generateUniqueHexCode(10)
+	orderId := GenerateUniqueHexCode(10)
 
 	//sum product value
 	res, status := GetOrderDetails(OrderIn.DistribId)

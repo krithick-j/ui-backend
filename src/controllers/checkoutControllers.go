@@ -27,7 +27,7 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&CheckoutIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
+	res,_,_, status := service.TotalChequeValueByDistribId(CheckoutIn)
 	return c.Status(status).JSON(fiber.Map{"data": res})
 }
 

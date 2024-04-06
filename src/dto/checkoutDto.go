@@ -22,15 +22,23 @@ type TakeChequeIn struct {
 }
 
 type TakeChequeOut struct {
-	TotalPoints            float32        `json:"total_points"`
-	LeftPoints             float32        `json:"left_points"`
-	RightPoints            float32        `json:"right_points"`
-	TotalCheckoutFrequency int            `json:"total_checkout_frequency"`
-	LeftCheckoutFrequency  int            `json:"left_checkout_frequency"`
-	RightCheckoutFrequency int            `json:"right_checkout_frequency"`
-	RUser                  *RecursiveUser `json:"recursive_user"`
+	TotalBalance          float32          `json:"total_balance"`
+	TotalAvailableBalance float32          `json:"total_available_balance"`
+	PlacePointsArr        []PlacePointsArr `json:"place_points"`
+}
+
+type PlacePointsArr struct {
+	Place string  `json:"place"`
+	Value float32 `json:"value"`
 }
 
 type CheckoutIn struct {
 	DistribId string `json:"distrib_id"`
+}
+
+type CheckoutFrequency struct {
+	TotalCheckoutFrequency  int `json:"total_checkout_frequency"`
+	ParentCheckoutFrequency int `json:"parent_checkout_frequency"`
+	LeftCheckoutFrequency   int `json:"left_checkout_frequency"`
+	RightCheckoutFrequency  int `json:"right_checkout_frequency"`
 }

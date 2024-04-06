@@ -56,7 +56,7 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 	}
 }
 
-func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, int) {
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, *dto.RecursiveUser, dto.CheckoutFrequency, int) {
 
 	CHECKOUT_VALUE := 4000
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
@@ -97,22 +97,44 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 	totalCheckoutFrequency := parentTCCheckoutFrequency + leftTCCheckoutFrequency + rightTCCheckoutFrequency
 	totalPoints := float32(totalCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
 
+	parentCheckoutFrequency := parentTCCheckoutFrequency
+	parentTotalPoints := float32(parentTCCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
+
 	leftCheckoutFrequency := leftTCCheckoutFrequency
 	leftTotalPoints := float32(leftCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
 
 	rightCheckoutFrequency := rightTCCheckoutFrequency
 	rightTotalPoints := float32(rightCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
 
-	pointsObj := dto.TakeChequeOut{
-		TotalPoints:            totalPoints,
-		LeftPoints:             leftTotalPoints,
-		RightPoints:            rightTotalPoints,
-		TotalCheckoutFrequency: totalCheckoutFrequency,
-		LeftCheckoutFrequency:  leftCheckoutFrequency,
-		RightCheckoutFrequency: rightCheckoutFrequency,
-		RUser:                  ruser,
+	placePointsObj := []dto.PlacePointsArr{
+		{
+			Place: "001",
+			Value: parentTotalPoints,
+		},
+		{
+			Place: "002",
+			Value: leftTotalPoints,
+		},
+		{
+			Place: "003",
+			Value: rightTotalPoints,
+		},
 	}
-	return pointsObj, 200
+
+	pointsObj := dto.TakeChequeOut{
+		TotalBalance:          totalPoints,
+		TotalAvailableBalance: totalPoints,
+		PlacePointsArr:        placePointsObj,
+	}
+
+	checkoutFrequencyObj := dto.CheckoutFrequency{
+		TotalCheckoutFrequency:  totalCheckoutFrequency,
+		ParentCheckoutFrequency: parentCheckoutFrequency,
+		LeftCheckoutFrequency:   leftCheckoutFrequency,
+		RightCheckoutFrequency:  rightCheckoutFrequency,
+	}
+
+	return pointsObj, ruser, checkoutFrequencyObj, 200
 }
 
 func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, int) {
@@ -122,19 +144,18 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, in
 	TotalChequeInObj := dto.CheckoutIn{
 		DistribId: TakeChequeIn.DistribId,
 	}
-	res, _ := TotalChequeValueByDistribId(TotalChequeInObj)
+	res, ruser, _, _ := TotalChequeValueByDistribId(TotalChequeInObj)
 
 	if TakeChequeIn.Place == "001" {
-		leftVal = res.RUser.LeftPoint
-		rightVal = res.RUser.RightPoint
+		leftVal = ruser.LeftPoint
+		rightVal = ruser.RightPoint
 	} else if TakeChequeIn.Place == "002" {
-		leftVal = res.RUser.Left.LeftPoint
-		rightVal = res.RUser.Left.RightPoint
+		leftVal = ruser.Left.LeftPoint
+		rightVal = ruser.Left.RightPoint
 	} else {
-		leftVal = res.RUser.Right.LeftPoint
-		rightVal = res.RUser.Right.RightPoint
+		leftVal = ruser.Right.LeftPoint
+		rightVal = ruser.Right.RightPoint
 	}
-	println("Helo")
 
 	if leftVal > 4000 && rightVal > 4000 {
 		LeftInsideTcObj := models.BvTransaction{

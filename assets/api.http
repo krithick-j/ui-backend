@@ -291,3 +291,33 @@ content-type: application/json
 		"bv_point": 500
 	}
 }
+
+###
+POST {{host}}/cheque/takeCheque HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00015",
+	"place": "001",
+	"coupons": [
+		{
+			"value": 100,
+			"quantity": 3
+		},
+		{
+			"value": 200,
+			"quantity": 2
+		}
+	],
+	"tx_detail": 3435
+}
+
+###
+POST {{host}}/cheque/totalChequeValue HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00015"
+}

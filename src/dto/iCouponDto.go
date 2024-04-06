@@ -9,7 +9,7 @@ type Coupon struct {
 
 type ICouponIn struct {
 	DistribID string   `json:"distrib_id"`
-	TxDetail  uint64   `json:"tx_detail"`
+	TxDetail  string   `json:"tx_detail"`
 	Coupons   []Coupon `json:"coupons"`
 }
 

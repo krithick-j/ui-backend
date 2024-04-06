@@ -7,6 +7,7 @@ import (
 	"ui-back-end/src/service"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func IsCheckqueAvailable(c *fiber.Ctx) error {
@@ -27,7 +28,7 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&CheckoutIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res,_,_, status := service.TotalChequeValueByDistribId(CheckoutIn)
+	res, _, status := service.TotalChequeValueByDistribId(CheckoutIn)
 	return c.Status(status).JSON(fiber.Map{"data": res})
 }
 
@@ -38,8 +39,11 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	count, _ := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId)
+	count, err := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId)
 
+	if err.Error == gorm.ErrRecordNotFound {
+		repositories.CreateCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place)
+	}
 	if count < 5 {
 		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn)
 
@@ -48,10 +52,10 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 			if err.Error != nil {
 				return c.Status(http.StatusInternalServerError).JSON(err)
 			}
-
+			iCouponTxDetail := service.GenerateUniqueHexCode(10)
 			iCouponObj := dto.ICouponIn{
 				DistribID: TakeChequeIn.DistribId,
-				TxDetail:  TakeChequeIn.ICouponTxDetail,
+				TxDetail:  iCouponTxDetail,
 				Coupons:   TakeChequeIn.Coupons,
 			}
 

@@ -12,10 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side string) {
+func FindRecursiveTC(ruser *dto.RecursiveUser, dist_id string, place string, side string) {
 	tc := repositories.GetTrackingCenter(dist_id, place)
 	tcbv, _ := repositories.GetBVforTC(dist_id, place)
-	var nuser *RecursiveUser = new(RecursiveUser)
+	var nuser *dto.RecursiveUser = new(dto.RecursiveUser)
 	nuser.Name = tc.Name
 	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
 	nuser.IsActive = tc.IsActive
@@ -44,10 +44,10 @@ func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side st
 }
 
 // only return tracking centers with respect to distrib id
-func FindRecursiveTCOnlyDistribId(ruser *RecursiveUser, dist_id string, place string, side string) {
+func FindRecursiveTCOnlyDistribId(ruser *dto.RecursiveUser, dist_id string, place string, side string) {
 	tc := repositories.GetTrackingCenter(dist_id, place)
 	tcbv, _ := repositories.GetBVforTC(dist_id, place)
-	var nuser *RecursiveUser = new(RecursiveUser)
+	var nuser *dto.RecursiveUser = new(dto.RecursiveUser)
 	nuser.Name = tc.Name
 	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
 	nuser.IsActive = tc.IsActive
@@ -78,7 +78,7 @@ func FindRecursiveTCOnlyDistribId(ruser *RecursiveUser, dist_id string, place st
 
 func GetTreeUserByDistId(distrib_id string) fiber.Map {
 
-	ruser := new(RecursiveUser)
+	ruser := new(dto.RecursiveUser)
 	tc := repositories.GetTrackingCenter(distrib_id, "001")
 	tcbv, _ := repositories.GetBVforTC(distrib_id, "001")
 	ruser.Name = tc.Name

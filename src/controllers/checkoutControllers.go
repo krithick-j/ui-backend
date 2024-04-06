@@ -28,7 +28,7 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
-	return c.Status(status).JSON(res)
+	return c.Status(status).JSON(fiber.Map{"data": res})
 }
 
 func TakeChequeByDistribId(c *fiber.Ctx) error {
@@ -38,19 +38,28 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-
 	count, _ := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId)
-	
+
 	if count < 5 {
-
 		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn)
-		err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, count)
 
-		if err.Error != nil {
-			return c.Status(http.StatusInternalServerError).JSON(err)
+		if status == 200 {
+			err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count)
+			if err.Error != nil {
+				return c.Status(http.StatusInternalServerError).JSON(err)
+			}
+
+			iCouponObj := dto.ICouponIn{
+				DistribID: TakeChequeIn.DistribId,
+				TxDetail:  TakeChequeIn.ICouponTxDetail,
+				Coupons:   TakeChequeIn.Coupons,
+			}
+
+			service.AddICoupon(iCouponObj, "") //admin is sent as empty string because user generating iCoupon
+			return c.Status(status).JSON(res)
+		} else {
+			return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
 		}
-
-		return c.Status(status).JSON(res)
 
 	} else {
 		return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Maximum checkout limit reached!"})

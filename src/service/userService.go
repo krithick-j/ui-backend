@@ -25,17 +25,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type RecursiveUser struct {
-	Name           string         `json:"name"`
-	TrackingCenter string         `json:"tracking_center"`
-	LeftPoint      int            `json:"left_point"`
-	RightPoint     int            `json:"right_point"`
-	BV             int            `json:"bv"`
-	IsActive       bool           `json:"is_active"`
-	Left           *RecursiveUser `json:"left"`
-	Right          *RecursiveUser `json:"right"`
-}
-
 func LoginUser(username string, password string) (fiber.Map, int) {
 	pass := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
 	if username == "admin" {

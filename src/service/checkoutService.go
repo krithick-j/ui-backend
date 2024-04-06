@@ -36,7 +36,7 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 			return fiber.Map{"error": err.Error}, 500
 		}
 
-		checkoutId := generateUniqueHexCode(10)
+		checkoutId := GenerateUniqueHexCode(10)
 
 		for _, user := range arr {
 
@@ -56,69 +56,49 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 	}
 }
 
-func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, *dto.RecursiveUser, dto.CheckoutFrequency, int) {
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, dto.CheckoutFrequency, int) {
 
 	CHECKOUT_VALUE := 4000
+	var parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
 	COUNT := 2 //Left and Right inside the tracking center
 
-	ruser := new(dto.RecursiveUser)
-	tc := repositories.GetTrackingCenter(TakeChequeIn.DistribId, "001")
-	tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, "001")
-
-	//print ruser for better understanding
-	ruser.Name = tc.Name
-	ruser.TrackingCenter = tc.DistribID + " " + tc.Place
-	ruser.IsActive = tc.IsActive
-	for _, val := range tcbv {
-
-		if val.Side == "left" {
-			ruser.LeftPoint = val.BValue
-		}
-		if val.Side == "right" {
-			ruser.RightPoint = val.BValue
-		}
-		if val.Side == "bv" {
-			ruser.BV = val.BValue
-		}
+	types := []struct {
+		Place             string
+		CheckoutFrequency *int
+	}{
+		{"001", &parentTCCheckoutFrequency},
+		{"002", &leftTCCheckoutFrequency},
+		{"003", &rightTCCheckoutFrequency},
 	}
 
-	if tc.LeftDistribID == tc.DistribID {
-		FindRecursiveTCOnlyDistribId(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
-	}
-	if tc.RightDistribID == tc.DistribID {
-		FindRecursiveTCOnlyDistribId(ruser, tc.RightDistribID, tc.RightPlace, "right")
-	}
+	totalCheckoutFrequency := 0
+	totalPoints := float32(0)
+	placePointsObj := make([]dto.PlacePointsArr, len(types))
 
-	parentTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.LeftPoint, ruser.RightPoint, CHECKOUT_VALUE)
-	leftTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.Left.LeftPoint, ruser.Left.RightPoint, CHECKOUT_VALUE)
-	rightTCCheckoutFrequency := middleware.NCheckoutPossible(ruser.Right.LeftPoint, ruser.Right.RightPoint, CHECKOUT_VALUE)
+	for i, t := range types {
+		var leftPoint, rightPoint int
 
-	totalCheckoutFrequency := parentTCCheckoutFrequency + leftTCCheckoutFrequency + rightTCCheckoutFrequency
-	totalPoints := float32(totalCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
+		tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, t.Place)
+		for _, val := range tcbv {
+			if val.Side == "left" {
+				leftPoint = val.BValue
+			}
+			if val.Side == "right" {
+				rightPoint = val.BValue
+			}
+		}
+		*t.CheckoutFrequency = middleware.NCheckoutPossible(leftPoint, rightPoint, CHECKOUT_VALUE)
 
-	parentCheckoutFrequency := parentTCCheckoutFrequency
-	parentTotalPoints := float32(parentTCCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
+		checkoutFrequency := *t.CheckoutFrequency
+		totalCheckoutFrequency += checkoutFrequency
+		points := float32(checkoutFrequency*CHECKOUT_VALUE*COUNT) * rank
 
-	leftCheckoutFrequency := leftTCCheckoutFrequency
-	leftTotalPoints := float32(leftCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
-
-	rightCheckoutFrequency := rightTCCheckoutFrequency
-	rightTotalPoints := float32(rightCheckoutFrequency*CHECKOUT_VALUE*COUNT) * rank
-
-	placePointsObj := []dto.PlacePointsArr{
-		{
-			Place: "001",
-			Value: parentTotalPoints,
-		},
-		{
-			Place: "002",
-			Value: leftTotalPoints,
-		},
-		{
-			Place: "003",
-			Value: rightTotalPoints,
-		},
+		placePointsObj[i] = dto.PlacePointsArr{
+			Place: t.Place,
+			Value: points,
+		}
+		totalPoints += points
 	}
 
 	pointsObj := dto.TakeChequeOut{
@@ -129,44 +109,33 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 
 	checkoutFrequencyObj := dto.CheckoutFrequency{
 		TotalCheckoutFrequency:  totalCheckoutFrequency,
-		ParentCheckoutFrequency: parentCheckoutFrequency,
-		LeftCheckoutFrequency:   leftCheckoutFrequency,
-		RightCheckoutFrequency:  rightCheckoutFrequency,
+		ParentCheckoutFrequency: parentTCCheckoutFrequency,
+		LeftCheckoutFrequency:   leftTCCheckoutFrequency,
+		RightCheckoutFrequency:  rightTCCheckoutFrequency,
 	}
 
-	return pointsObj, ruser, checkoutFrequencyObj, 200
+	return pointsObj, checkoutFrequencyObj, 200
 }
 
 func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, int) {
 
-	leftVal, rightVal := 0, 0
-	checkoutId := generateUniqueHexCode(10)
-	TotalChequeInObj := dto.CheckoutIn{
-		DistribId: TakeChequeIn.DistribId,
-	}
-	res, ruser, _, _ := TotalChequeValueByDistribId(TotalChequeInObj)
+	checkoutId := GenerateUniqueHexCode(10)
 
-	if TakeChequeIn.Place == "001" {
-		leftVal = ruser.LeftPoint
-		rightVal = ruser.RightPoint
-	} else if TakeChequeIn.Place == "002" {
-		leftVal = ruser.Left.LeftPoint
-		rightVal = ruser.Left.RightPoint
-	} else {
-		leftVal = ruser.Right.LeftPoint
-		rightVal = ruser.Right.RightPoint
-	}
+	var leftPoint, rightPoint int
+	side := TakeChequeIn.Place
 
-	if leftVal > 4000 && rightVal > 4000 {
-		LeftInsideTcObj := models.BvTransaction{
-			DisribId: TakeChequeIn.DistribId,
-			Place:    TakeChequeIn.Place,
-			OrderId:  checkoutId,
-			Date:     time.Now(),
-			BvValue:  -4000,
-			Side:     "left",
+	tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, side)
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			leftPoint = val.BValue
 		}
-		RightInsidetCObj := models.BvTransaction{
+		if val.Side == "right" {
+			rightPoint = val.BValue
+		}
+	}
+
+	if leftPoint >= 4000 && rightPoint >= 4000 {
+		LeftInsideTcObj := models.BvTransaction{
 			DisribId:     TakeChequeIn.DistribId,
 			Place:        TakeChequeIn.Place,
 			OrderId:      checkoutId,
@@ -175,11 +144,19 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, in
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "left",
 		}
+		RightInsidetCObj := models.BvTransaction{
+			DisribId:     TakeChequeIn.DistribId,
+			Place:        TakeChequeIn.Place,
+			OrderId:      checkoutId,
+			Date:         time.Now(),
+			BvValue:      -4000,
+			ActivateDate: time.Now().AddDate(0, 0, 7),
+			Side:         "right",
+		}
 		repositories.SaveBvTransaction(LeftInsideTcObj)
 		repositories.SaveBvTransaction(RightInsidetCObj)
-		return fiber.Map{"data": res}, 200
+		return fiber.Map{"data": "Cheque taken Successful"}, 200
 	} else {
 		return fiber.Map{"data": "cheque unsuccessfull!"}, 403
 	}
-
 }

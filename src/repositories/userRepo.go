@@ -111,6 +111,5 @@ func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
 		Where("disrib_id = ? AND place = ? ", distrib_id, tc).
 		Group("side").
 		Scan(&tcbv)
-	println(tcbv)
 	return tcbv, result
 }

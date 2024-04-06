@@ -14,6 +14,16 @@ func GetCheckoutFrequency(distrib_id string) (int, *gorm.DB) {
 }
 
 func IncrementCheckoutFrequency(distrib_id string, place string, frequency int) *gorm.DB {
-	result := configs.DB.Where("distrib_id=?", distrib_id).Save(&models.ChequeFrequency{DistribId: distrib_id, Place: place, Frequency: frequency})
+	result := configs.DB.Model(models.ChequeFrequency{}).Where("distrib_id=?", distrib_id).Update("frequency", frequency+1)
+	return result
+}
+
+func CreateCheckoutFrequency(distrib_id string, place string) *gorm.DB {
+	obj := models.ChequeFrequency{
+		DistribId: distrib_id,
+		Frequency: 0,
+	}
+	result := configs.DB.Create(&obj)
+	print("hello")
 	return result
 }

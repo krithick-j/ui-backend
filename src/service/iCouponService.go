@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func generateUniqueHexCode(length int) string {
+func GenerateUniqueHexCode(length int) string {
 	randomBytes := make([]byte, length/2)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -101,8 +101,8 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 
 	for _, Coupon := range iCouponIn.Coupons {
 		for i := 0; i < int(Coupon.Quantity); i++ {
-			hexVID := generateUniqueHexCode(10)
-			hexPin := generateUniqueHexCode(10)
+			hexVID := GenerateUniqueHexCode(10)
+			hexPin := GenerateUniqueHexCode(10)
 			iCoupon = models.ICoupon{
 				VID:       hexVID,
 				Pin:       hexPin,

@@ -293,6 +293,7 @@ content-type: application/json
 }
 
 ###
+
 POST {{host}}/cheque/takeCheque HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
@@ -309,8 +310,7 @@ content-type: application/json
 			"value": 200,
 			"quantity": 2
 		}
-	],
-	"tx_detail": 3435
+	]
 }
 
 ###

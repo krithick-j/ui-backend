@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00013",
+	"username": "IN-00015",
 	"password": "1234"
 }
 

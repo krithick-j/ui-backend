@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -65,8 +64,6 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue
 	)
 
-	fmt.Println("checque draw", CHEQUE_DRAW_VALUE)
-
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
 	COUNT := 2 //Left and Right inside the tracking center
 
@@ -81,9 +78,9 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 
 	totalCheckoutFrequency := 0
 	totalPoints := float32(0)
-	placePointsObj := make([]dto.PlacePointsArr, len(types))
+	placePointsObj := []dto.PlacePointsArr{}
 
-	for i, t := range types {
+	for _, t := range types {
 		var leftPoint, rightPoint int
 
 		tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, t.Place)
@@ -101,10 +98,13 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 		totalCheckoutFrequency += checkoutFrequency
 		points := float32(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
 
-		placePointsObj[i] = dto.PlacePointsArr{
-			Place: t.Place,
-			Value: points,
+		if points != 0 {
+			placePointsObj = append(placePointsObj, dto.PlacePointsArr{
+				Place: t.Place,
+				Value: points,
+			})
 		}
+
 		totalPoints += points
 	}
 

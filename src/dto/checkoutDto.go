@@ -28,8 +28,8 @@ type TakeChequeOut struct {
 }
 
 type PlacePointsArr struct {
-	Place string  `json:"place"`
-	Value float32 `json:"value"`
+	Place string  `json:"place,omitempty"`
+	Value float32 `json:"value,omitempty"`
 }
 
 type CheckoutIn struct {

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -53,6 +52,23 @@ func GetProductByCategoryID(category_id string) fiber.Map {
 		return fiber.Map{"error": result.Error}
 	}
 	return fiber.Map{"data": product}
+}
+
+func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
+
+	var product []models.Product
+	var result *gorm.DB
+
+	product, result = repositories.GetAllEpProductByCategoryID(category_id, product)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	}
+
+	return fiber.Map{"data": product}, fiber.StatusOK
 }
 
 func GetProductsByIds(ids []uint) ([]models.Product, error) {
@@ -154,10 +170,10 @@ func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 		BV:                payload.BV,
 		ProductCategoryID: payload.ProductCategoryID,
 		RSP:               payload.RSP,
+		EP:                payload.EP,
 		AdminName:         adminName,
 	}
 	product = repositories.SaveProduct(product)
-	fmt.Printf("--------------_>	product ID %d", product.ID)
 	//group of pictures stores in product image table
 	for _, image := range payload.ProductImages {
 		productImage := &models.ProductImage{

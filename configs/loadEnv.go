@@ -13,22 +13,21 @@ type Config struct {
 	ChequeDrawValue int    `mapstructure:"CHEQUE_DRAW_VALUE"`
 }
 
-var GlobalConfig Config
+var GlobalConfig *Config
 
-func LoadConfig(path string) (GlobalConfig *Config, err error) {
+func LoadConfig(path string) (*Config, error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigType("env")
 	viper.SetConfigName("app")
 	viper.SetDefault("CHEQUE_DRAW_VALUE", 4000)
 	viper.AutomaticEnv()
 
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	if err != nil {
-		return 
+		return nil, err
 	}
 
-	// config.ChequeDrawValue = viper.GetInt("CHEQUE_DRAW_VALUE")
-
+	//GlobalConfig.ChequeDrawValue = viper.GetInt("CHEQUE_DRAW_VALUE")
 	err = viper.Unmarshal(&GlobalConfig)
-	return
+	return GlobalConfig , nil
 }

@@ -155,9 +155,9 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	var iCoupon models.ICoupon
 	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
 
-	if iCoupon.DistribID != distribID {
-		return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
-	}
+	// if iCoupon.DistribID != distribID {
+	// 	return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
+	// }
 
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK

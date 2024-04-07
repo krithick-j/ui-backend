@@ -1,7 +1,9 @@
 package service
 
 import (
+	"fmt"
 	"time"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
@@ -58,8 +60,13 @@ func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int)
 
 func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, dto.CheckoutFrequency, int) {
 
-	CHECKOUT_VALUE := 4000
-	var parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
+	var (
+		parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
+		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue
+	)
+
+	fmt.Println("checque draw", CHEQUE_DRAW_VALUE)
+
 	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
 	COUNT := 2 //Left and Right inside the tracking center
 
@@ -88,11 +95,11 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 				rightPoint = val.BValue
 			}
 		}
-		*t.CheckoutFrequency = middleware.NCheckoutPossible(leftPoint, rightPoint, CHECKOUT_VALUE)
+		*t.CheckoutFrequency = middleware.NCheckoutPossible(leftPoint, rightPoint, CHEQUE_DRAW_VALUE)
 
 		checkoutFrequency := *t.CheckoutFrequency
 		totalCheckoutFrequency += checkoutFrequency
-		points := float32(checkoutFrequency*CHECKOUT_VALUE*COUNT) * rank
+		points := float32(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
 
 		placePointsObj[i] = dto.PlacePointsArr{
 			Place: t.Place,

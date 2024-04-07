@@ -21,7 +21,7 @@ func init() {
 	if err != nil {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
-	configs.DbConnect(&config)
+	configs.DbConnect(config)
 }
 
 func main() {

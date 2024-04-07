@@ -26,6 +26,11 @@ func GetAllProductByCategoryID(category_id string, product []models.Product) ([]
 	return product, result
 }
 
+func GetAllEpProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
+	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
+	return product, result
+}
+
 func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product, *gorm.DB) {
 	result := configs.DB.Find(&product, ids)
 	return product, result
@@ -72,7 +77,6 @@ func SaveProductImage(productImage *models.ProductImage) error {
 }
 
 func SaveProduct(product *models.Product) *models.Product {
-	println("hello from save product")
 	result := configs.DB.Create(&product)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())

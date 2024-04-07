@@ -321,3 +321,10 @@ content-type: application/json
 {
 	"distrib_id": "IN-00015"
 }
+
+
+###
+GET {{host}}/product/getEpProducts/2 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+

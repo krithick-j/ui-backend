@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -98,7 +97,6 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 		for _, item := range request.Items {
 			ids := []uint{item.ProductID}
 			_, err := repositories.GetAllProductByIDs(ids)
-			fmt.Println("errror--->", err.Error)
 			if err.RowsAffected == 0 {
 				return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
 			}
@@ -214,7 +212,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var userData models.User
 	var totalBv int = 0
 	var totalRsp int = 0
-
+	var totalEp float64 = 0
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
 
@@ -233,6 +231,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 			SubTotal:  item.Product.Price * float64(item.Quantity),
 			BV:        item.Product.BV,
 			Rsp:       item.Product.RSP,
+			Ep:        item.Product.EP,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
@@ -241,7 +240,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		quantity += item.Quantity
 		totalBv += orderProduct.BV * int(item.Quantity)
 		totalRsp += orderProduct.Rsp * int(item.Quantity)
-
+		totalEp += orderProduct.Ep * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
@@ -272,6 +271,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalBV:         totalBv,
 		DistribId:       distrib_id,
 		TotalRsp:        totalRsp,
+		TotalEp:         totalEp,
 	}
 	print("distrib id from getORderDetails", orderDetails.DistribId)
 

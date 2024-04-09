@@ -52,15 +52,14 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			Name:           product.Name,
 			Quantity:       product.Quantity,
 			UnitPrice:      product.UnitPrice,
-			BV:             product.BV,
-			RSP:            product.Rsp,
-			EP:             product.Ep,
+			ProductType:    product.ProductType,
+			TypeValue:      product.TypeValue,
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
 		}
 		repositories.SaveOrderLiner(OrderLinerObj)
 	}
-	
+
 	//validate coupon balance
 	// Close Coupon if coupon balance is 0
 	if OrderIn.AppliedCoupons != nil && OrderIn.OrderType != "ep" {

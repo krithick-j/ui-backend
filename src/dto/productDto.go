@@ -29,8 +29,7 @@ type ProductIn struct {
 	ShipmentTime      string  `json:"shipment_time"`
 	Price             float64 `json:"price"`
 	SandH             float64 `json:"s_and_h"`
-	RSP               int     `json:"rsp"`
-	BV                int     `gorm:"default:null" json:"bv"`
 	ProductCategoryID uint    `json:"product_category_id"`
-	EP                float64 `gorm:"default:null" json:"ep"`
+	ProductType       string  `json:"product_type"`
+	TypeValue         float64 `json:"type_value"`
 }

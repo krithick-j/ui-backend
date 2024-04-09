@@ -11,11 +11,9 @@ type Product struct {
 	Quantity          int            `json:"quantity"`
 	ShipmentTime      string         `json:"shipment_time"`
 	Price             float64        `json:"price"`
+	TypeValue         float64        `json:"type_value"`
 	SandH             float64        `json:"s_and_h"`
-	RSP               int            `json:"rsp"`
-	BV                int            `gorm:"default:null" json:"bv"`
 	ProductCategoryID uint           `json:"product_category_id"`
-	EP                float64        `gorm:"default:null" json:"ep"`
 	ProductType       string         `gorm:"default:not null" json:"product_type"`
 	ProductImages     []ProductImage `json:"product_images"` //group of pictures
 	ProductImage      ProductImage   `json:"product_image"`  //main picture

@@ -328,7 +328,22 @@ content-type: application/json
 
 
 ###
-GET {{host}}/product/getEpProducts/2 HTTP/1.1
+GET {{host}}/product/cartProducts/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
-content-type: application/json
+content-type: applicatiogetEpProductsn/json
 
+###
+POST {{host}}/product/addToCart HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: applicatiogetEpProductsn/json
+
+{
+	"distrib_id": "IN-00001",
+	"items": [
+		{
+			"product_id": 2,
+			"quantity": 1
+		}
+	],
+	"product_type": "bv"
+}

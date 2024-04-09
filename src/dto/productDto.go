@@ -8,8 +8,9 @@ type ProductCart struct {
 }
 
 type CartItemIn struct {
-	DistribID string        `json:"distrib_id"`
-	Items     []ProductCart `json:"items"`
+	DistribID   string        `json:"distrib_id"`
+	Items       []ProductCart `json:"items"`
+	ProductType string        `json:"product_type"`
 }
 
 type ProductsOut struct {

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -72,8 +73,7 @@ func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
 }
 
 func GetProductsByIds(ids []uint) ([]models.Product, error) {
-	var products []models.Product
-	products, result := repositories.GetAllProductByIDs(ids, products)
+	products, result := repositories.GetAllProductByIDs(ids)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -82,18 +82,37 @@ func GetProductsByIds(ids []uint) ([]models.Product, error) {
 	return products, nil
 }
 
-func AddToCart(request dto.CartItemIn) fiber.Map {
-	println("hello from add to cart")
-	for _, item := range request.Items {
-		product := models.CartItem{
-			DistribID: request.DistribID,
-			ProductID: item.ProductID,
-			Quantity:  item.Quantity,
+func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
+	var firstProdType string
+	firstCartItem, err := repositories.GetFirstCartItem(request.DistribID)
+
+	if err.Error != gorm.ErrRecordNotFound {
+		firstProdType, err = repositories.GetProductTypeByProductID(firstCartItem.ProductID)
+		if err.Error != nil {
+			return fiber.Map{"message": err.Error}, fiber.StatusInternalServerError
 		}
-		repositories.SaveToCart(product)
 	}
 
-	return fiber.Map{"success": "Added to Cart Successfully"}
+	if firstProdType == "" || request.ProductType == firstProdType {
+
+		for _, item := range request.Items {
+			ids := []uint{item.ProductID}
+			_, err := repositories.GetAllProductByIDs(ids)
+			fmt.Println("errror--->", err.Error)
+			if err.RowsAffected == 0 {
+				return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
+			}
+			product := models.CartItem{
+				DistribID: request.DistribID,
+				ProductID: item.ProductID,
+				Quantity:  item.Quantity,
+			}
+			repositories.SaveToCart(product)
+		}
+		return fiber.Map{"success": "Added to Cart Successfully"}, fiber.StatusOK
+	} else {
+		return fiber.Map{"failed": "All products in cart must be same"}, fiber.StatusBadRequest
+	}
 }
 
 func GetCartProductsByDistribId(user_id string) fiber.Map {

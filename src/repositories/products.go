@@ -31,7 +31,22 @@ func GetAllEpProductByCategoryID(category_id string, product []models.Product) (
 	return product, result
 }
 
-func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product, *gorm.DB) {
+// Get the first cart item using distrib ID in cart table
+func GetFirstCartItem(distribId string) (models.CartItem, *gorm.DB) {
+	var item models.CartItem
+	fmt.Println("distrib id", distribId)
+	result := configs.DB.Model(&models.CartItem{}).Where("distrib_id=?", distribId).First(&item)
+	return item, result
+}
+
+func GetProductTypeByProductID(product_id uint) (string, *gorm.DB) {
+	var prodType string
+	result := configs.DB.Model(&models.Product{}).Select("product_type").First(&prodType, "id=?", product_id)
+	return prodType, result
+}
+
+func GetAllProductByIDs(ids []uint) ([]models.Product, *gorm.DB) {
+	var product []models.Product
 	result := configs.DB.Find(&product, ids)
 	return product, result
 }

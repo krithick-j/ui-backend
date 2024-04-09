@@ -32,9 +32,9 @@ func AddToCartController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	res := service.AddToCart(request)
+	res, status := service.AddToCart(request)
 
-	return c.Status(http.StatusOK).JSON(res)
+	return c.Status(status).JSON(res)
 }
 
 func GetProductsById(c *fiber.Ctx) error {

@@ -32,9 +32,8 @@ type OrdersLiner struct {
 	Name           string
 	Quantity       uint
 	UnitPrice      uint64
-	BV             int
-	RSP            int
-	EP             float64
+	ProductType    string
+	TypeValue      float64
 	SubTotal       float64
 	SandH          float64
 }

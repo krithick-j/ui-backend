@@ -176,7 +176,6 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 }
 
 func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
-	println("hello from create product")
 	//saving product
 	product := &models.Product{
 		Name:              payload.Name,
@@ -184,10 +183,9 @@ func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 		ShipmentTime:      payload.ShipmentTime,
 		Price:             payload.Price,
 		SandH:             payload.SandH,
-		BV:                payload.BV,
 		ProductCategoryID: payload.ProductCategoryID,
-		RSP:               payload.RSP,
-		EP:                payload.EP,
+		TypeValue:         payload.TypeValue,
+		ProductType:       payload.ProductType,
 		AdminName:         adminName,
 	}
 	product = repositories.SaveProduct(product)
@@ -210,9 +208,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
 	var userData models.User
-	var totalBv int = 0
-	var totalRsp int = 0
-	var totalEp float64 = 0
+	var TotalTypeValue float64
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
 
@@ -224,23 +220,20 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
 		orderProduct := dto.OrderProduct{
-			Name:      item.Product.Name,
-			Quantity:  item.Quantity,
-			UnitPrice: uint64(item.Product.Price),
-			SandH:     item.Product.SandH,
-			SubTotal:  item.Product.Price * float64(item.Quantity),
-			BV:        item.Product.BV,
-			Rsp:       item.Product.RSP,
-			Ep:        item.Product.EP,
+			Name:        item.Product.Name,
+			Quantity:    item.Quantity,
+			UnitPrice:   uint64(item.Product.Price),
+			SandH:       item.Product.SandH,
+			SubTotal:    item.Product.Price * float64(item.Quantity),
+			ProductType: item.Product.ProductType,
+			TypeValue:   item.Product.TypeValue,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
 		subTotal += orderProduct.SubTotal
 		totalSandH += orderProduct.SandH
 		quantity += item.Quantity
-		totalBv += orderProduct.BV * int(item.Quantity)
-		totalRsp += orderProduct.Rsp * int(item.Quantity)
-		totalEp += orderProduct.Ep * float64(item.Quantity)
+		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
@@ -268,12 +261,9 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalAmount:     subTotal + totalSandH,
 		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
-		TotalBV:         totalBv,
 		DistribId:       distrib_id,
-		TotalRsp:        totalRsp,
-		TotalEp:         totalEp,
+		TypeValue:       TotalTypeValue,
 	}
-	print("distrib id from getORderDetails", orderDetails.DistribId)
 
 	if result.Error != nil {
 		print(fiber.Map{"error": result.Error})

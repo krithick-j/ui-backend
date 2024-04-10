@@ -13,9 +13,9 @@ import (
 
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
+	var totalOrderAmount float64
 	//Generating unique Order ID
 	orderId := GenerateUniqueHexCode(10)
-
 	//sum product value
 	total, status := GetOrderDetails(OrderIn.DistribId)
 	tx := configs.DB.Begin()
@@ -74,48 +74,69 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		}
 	}
 
-	//validate coupon balance
-	// Close Coupon if coupon balance is 0
+	var totalICouponBalance float64
 	if OrderIn.AppliedCoupons != nil && productType != "ep" {
 		for _, orderCoupon := range OrderIn.AppliedCoupons {
-			totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)
 			balance, result := repositories.GetICouponBalance(orderCoupon.VID)
 			if result.Error != nil {
 				return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
 			}
 
-			//Recording in ICoupon Transaction table
-			ICouponObj := models.ICouponTransaction{
-				OrderId:        orderId,
-				DistribId:      OrderIn.DistribId,
-				VID:            orderCoupon.VID,
-				Pin:            orderCoupon.Pin,
-				TotalValue:     totalValue,
-				AmountDetected: orderCoupon.AmountDetected,
-				Balance:        balance - orderCoupon.AmountDetected,
+			if balance == 0 {
+				repositories.CloseCoupon(orderCoupon.VID)
+				return fiber.Map{"error": "ICoupon used already!"}, fiber.StatusPaymentRequired
+			}
+			totalICouponBalance += balance
+		}
+
+		for _, orderCoupon := range OrderIn.AppliedCoupons {
+			balance, result := repositories.GetICouponBalance(orderCoupon.VID)
+			if result.Error != nil {
+				return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
 			}
 
-			//Updating balance in icoupons Transaction table
-			_, res := repositories.UpdateBalanceInICoupons(orderCoupon.VID, ICouponObj.Balance)
-			if res.Error != nil {
-				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-			}
+			if totalOrderAmount >= balance {
+				totalOrderAmount = totalOrderAmount - balance
 
-			//Closing coupon if balance is over
-			if ICouponObj.Balance == 0 {
-				res = repositories.CloseCoupon(orderCoupon.VID)
+				// Updating in ICoupon Transaction table
+				ICouponObj := models.ICouponTransaction{
+					DistribId: OrderIn.DistribId,
+					VID:       orderCoupon.VID,
+					Value:     -balance, //using the full balance of ICoupon
+				}
+				err := repositories.SaveICouponTx(ICouponObj)
+				if err.Error != nil {
+					tx.Rollback()
+					return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+				}
+				//Balance will be zero after using full coupon, so active set to false
+				res := repositories.CloseCoupon(orderCoupon.VID)
 				if res.Error != nil {
 					tx.Rollback()
 					return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 				}
+
+			} else {
+				ICouponObj := models.ICouponTransaction{
+					DistribId: OrderIn.DistribId,
+					VID:       orderCoupon.VID,
+					Value:     -totalOrderAmount, //The order amount is less than Icoupon Balance, so icoupon have remaining balance
+				}
+				err := repositories.SaveICouponTx(ICouponObj)
+				if err.Error != nil {
+					tx.Rollback()
+					return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+				}
+				break //No need to loop again, since the order amount is satisfied with the coupon
 			}
-			res = repositories.SaveICouponTx(ICouponObj)
-			if res.Error != nil {
-				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-			}
+
 		}
+
+		if totalICouponBalance < total.TotalAmount {
+			tx.Rollback()
+			return fiber.Map{"error": "Insufficient Balance! Transaction Failed"}, fiber.StatusInternalServerError
+		}
+
 		//if len(bv)=0 then rsp transaction if not bv transaction
 		if len(OrderIn.PlaceBvs) != 0 && productType == "bv" {
 			//insert directbv in rsptransaction

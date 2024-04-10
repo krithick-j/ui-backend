@@ -9,6 +9,7 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
@@ -125,7 +126,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 	return pointsObj, checkoutFrequencyObj, 200
 }
 
-func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, int) {
+func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (fiber.Map, int) {
 
 	checkoutId := GenerateUniqueHexCode(10)
 
@@ -163,10 +164,19 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, in
 			Side:         "right",
 			TransType:    "Cheque",
 		}
-		repositories.SaveBvTransaction(LeftInsideTcObj)
-		repositories.SaveBvTransaction(RightInsidetCObj)
+		res := repositories.SaveBvTransaction(LeftInsideTcObj)
+		if res.Error != nil {
+			tx.Rollback()
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
+		res = repositories.SaveBvTransaction(RightInsidetCObj)
+		if res.Error != nil {
+			tx.Rollback()
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
 		return fiber.Map{"data": "Cheque taken Successful"}, 200
 	} else {
+		tx.Rollback()
 		return fiber.Map{"data": "cheque unsuccessfull!"}, 403
 	}
 }

@@ -29,5 +29,8 @@ func LoadConfig(path string) (*Config, error) {
 
 	//GlobalConfig.ChequeDrawValue = viper.GetInt("CHEQUE_DRAW_VALUE")
 	err = viper.Unmarshal(&GlobalConfig)
-	return GlobalConfig , nil
+	if err != nil {
+		return nil, err
+	}
+	return GlobalConfig, nil
 }

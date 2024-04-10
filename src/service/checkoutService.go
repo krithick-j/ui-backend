@@ -11,51 +11,52 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
+// func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
 
-	var chequeCounter, err = repositories.GetCheckoutFrequency(chequeDetailsIn.DistribId)
-	if err.Error != nil {
-		return fiber.Map{"error": err}, 500
-	}
+// 	var chequeCounter, err = repositories.GetCheckoutFrequency(chequeDetailsIn.DistribId)
+// 	if err.Error != nil {
+// 		return fiber.Map{"error": err}, 500
+// 	}
 
-	const checkoutValue int = 4000
+// 	const checkoutValue int = 4000
 
-	if chequeCounter > 5 {
-		return fiber.Map{"error": "Maximum checkout limit reached"}, 403
-	}
+// 	if chequeCounter > 5 {
+// 		return fiber.Map{"error": "Maximum checkout limit reached"}, 403
+// 	}
 
-	leftSumValue := chequeDetailsIn.LTc.BvPoint + chequeDetailsIn.LTc.LPoint + chequeDetailsIn.LTc.RPoint
-	rightSumValue := chequeDetailsIn.RTc.BvPoint + chequeDetailsIn.RTc.LPoint + chequeDetailsIn.RTc.RPoint
+// 	leftSumValue := chequeDetailsIn.LTc.BvPoint + chequeDetailsIn.LTc.LPoint + chequeDetailsIn.LTc.RPoint
+// 	rightSumValue := chequeDetailsIn.RTc.BvPoint + chequeDetailsIn.RTc.LPoint + chequeDetailsIn.RTc.RPoint
 
-	arr := []dto.Tc{chequeDetailsIn.LTc, chequeDetailsIn.RTc}
+// 	arr := []dto.Tc{chequeDetailsIn.LTc, chequeDetailsIn.RTc}
 
-	if (leftSumValue >= checkoutValue) && (rightSumValue >= checkoutValue) {
+// 	if (leftSumValue >= checkoutValue) && (rightSumValue >= checkoutValue) {
 
-		err := repositories.IncrementCheckoutFrequency(chequeDetailsIn.DistribId, chequeDetailsIn.Place, chequeCounter)
+// 		err := repositories.IncrementCheckoutFrequency(chequeDetailsIn.DistribId, chequeDetailsIn.Place, chequeCounter)
 
-		if err.Error != nil {
-			return fiber.Map{"error": err.Error}, 500
-		}
+// 		if err.Error != nil {
+// 			return fiber.Map{"error": err.Error}, 500
+// 		}
 
-		checkoutId := GenerateUniqueHexCode(10)
+// 		checkoutId := GenerateUniqueHexCode(10)
 
-		for _, user := range arr {
+// 		for _, user := range arr {
 
-			tx := models.BvTransaction{
-				DisribId: user.DistribId,
-				Place:    user.Place,
-				OrderId:  checkoutId, //checkout id is saved in OrderID for now temporarily
-				Date:     time.Now(),
-				BvValue:  -checkoutValue,
-			}
-			repositories.SaveBvTransaction(tx)
-		}
+// 			tx := models.BvTransaction{
+// 				DisribId: user.DistribId,
+// 				Place:    user.Place,
+// 				OrderId:  checkoutId, //checkout id is saved in OrderID for now temporarily
+// 				Date:     time.Now(),
+// 				BvValue:  -checkoutValue,
+// 				TransType: "Cheque",
+// 			}
+// 			repositories.SaveBvTransaction(tx)
+// 		}
 
-		return fiber.Map{"success": "checkout done"}, 200
-	} else {
-		return fiber.Map{"error": "cannot checkout"}, 400
-	}
-}
+// 		return fiber.Map{"success": "checkout done"}, 200
+// 	} else {
+// 		return fiber.Map{"error": "cannot checkout"}, 400
+// 	}
+// }
 
 func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, dto.CheckoutFrequency, int) {
 
@@ -150,6 +151,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, in
 			BvValue:      -4000,
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "left",
+			TransType:    "Cheque",
 		}
 		RightInsidetCObj := models.BvTransaction{
 			DisribId:     TakeChequeIn.DistribId,
@@ -159,6 +161,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn) (fiber.Map, in
 			BvValue:      -4000,
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "right",
+			TransType:    "Cheque",
 		}
 		repositories.SaveBvTransaction(LeftInsideTcObj)
 		repositories.SaveBvTransaction(RightInsidetCObj)

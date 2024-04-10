@@ -52,15 +52,17 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			Name:           product.Name,
 			Quantity:       product.Quantity,
 			UnitPrice:      product.UnitPrice,
-			BV:             product.BV,
+			ProductType:    product.ProductType,
+			TypeValue:      product.TypeValue,
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
 		}
 		repositories.SaveOrderLiner(OrderLinerObj)
 	}
+
 	//validate coupon balance
 	// Close Coupon if coupon balance is 0
-	if OrderIn.AppliedCoupons != nil {
+	if OrderIn.AppliedCoupons != nil && OrderIn.OrderType != "ep" {
 		for _, orderCoupon := range OrderIn.AppliedCoupons {
 			totalValue := repositories.GetICouponValue(orderCoupon.VID, orderCoupon.Pin)
 			balance, result := repositories.GetICouponBalance(orderCoupon.VID)
@@ -91,8 +93,8 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		}
 		//if len(bv)=0 then rsp transaction if not bv transaction
 		if len(OrderIn.PlaceBvs) != 0 {
-			//insert directbv in rsptransaction 
-			repositories.AddDirectBvTx(OrderIn.DistribId,orderId,res.TotalBV)
+			//insert directbv in rsptransaction
+			repositories.AddDirectBvTx(OrderIn.DistribId, orderId, res.TotalBV)
 			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId)
 			//UpdateTreePlaceValuesByDistribId(OrderIn.DistribId, OrderIn.PlaceBvs)
 		} else {
@@ -101,7 +103,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			repositories.AddRspTx(OrderIn.DistribId, orderId, res.TotalRsp)
 		}
 	}
-	
+
 	//Cleaning cart after buying
 	var cartItems []models.CartItem
 	repositories.DeleteAllCartProduct(OrderIn.DistribId, cartItems)

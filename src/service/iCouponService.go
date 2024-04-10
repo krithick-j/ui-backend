@@ -179,3 +179,12 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 
 	return fiber.Map{"data": iCouponsOut}, http.StatusOK
 }
+
+func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
+	iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId)
+
+	if err == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+	}
+	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
+}

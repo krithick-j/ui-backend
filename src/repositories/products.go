@@ -71,7 +71,8 @@ func DeleteCartProduct(distrib_id string, product_id string, cartItem models.Car
 	return cartItem, result
 }
 
-func DeleteAllCartProduct(distrib_id string, cartItem []models.CartItem) ([]models.CartItem, *gorm.DB) {
+func DeleteAllCartProduct(distrib_id string) ([]models.CartItem, *gorm.DB) {
+	var cartItem []models.CartItem
 	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("distrib_id= ?", distrib_id).Delete(&cartItem)
 	return cartItem, result
 }

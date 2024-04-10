@@ -146,8 +146,7 @@ func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 }
 
 func DeleteAllCartProduct(distrib_id string) (fiber.Map, int) {
-	var cartItem []models.CartItem
-	cartItem, result := repositories.DeleteAllCartProduct(distrib_id, cartItem)
+	cartItem, result := repositories.DeleteAllCartProduct(distrib_id)
 
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
@@ -213,7 +212,6 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
 
 	if result.Error != nil {
-		println(fiber.Map{"error": result.Error})
 		return orderDetails, http.StatusInternalServerError
 	}
 
@@ -262,7 +260,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
 		DistribId:       distrib_id,
-		TypeValue:       TotalTypeValue,
+		TotalTypeValue: TotalTypeValue,
 	}
 
 	if result.Error != nil {

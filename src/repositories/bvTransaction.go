@@ -1,17 +1,16 @@
 package repositories
 
 import (
-	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
+
+	"gorm.io/gorm"
 )
 
-func SaveBvTransaction(tx models.BvTransaction) {
+func SaveBvTransaction(tx models.BvTransaction) *gorm.DB {
 
 	result := configs.DB.Create(&tx)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
-	}
+	return result
 }
 
 func GetBvHistory(distribId string, transType string) ([]models.BvTransaction, error) {

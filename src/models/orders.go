@@ -6,24 +6,25 @@ import (
 
 type OrdersHeader struct {
 	gorm.Model
-	DistribId     string
-	OrderId       string
-	SubTotal      float64
-	TotalSandH    float64
-	TotalAmount   float64
-	TotalQuantity float64
-	TotalBV       int
-	ContactName   string
-	ContactEmail  string
-	Address       string
-	City          string
-	District      string
-	State         string
-	ZipCode       uint64
-	Country       string
-	HomePhoneNo   string
-	MobilePhoneNo string
-	OrdersLiner   []OrdersLiner
+	DistribId      string
+	OrderId        string
+	SubTotal       float64
+	TotalSandH     float64
+	TotalAmount    float64
+	TotalQuantity  float64
+	TotalTypeValue float64
+	ProductType    string
+	ContactName    string
+	ContactEmail   string
+	Address        string
+	City           string
+	District       string
+	State          string
+	ZipCode        uint64
+	Country        string
+	HomePhoneNo    string
+	MobilePhoneNo  string
+	OrdersLiner    []OrdersLiner
 }
 
 type OrdersLiner struct {

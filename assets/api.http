@@ -321,3 +321,29 @@ content-type: application/json
 POST {{host}}/cheque/totalChequeValue HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+{
+	"distrib_id": "IN-00015"
+}
+
+
+###
+GET {{host}}/product/cartProducts/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: applicatiogetEpProductsn/json
+
+###
+POST {{host}}/product/addToCart HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: applicatiogetEpProductsn/json
+
+{
+	"distrib_id": "IN-00001",
+	"items": [
+		{
+			"product_id": 2,
+			"quantity": 1
+		}
+	],
+	"product_type": "bv"
+}

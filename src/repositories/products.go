@@ -26,7 +26,27 @@ func GetAllProductByCategoryID(category_id string, product []models.Product) ([]
 	return product, result
 }
 
-func GetAllProductByIDs(ids []uint, product []models.Product) ([]models.Product, *gorm.DB) {
+func GetAllEpProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
+	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
+	return product, result
+}
+
+// Get the first cart item using distrib ID in cart table
+func GetFirstCartItem(distribId string) (models.CartItem, *gorm.DB) {
+	var item models.CartItem
+	fmt.Println("distrib id", distribId)
+	result := configs.DB.Model(&models.CartItem{}).Where("distrib_id=?", distribId).First(&item)
+	return item, result
+}
+
+func GetProductTypeByProductID(product_id uint) (string, *gorm.DB) {
+	var prodType string
+	result := configs.DB.Model(&models.Product{}).Select("product_type").First(&prodType, "id=?", product_id)
+	return prodType, result
+}
+
+func GetAllProductByIDs(ids []uint) ([]models.Product, *gorm.DB) {
+	var product []models.Product
 	result := configs.DB.Find(&product, ids)
 	return product, result
 }
@@ -72,7 +92,6 @@ func SaveProductImage(productImage *models.ProductImage) error {
 }
 
 func SaveProduct(product *models.Product) *models.Product {
-	println("hello from save product")
 	result := configs.DB.Create(&product)
 	if result.Error != nil {
 		fmt.Printf("Error %v\n", result.Error.Error())

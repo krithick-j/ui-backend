@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/repositories"
 	"ui-back-end/src/service"
@@ -39,18 +40,20 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
+
+	tx := configs.DB.Begin()
 	count, err := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId)
 
 	if err.Error == gorm.ErrRecordNotFound {
 		repositories.CreateCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place)
 	}
 	if count < 5 {
-		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn)
+		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn, tx)
 
 		if status == 200 {
 			err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count)
 			if err.Error != nil {
-				return c.Status(http.StatusInternalServerError).JSON(err)
+				return c.Status(http.StatusInternalServerError).JSON(err.Error.Error())
 			}
 			iCouponTxDetail := service.GenerateUniqueHexCode(10)
 			iCouponObj := dto.ICouponIn{
@@ -59,13 +62,19 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 				Coupons:   TakeChequeIn.Coupons,
 			}
 
-			service.AddICoupon(iCouponObj, "") //admin is sent as empty string because user generating iCoupon
+			service.AddICoupon(iCouponObj, iCouponObj.DistribID, tx) //admin is sent as empty string because user generating iCoupon
+			if err := tx.Commit().Error; err != nil {
+				tx.Rollback()
+				// Handle error
+			}
 			return c.Status(status).JSON(res)
 		} else {
+			tx.Rollback()
 			return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
 		}
 
 	} else {
+		tx.Rollback()
 		return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Maximum checkout limit reached!"})
 	}
 }

@@ -11,7 +11,8 @@ import (
 func GetBvHistory(payload dto.BvHistoryIn) (fiber.Map, int) {
 
 	if payload.HistoryType != "" {
-		BvHistory, err := repositories.GetBvHistory(payload.DistribId, payload.HistoryType)
+
+		BvHistory, err := repositories.GetBvHistoryByTransType(payload.DistribId, payload.HistoryType, payload.FromDate, payload.ToDate)
 
 		if err == gorm.ErrRecordNotFound {
 			return fiber.Map{"data": "No BV Transaction History"}, fiber.StatusNotFound

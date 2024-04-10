@@ -121,14 +121,18 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 	return fiber.Map{"data": tracking_centers}, http.StatusOK
 }
 
-func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string) (fiber.Map, int) {
+func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB) (fiber.Map, int) {
 	//Adding Bv Points from the product to the tree
 	for _, placeBv := range placeBvs {
 		if placeBv.AddBv == 0 {
 			//Skip updating for empty values
 			continue
 		}
-		repositories.ActivateTC(distrib_id, placeBv.Place)
+		err := repositories.ActivateTC(distrib_id, placeBv.Place)
+		if err != nil {
+			tx.Rollback()
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
 		var side string
 		bvretain_flag := true
 		if placeBv.Place == "001" {
@@ -160,7 +164,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				}
 			}
 			bvretain_flag = false
-			tx := models.BvTransaction{
+			BvObj := models.BvTransaction{
 				DisribId:     rdistrib_id,
 				Place:        place,
 				OrderId:      orderId,
@@ -171,7 +175,12 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				TransType:    "Product",
 			}
 			if currentTc.IsActive {
-				repositories.SaveBvTransaction(tx)
+				res := repositories.SaveBvTransaction(BvObj)
+				if res.Error != nil {
+					tx.Rollback()
+					return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+				}
+
 			}
 			if currentTc.PDistribId == "" {
 				break

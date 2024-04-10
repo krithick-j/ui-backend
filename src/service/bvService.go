@@ -11,19 +11,19 @@ import (
 func GetBvHistory(payload dto.BvHistoryIn) (fiber.Map, int) {
 
 	if payload.HistoryType != "" {
-		iCouponHistory, err := repositories.GetBvHistory(payload.DistribId, payload.HistoryType)
+		BvHistory, err := repositories.GetBvHistory(payload.DistribId, payload.HistoryType)
 
 		if err == gorm.ErrRecordNotFound {
-			return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+			return fiber.Map{"data": "No BV Transaction History"}, fiber.StatusNotFound
 		}
-		return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
+		return fiber.Map{"data": BvHistory}, fiber.StatusOK
 	}
 
-	iCouponHistory, err := repositories.GetAllBvHistory(payload.DistribId)
+	BvHistory, err := repositories.GetAllBvHistory(payload.DistribId)
 
 	if err == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+		return fiber.Map{"data": "No Bv Transaction History"}, fiber.StatusNotFound
 	}
 
-	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
+	return fiber.Map{"data": BvHistory}, fiber.StatusOK
 }

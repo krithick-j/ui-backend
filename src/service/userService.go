@@ -178,7 +178,11 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return fiber.Map{"Error": err.Error()}, err
+
+	}
 	rspdata := dto.UserOut{DistribID: distrib_id}
 	return fiber.Map{"data": rspdata}, nil
 }

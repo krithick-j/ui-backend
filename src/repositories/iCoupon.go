@@ -27,7 +27,7 @@ func GetAllICouponsByDistribID(distribID string, iCoupons []models.ICoupon) (*go
 // remaining Balance of the Coupon
 func GetICouponBalance(VID string) (float64, *gorm.DB) {
 	var balance float64
-	result := configs.DB.Table("i_coupons").Select("balance").Where("v_id=?", VID).Take(&balance)
+	result := configs.DB.Table("i_coupon_transactions").Select("sum(value)").Where("v_id=?", VID).Take(&balance)
 	return balance, result
 }
 

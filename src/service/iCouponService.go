@@ -84,10 +84,12 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	return nil
 }
 
+// This function is used to generate ICoupon and send email
 func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
 	var iCoupons []dto.SendCoupon
+	reference := GenerateUniqueHexCode(10)
 
 	result, email := repositories.GetUserEmailByDistribID(iCouponIn.DistribID)
 
@@ -110,10 +112,9 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 				Pin:       hexPin,
 				DistribID: iCouponIn.DistribID,
 				DateOn:    time.Now(),
-				TxDetail:  iCouponIn.TxDetail,
+				Reference: reference,
 				ExpiresOn: time.Now().AddDate(0, 6, 0),
 				Value:     Coupon.Value,
-				Balance:   Coupon.Value,
 				AdminName: adminName,
 				Active:    true,
 			}
@@ -131,6 +132,18 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 			if err != nil {
 				tx.Rollback()
 				return fiber.Map{"error": err.Error()}, http.StatusInternalServerError
+			}
+
+			ICouponTxObj := models.ICouponTransaction{
+				DistribId: iCoupon.DistribID,
+				VID:       iCoupon.VID,
+				Value:     iCoupon.Value,
+				Reference: reference,
+			}
+			res := repositories.SaveICouponTx(ICouponTxObj)
+			if res.Error != nil {
+				tx.Rollback()
+				return fiber.Map{"error": res.Error.Error()}, http.StatusInternalServerError
 			}
 		}
 	}

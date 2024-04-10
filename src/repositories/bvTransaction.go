@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
@@ -13,9 +14,13 @@ func SaveBvTransaction(tx models.BvTransaction) *gorm.DB {
 	return result
 }
 
-func GetBvHistory(distribId string, transType string) ([]models.BvTransaction, error) {
+func GetBvHistoryByTransType(distribId string, transType string, fromDate time.Time, toDate time.Time) ([]models.BvTransaction, error) {
 	var BvHistory []models.BvTransaction
-	result := configs.DB.Find(BvHistory, "distrib_id=? AND trans_type=?", distribId, transType)
+	query := configs.DB.Where("distrib_id=? AND trans_type=?", distribId, transType)
+	if !fromDate.IsZero() && !toDate.IsZero() {
+		query = query.Where("created_at BETWEEN ? AND ?", fromDate, toDate)
+	}
+	result := query.Find(&BvHistory)
 	return BvHistory, result.Error
 }
 

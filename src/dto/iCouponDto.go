@@ -30,3 +30,12 @@ type SendCoupon struct {
 	ExpiresOn time.Time
 	Active    bool
 }
+
+type ICouponHistoryIn struct {
+	DistribId string `json:"distrib_id"`
+}
+
+type BvHistoryIn struct {
+	DistribId string `json:"distrib_id"`
+	HistoryType string `json:"history_type"`
+}

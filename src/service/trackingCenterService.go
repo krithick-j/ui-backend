@@ -168,6 +168,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				BvValue:      placeBv.AddBv,
 				ActivateDate: time.Now().AddDate(0, 0, 7),
 				Side:         nside,
+				TransType:    "Product",
 			}
 			if currentTc.IsActive {
 				repositories.SaveBvTransaction(tx)

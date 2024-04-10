@@ -10,16 +10,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func IsCheckqueAvailable(c *fiber.Ctx) error {
+// func IsCheckqueAvailable(c *fiber.Ctx) error {
 
-	var chequeAvailableIn dto.ChequeAvailableIn
+// 	var chequeAvailableIn dto.ChequeAvailableIn
 
-	if err := c.BodyParser(&chequeAvailableIn); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
-	}
-	res, status := service.IsCheckqueAvailable(chequeAvailableIn)
-	return c.Status(status).JSON(res)
-}
+// 	if err := c.BodyParser(&chequeAvailableIn); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+// 	}
+// 	res, status := service.IsCheckqueAvailable(chequeAvailableIn)
+// 	return c.Status(status).JSON(res)
+// }
 
 func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 

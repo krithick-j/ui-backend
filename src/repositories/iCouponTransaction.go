@@ -13,3 +13,9 @@ func RecordICouponTx(tx models.ICouponTransaction) {
 		fmt.Printf("Error %v\n", result.Error.Error())
 	}
 }
+
+func GetICouponHistory(distribId string) ([]models.ICouponTransaction, error) {
+	var iCouponHistory []models.ICouponTransaction
+	result := configs.DB.Find(iCouponHistory, "distrib_id=?", distribId)
+	return iCouponHistory, result.Error
+}

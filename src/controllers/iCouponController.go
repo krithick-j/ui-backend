@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
 
@@ -16,7 +17,14 @@ func CreateICoupon(c *fiber.Ctx) error {
 	if err := c.BodyParser(&iCouponIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, status := service.AddICoupon(iCouponIn, adminName)
+	tx := configs.DB.Begin()
+	res, status := service.AddICoupon(iCouponIn, adminName, tx)
+	// If no error occurred, commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(err.Error())
+
+	}
 	return c.Status(status).JSON(res)
 }
 

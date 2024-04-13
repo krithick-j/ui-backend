@@ -7,7 +7,7 @@ POST {{host}}/auth/login HTTP/1.1
 content-type: application/json
 
 {
-	"username": "IN-00013",
+	"username": "IN-00015",
 	"password": "1234"
 }
 
@@ -95,6 +95,10 @@ content-type: application/json
 ###
 GET  {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+GET  {{host}}/user/IN-00001 HTTP/1.1
 content-type: application/json
 
 ###
@@ -290,4 +294,56 @@ content-type: application/json
 		"r_point": 3000,
 		"bv_point": 500
 	}
+}
+
+###
+
+POST {{host}}/cheque/takeCheque HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00015",
+	"place": "001",
+	"coupons": [
+		{
+			"value": 100,
+			"quantity": 3
+		},
+		{
+			"value": 200,
+			"quantity": 2
+		}
+	]
+}
+
+###
+POST {{host}}/cheque/totalChequeValue HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00015"
+}
+
+
+###
+GET {{host}}/product/cartProducts/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: applicatiogetEpProductsn/json
+
+###
+POST {{host}}/product/addToCart HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: applicatiogetEpProductsn/json
+
+{
+	"distrib_id": "IN-00001",
+	"items": [
+		{
+			"product_id": 2,
+			"quantity": 1
+		}
+	],
+	"product_type": "bv"
 }

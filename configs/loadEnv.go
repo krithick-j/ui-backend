@@ -5,25 +5,32 @@ import (
 )
 
 type Config struct {
-	DBUserName     string `mapstructure:"MYSQL_USER"`
-	DBUserPassword string `mapstructure:"MYSQL_PASSWORD"`
-	DBName         string `mapstructure:"MYSQL_DB"`
-	DBAddress      string `mapstructure:"MYSQL_ADDRESS"`
-	DBPort         int    `mapstructure:"MYSQL_PORT"`
+	DBUserName      string `mapstructure:"MYSQL_USER"`
+	DBUserPassword  string `mapstructure:"MYSQL_PASSWORD"`
+	DBName          string `mapstructure:"MYSQL_DB"`
+	DBHost          string `mapstructure:"MYSQL_HOST"`
+	DBPort          int    `mapstructure:"MYSQL_PORT"`
+	ChequeDrawValue int    `mapstructure:"CHEQUE_DRAW_VALUE"`
 }
 
-func LoadConfig(path string) (config Config, err error) {
+var GlobalConfig *Config
+
+func LoadConfig(path string) (*Config, error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigType("env")
 	viper.SetConfigName("app")
-
+	viper.SetDefault("CHEQUE_DRAW_VALUE", 4000)
 	viper.AutomaticEnv()
 
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = viper.Unmarshal(&config)
-	return
+	//GlobalConfig.ChequeDrawValue = viper.GetInt("CHEQUE_DRAW_VALUE")
+	err = viper.Unmarshal(&GlobalConfig)
+	if err != nil {
+		return nil, err
+	}
+	return GlobalConfig, nil
 }

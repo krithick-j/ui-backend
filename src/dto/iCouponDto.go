@@ -9,7 +9,7 @@ type Coupon struct {
 
 type ICouponIn struct {
 	DistribID string   `json:"distrib_id"`
-	TxDetail  uint64   `json:"tx_detail"`
+	TxDetail  string   `json:"tx_detail"`
 	Coupons   []Coupon `json:"coupons"`
 }
 
@@ -29,4 +29,17 @@ type SendCoupon struct {
 	DateOn    time.Time
 	ExpiresOn time.Time
 	Active    bool
+}
+
+type ICouponHistoryIn struct {
+	DistribId string    `json:"distrib_id"`
+	FromDate  time.Time `json:"from_date"`
+	ToDate    time.Time `json:"to_date"`
+}
+
+type BvHistoryIn struct {
+	DistribId   string    `json:"distrib_id"`
+	HistoryType string    `json:"history_type"`
+	FromDate    time.Time `json:"from_date"`
+	ToDate      time.Time `json:"to_date"`
 }

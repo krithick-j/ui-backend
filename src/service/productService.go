@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -55,9 +54,25 @@ func GetProductByCategoryID(category_id string) fiber.Map {
 	return fiber.Map{"data": product}
 }
 
+func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
+
+	var product []models.Product
+	var result *gorm.DB
+
+	product, result = repositories.GetAllEpProductByCategoryID(category_id, product)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	}
+
+	return fiber.Map{"data": product}, fiber.StatusOK
+}
+
 func GetProductsByIds(ids []uint) ([]models.Product, error) {
-	var products []models.Product
-	products, result := repositories.GetAllProductByIDs(ids, products)
+	products, result := repositories.GetAllProductByIDs(ids)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -66,18 +81,36 @@ func GetProductsByIds(ids []uint) ([]models.Product, error) {
 	return products, nil
 }
 
-func AddToCart(request dto.CartItemIn) fiber.Map {
-	println("hello from add to cart")
-	for _, item := range request.Items {
-		product := models.CartItem{
-			DistribID: request.DistribID,
-			ProductID: item.ProductID,
-			Quantity:  item.Quantity,
+func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
+	var firstProdType string
+	firstCartItem, err := repositories.GetFirstCartItem(request.DistribID)
+
+	if err.Error != gorm.ErrRecordNotFound {
+		firstProdType, err = repositories.GetProductTypeByProductID(firstCartItem.ProductID)
+		if err.Error != nil {
+			return fiber.Map{"message": err.Error}, fiber.StatusInternalServerError
 		}
-		repositories.SaveToCart(product)
 	}
 
-	return fiber.Map{"success": "Added to Cart Successfully"}
+	if firstProdType == "" || request.ProductType == firstProdType {
+
+		for _, item := range request.Items {
+			ids := []uint{item.ProductID}
+			_, err := repositories.GetAllProductByIDs(ids)
+			if err.RowsAffected == 0 {
+				return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
+			}
+			product := models.CartItem{
+				DistribID: request.DistribID,
+				ProductID: item.ProductID,
+				Quantity:  item.Quantity,
+			}
+			repositories.SaveToCart(product)
+		}
+		return fiber.Map{"success": "Added to Cart Successfully"}, fiber.StatusOK
+	} else {
+		return fiber.Map{"failed": "All products in cart must be same"}, fiber.StatusBadRequest
+	}
 }
 
 func GetCartProductsByDistribId(user_id string) fiber.Map {
@@ -113,8 +146,7 @@ func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 }
 
 func DeleteAllCartProduct(distrib_id string) (fiber.Map, int) {
-	var cartItem []models.CartItem
-	cartItem, result := repositories.DeleteAllCartProduct(distrib_id, cartItem)
+	cartItem, result := repositories.DeleteAllCartProduct(distrib_id)
 
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
@@ -143,7 +175,6 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 }
 
 func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
-	println("hello from create product")
 	//saving product
 	product := &models.Product{
 		Name:              payload.Name,
@@ -151,13 +182,12 @@ func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 		ShipmentTime:      payload.ShipmentTime,
 		Price:             payload.Price,
 		SandH:             payload.SandH,
-		BV:                payload.BV,
 		ProductCategoryID: payload.ProductCategoryID,
-		RSP:               payload.RSP,
+		TypeValue:         payload.TypeValue,
+		ProductType:       payload.ProductType,
 		AdminName:         adminName,
 	}
 	product = repositories.SaveProduct(product)
-	fmt.Printf("--------------_>	product ID %d", product.ID)
 	//group of pictures stores in product image table
 	for _, image := range payload.ProductImages {
 		productImage := &models.ProductImage{
@@ -177,36 +207,31 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
 	var userData models.User
-	var totalBv int = 0
-	var totalRsp int = 0
-
+	var TotalTypeValue float64
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
 
 	if result.Error != nil {
-		println(fiber.Map{"error": result.Error})
 		return orderDetails, http.StatusInternalServerError
 	}
 
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
 		orderProduct := dto.OrderProduct{
-			Name:      item.Product.Name,
-			Quantity:  item.Quantity,
-			UnitPrice: uint64(item.Product.Price),
-			SandH:     item.Product.SandH,
-			SubTotal:  item.Product.Price * float64(item.Quantity),
-			BV:        item.Product.BV,
-			Rsp:       item.Product.RSP,
+			Name:        item.Product.Name,
+			Quantity:    item.Quantity,
+			UnitPrice:   uint64(item.Product.Price),
+			SandH:       item.Product.SandH,
+			SubTotal:    item.Product.Price * float64(item.Quantity),
+			ProductType: item.Product.ProductType,
+			TypeValue:   item.Product.TypeValue,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
 		subTotal += orderProduct.SubTotal
 		totalSandH += orderProduct.SandH
 		quantity += item.Quantity
-		totalBv += orderProduct.BV * int(item.Quantity)
-		totalRsp += orderProduct.Rsp * int(item.Quantity)
-
+		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
@@ -234,11 +259,9 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalAmount:     subTotal + totalSandH,
 		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
-		TotalBV:         totalBv,
 		DistribId:       distrib_id,
-		TotalRsp:        totalRsp,
+		TotalTypeValue: TotalTypeValue,
 	}
-	print("distrib id from getORderDetails", orderDetails.DistribId)
 
 	if result.Error != nil {
 		print(fiber.Map{"error": result.Error})

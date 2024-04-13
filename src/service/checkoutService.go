@@ -2,55 +2,181 @@ package service
 
 import (
 	"time"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
-func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
+// func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
 
-	var chequeCounter, err = repositories.GetCheckoutFrequency(chequeDetailsIn.DistribId)
-	if err.Error != nil {
-		return fiber.Map{"error": err}, 500
+// 	var chequeCounter, err = repositories.GetCheckoutFrequency(chequeDetailsIn.DistribId)
+// 	if err.Error != nil {
+// 		return fiber.Map{"error": err}, 500
+// 	}
+
+// 	const checkoutValue int = 4000
+
+// 	if chequeCounter > 5 {
+// 		return fiber.Map{"error": "Maximum checkout limit reached"}, 403
+// 	}
+
+// 	leftSumValue := chequeDetailsIn.LTc.BvPoint + chequeDetailsIn.LTc.LPoint + chequeDetailsIn.LTc.RPoint
+// 	rightSumValue := chequeDetailsIn.RTc.BvPoint + chequeDetailsIn.RTc.LPoint + chequeDetailsIn.RTc.RPoint
+
+// 	arr := []dto.Tc{chequeDetailsIn.LTc, chequeDetailsIn.RTc}
+
+// 	if (leftSumValue >= checkoutValue) && (rightSumValue >= checkoutValue) {
+
+// 		err := repositories.IncrementCheckoutFrequency(chequeDetailsIn.DistribId, chequeDetailsIn.Place, chequeCounter)
+
+// 		if err.Error != nil {
+// 			return fiber.Map{"error": err.Error}, 500
+// 		}
+
+// 		checkoutId := GenerateUniqueHexCode(10)
+
+// 		for _, user := range arr {
+
+// 			tx := models.BvTransaction{
+// 				DisribId: user.DistribId,
+// 				Place:    user.Place,
+// 				OrderId:  checkoutId, //checkout id is saved in OrderID for now temporarily
+// 				Date:     time.Now(),
+// 				BvValue:  -checkoutValue,
+// 				TransType: "Cheque",
+// 			}
+// 			repositories.SaveBvTransaction(tx)
+// 		}
+
+// 		return fiber.Map{"success": "checkout done"}, 200
+// 	} else {
+// 		return fiber.Map{"error": "cannot checkout"}, 400
+// 	}
+// }
+
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, dto.CheckoutFrequency, int) {
+
+	var (
+		parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
+		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue
+	)
+
+	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
+	COUNT := 2 //Left and Right inside the tracking center
+
+	types := []struct {
+		Place             string
+		CheckoutFrequency *int
+	}{
+		{"001", &parentTCCheckoutFrequency},
+		{"002", &leftTCCheckoutFrequency},
+		{"003", &rightTCCheckoutFrequency},
 	}
 
-	const checkoutValue int = 4000
+	totalCheckoutFrequency := 0
+	totalPoints := float32(0)
+	placePointsObj := []dto.PlacePointsArr{}
 
-	if chequeCounter > 5 {
-		return fiber.Map{"error": "Maximum checkout limit reached"}, 403
-	}
+	for _, t := range types {
+		var leftPoint, rightPoint int
 
-	leftSumValue := chequeDetailsIn.LTc.BvPoint + chequeDetailsIn.LTc.LPoint + chequeDetailsIn.LTc.RPoint
-	rightSumValue := chequeDetailsIn.RTc.BvPoint + chequeDetailsIn.RTc.LPoint + chequeDetailsIn.RTc.RPoint
-
-	arr := []dto.Tc{chequeDetailsIn.LTc, chequeDetailsIn.RTc}
-
-	if (leftSumValue >= checkoutValue) && (rightSumValue >= checkoutValue) {
-
-		err := repositories.IncrementCheckoutFrequency(chequeDetailsIn.DistribId, chequeCounter)
-
-		if err.Error != nil {
-			return fiber.Map{"error": err.Error}, 500
-		}
-
-		checkoutId := generateUniqueHexCode(10)
-
-		for _, user := range arr {
-
-			tx := models.BvTransaction{
-				DisribId: user.DistribId,
-				Place:    user.Place,
-				OrderId:  checkoutId, //checkout id is saved in OrderID for now temporarily
-				Date:     time.Now(),
-				BvValue:  -checkoutValue,
+		tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, t.Place)
+		for _, val := range tcbv {
+			if val.Side == "left" {
+				leftPoint = val.BValue
 			}
-			repositories.SaveBvTransaction(tx)
+			if val.Side == "right" {
+				rightPoint = val.BValue
+			}
+		}
+		*t.CheckoutFrequency = middleware.NCheckoutPossible(leftPoint, rightPoint, CHEQUE_DRAW_VALUE)
+
+		checkoutFrequency := *t.CheckoutFrequency
+		totalCheckoutFrequency += checkoutFrequency
+		points := float32(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
+
+		if points != 0 {
+			placePointsObj = append(placePointsObj, dto.PlacePointsArr{
+				Place: t.Place,
+				Value: points,
+			})
 		}
 
-		return fiber.Map{"success": "checkout done"}, 200
+		totalPoints += points
+	}
+
+	pointsObj := dto.TakeChequeOut{
+		TotalBalance:          totalPoints,
+		TotalAvailableBalance: totalPoints,
+		PlacePointsArr:        placePointsObj,
+	}
+
+	checkoutFrequencyObj := dto.CheckoutFrequency{
+		TotalCheckoutFrequency:  totalCheckoutFrequency,
+		ParentCheckoutFrequency: parentTCCheckoutFrequency,
+		LeftCheckoutFrequency:   leftTCCheckoutFrequency,
+		RightCheckoutFrequency:  rightTCCheckoutFrequency,
+	}
+
+	return pointsObj, checkoutFrequencyObj, 200
+}
+
+func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (fiber.Map, int) {
+
+	checkoutId := GenerateUniqueHexCode(10)
+
+	var leftPoint, rightPoint int
+	side := TakeChequeIn.Place
+
+	tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, side)
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			leftPoint = val.BValue
+		}
+		if val.Side == "right" {
+			rightPoint = val.BValue
+		}
+	}
+
+	if leftPoint >= 4000 && rightPoint >= 4000 {
+		LeftInsideTcObj := models.BvTransaction{
+			DisribId:     TakeChequeIn.DistribId,
+			Place:        TakeChequeIn.Place,
+			OrderId:      checkoutId,
+			Date:         time.Now(),
+			BvValue:      -4000,
+			ActivateDate: time.Now().AddDate(0, 0, 7),
+			Side:         "left",
+			TransType:    "Cheque",
+		}
+		RightInsidetCObj := models.BvTransaction{
+			DisribId:     TakeChequeIn.DistribId,
+			Place:        TakeChequeIn.Place,
+			OrderId:      checkoutId,
+			Date:         time.Now(),
+			BvValue:      -4000,
+			ActivateDate: time.Now().AddDate(0, 0, 7),
+			Side:         "right",
+			TransType:    "Cheque",
+		}
+		res := repositories.SaveBvTransaction(LeftInsideTcObj)
+		if res.Error != nil {
+			tx.Rollback()
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
+		res = repositories.SaveBvTransaction(RightInsidetCObj)
+		if res.Error != nil {
+			tx.Rollback()
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
+		return fiber.Map{"data": "Cheque taken Successful"}, 200
 	} else {
-		return fiber.Map{"error": "cannot checkout"}, 400
+		tx.Rollback()
+		return fiber.Map{"data": "cheque unsuccessfull!"}, 403
 	}
 }

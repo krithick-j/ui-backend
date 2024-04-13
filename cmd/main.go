@@ -21,7 +21,7 @@ func init() {
 	if err != nil {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
-	configs.DbConnect(&config)
+	configs.DbConnect(config)
 }
 
 func main() {
@@ -33,7 +33,6 @@ func main() {
 	api := app.Group("/api")
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)
-	api.Get("/user/:dist_id", controllers.GetUserByDistId)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
@@ -46,6 +45,7 @@ func main() {
 	api.Route("/product", routes.ProductRouter)
 	api.Route("/order", routes.OrdersRouter)
 	api.Route("/rsp", routes.RspRouter)
+	api.Route("/history", routes.HistoryRouter)
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)

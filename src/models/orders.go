@@ -6,13 +6,14 @@ import (
 
 type OrdersHeader struct {
 	gorm.Model
-	DistribId   string
-	OrderId     string
+	DistribId      string
+	OrderId        string
 	SubTotal       float64
 	TotalSandH     float64
 	TotalAmount    float64
 	TotalQuantity  float64
-	TotalBV        int
+	TotalTypeValue float64
+	ProductType    string
 	ContactName    string
 	ContactEmail   string
 	Address        string
@@ -23,7 +24,7 @@ type OrdersHeader struct {
 	Country        string
 	HomePhoneNo    string
 	MobilePhoneNo  string
-	OrdersLiner []OrdersLiner
+	OrdersLiner    []OrdersLiner
 }
 
 type OrdersLiner struct {
@@ -32,7 +33,8 @@ type OrdersLiner struct {
 	Name           string
 	Quantity       uint
 	UnitPrice      uint64
-	BV             int
+	ProductType    string
+	TypeValue      float64
 	SubTotal       float64
 	SandH          float64
 }

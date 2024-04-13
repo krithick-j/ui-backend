@@ -7,3 +7,5 @@ DB = mysql.connector.connect(
   password="Ui-Network24*",
   database="ui_network",
 )
+
+BV_VALUE = 4000

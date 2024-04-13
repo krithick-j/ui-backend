@@ -13,3 +13,32 @@ type ChequeAvailableIn struct {
 	LTc       Tc     `json:"l_tc"`
 	RTc       Tc     `json:"r_tc"`
 }
+
+type TakeChequeIn struct {
+	DistribId       string   `json:"distrib_id"`
+	Place           string   `json:"place"`
+	Coupons         []Coupon `json:"coupons"`
+	ICouponTxDetail uint64   `json:"tx_detail"`
+}
+
+type TakeChequeOut struct {
+	TotalBalance          float32          `json:"total_balance"`
+	TotalAvailableBalance float32          `json:"total_available_balance"`
+	PlacePointsArr        []PlacePointsArr `json:"place_points"`
+}
+
+type PlacePointsArr struct {
+	Place string  `json:"place,omitempty"`
+	Value float32 `json:"value,omitempty"`
+}
+
+type CheckoutIn struct {
+	DistribId string `json:"distrib_id"`
+}
+
+type CheckoutFrequency struct {
+	TotalCheckoutFrequency  int `json:"total_checkout_frequency"`
+	ParentCheckoutFrequency int `json:"parent_checkout_frequency"`
+	LeftCheckoutFrequency   int `json:"left_checkout_frequency"`
+	RightCheckoutFrequency  int `json:"right_checkout_frequency"`
+}

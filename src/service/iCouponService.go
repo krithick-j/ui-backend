@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func generateUniqueHexCode(length int) string {
+func GenerateUniqueHexCode(length int) string {
 	randomBytes := make([]byte, length/2)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -84,34 +84,37 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	return nil
 }
 
-func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
+// This function is used to generate ICoupon and send email
+func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
 	var iCoupons []dto.SendCoupon
+	reference := GenerateUniqueHexCode(10)
 
 	result, email := repositories.GetUserEmailByDistribID(iCouponIn.DistribID)
 
 	if result.Error != nil {
+		tx.Rollback()
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 
 	if result.RowsAffected == 0 {
+		tx.Rollback()
 		return fiber.Map{"data": "No emailID Found"}, http.StatusNotFound
 	}
 
 	for _, Coupon := range iCouponIn.Coupons {
 		for i := 0; i < int(Coupon.Quantity); i++ {
-			hexVID := generateUniqueHexCode(10)
-			hexPin := generateUniqueHexCode(10)
+			hexVID := GenerateUniqueHexCode(10)
+			hexPin := GenerateUniqueHexCode(10)
 			iCoupon = models.ICoupon{
 				VID:       hexVID,
 				Pin:       hexPin,
 				DistribID: iCouponIn.DistribID,
 				DateOn:    time.Now(),
-				TxDetail:  iCouponIn.TxDetail,
+				Reference: reference,
 				ExpiresOn: time.Now().AddDate(0, 6, 0),
 				Value:     Coupon.Value,
-				Balance:   Coupon.Value,
 				AdminName: adminName,
 				Active:    true,
 			}
@@ -125,14 +128,30 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string) (fiber.Map, int) {
 				Active:    iCoupon.Active,
 			}
 			iCoupons = append(iCoupons, SendCoupon)
-			repositories.SaveICoupon(iCoupon)
+			err := repositories.SaveICoupon(iCoupon)
+			if err != nil {
+				tx.Rollback()
+				return fiber.Map{"error": err.Error()}, http.StatusInternalServerError
+			}
+
+			ICouponTxObj := models.ICouponTransaction{
+				DistribId: iCoupon.DistribID,
+				VID:       iCoupon.VID,
+				Value:     iCoupon.Value,
+				Reference: reference,
+			}
+			res := repositories.SaveICouponTx(ICouponTxObj)
+			if res.Error != nil {
+				tx.Rollback()
+				return fiber.Map{"error": res.Error.Error()}, http.StatusInternalServerError
+			}
 		}
 	}
 
 	err := SendICouponMail(email, iCoupons)
 	if err != nil {
-		fmt.Print(err)
-		return fiber.Map{"error1": err}, http.StatusInternalServerError
+		tx.Rollback()
+		return fiber.Map{"error": err.Error()}, http.StatusInternalServerError
 	}
 
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
@@ -155,9 +174,9 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	var iCoupon models.ICoupon
 	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
 
-	if iCoupon.DistribID != distribID {
-		return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
-	}
+	// if iCoupon.DistribID != distribID {
+	// 	return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
+	// }
 
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK
@@ -178,4 +197,13 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	}
 
 	return fiber.Map{"data": iCouponsOut}, http.StatusOK
+}
+
+func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
+	iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId)
+
+	if err == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+	}
+	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
 }

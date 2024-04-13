@@ -27,15 +27,14 @@ func GetProductsByCategoryID(c *fiber.Ctx) error {
 }
 
 func AddToCartController(c *fiber.Ctx) error {
-	println("Hello")
 	var request dto.CartItemIn
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	res := service.AddToCart(request)
+	res, status := service.AddToCart(request)
 
-	return c.Status(http.StatusOK).JSON(res)
+	return c.Status(status).JSON(res)
 }
 
 func GetProductsById(c *fiber.Ctx) error {
@@ -53,6 +52,14 @@ func GetProductsById(c *fiber.Ctx) error {
 	res, _ := service.GetProductsByIds(request.IDs)
 	return c.Status(http.StatusOK).JSON(res)
 
+}
+
+func GetEpProductsByCategoryId(c *fiber.Ctx) error {
+
+	category_id := c.Params("category_id")
+	res, status := service.GetEpProductsByCategoryId(category_id)
+
+	return c.Status(status).JSON(res)
 }
 
 func GetCartProductsByUserId(c *fiber.Ctx) error {
@@ -88,7 +95,6 @@ func EditCartProducts(c *fiber.Ctx) error {
 }
 
 func CreateProduct(c *fiber.Ctx) error {
-	println("Hello from create product")
 	adminName := c.Params("admin_name")
 	var payload dto.ProductIn
 	if err := c.BodyParser(&payload); err != nil {

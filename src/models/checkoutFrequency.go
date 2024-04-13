@@ -2,7 +2,7 @@ package models
 
 import "gorm.io/gorm"
 
-type CheckoutFrequency struct {
+type ChequeFrequency struct {
 	gorm.Model
 	DistribId string `json:"distrib_id"`
 	Frequency int    `json:"frequency"`

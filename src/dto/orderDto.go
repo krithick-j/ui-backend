@@ -16,13 +16,13 @@ type DeliveryAddress struct {
 }
 
 type OrderProduct struct {
-	Name      string  `json:"name"`
-	Quantity  uint    `json:"quantity"`
-	UnitPrice uint64  `json:"unit_price"`
-	BV        int     `json:"bv"`
-	SubTotal  float64 `json:"sub_total"`
-	SandH     float64 `json:"s_and_h"`
-	Rsp       int     `json:"rsp"`
+	Name        string  `json:"name"`
+	Quantity    uint    `json:"quantity"`
+	UnitPrice   uint64  `json:"unit_price"`
+	SubTotal    float64 `json:"sub_total"`
+	SandH       float64 `json:"s_and_h"`
+	ProductType string  `json:"product_type"`
+	TypeValue   float64 `json:"type_value"`
 }
 
 type OrderDetailsOut struct {
@@ -32,9 +32,8 @@ type OrderDetailsOut struct {
 	TotalSandH      float64         `json:"total_s_and_h"`
 	TotalAmount     float64         `json:"total_amount"`
 	TotalQuantity   float64         `json:"total_quantity"`
-	TotalBV         int             `json:"total_bv"`
-	TotalRsp        int             `json:"total_rsp"`
 	DeliveryAddress DeliveryAddress `json:"delivery_address"`
+	TotalTypeValue  float64         `json:"total_type_value"`
 }
 
 type PlaceOrderCoupon struct {

@@ -25,16 +25,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type RecursiveUser struct {
-	Name           string         `json:"name"`
-	TrackingCenter string         `json:"tracking_center"`
-	LeftPoint      int            `json:"left_point"`
-	RightPoint     int            `json:"right_point"`
-	BV             int            `json:"bv"`
-	Left           *RecursiveUser `json:"left"`
-	Right          *RecursiveUser `json:"right"`
-}
-
 func LoginUser(username string, password string) (fiber.Map, int) {
 	pass := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
 	if username == "admin" {
@@ -62,6 +52,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	return fiber.Map{"data": authout}, http.StatusAccepted
 
 }
+
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
 	var user models.User
@@ -91,46 +82,6 @@ func GetUsers() fiber.Map {
 	return fiber.Map{"data": users}
 }
 
-func FindRecursiveTC(ruser *RecursiveUser, dist_id string, place string, side string) {
-	tc := repositories.GetTrackingCenter(dist_id, place)
-	var nuser *RecursiveUser = new(RecursiveUser)
-	nuser.Name = tc.Name
-	nuser.TrackingCenter = tc.DistribID + " " + tc.Place
-	nuser.LeftPoint = tc.LeftPoint
-	nuser.RightPoint = tc.RightPoint
-	nuser.BV = tc.Bv
-	if tc.LeftDistribID != "" {
-		FindRecursiveTC(nuser, tc.LeftDistribID, tc.LeftPlace, "left")
-	}
-	if tc.RightDistribID != "" {
-		FindRecursiveTC(nuser, tc.RightDistribID, tc.RightPlace, "right")
-	}
-	if side == "left" {
-		ruser.Left = nuser
-	} else {
-		ruser.Right = nuser
-	}
-}
-
-func GetTreeUserByDistId(distrib_id string) fiber.Map {
-
-	ruser := new(RecursiveUser)
-	tc := repositories.GetTrackingCenter(distrib_id, "001")
-	ruser.Name = tc.Name
-	ruser.TrackingCenter = tc.DistribID + " " + tc.Place
-	ruser.LeftPoint = tc.LeftPoint
-	ruser.RightPoint = tc.RightPoint
-	ruser.BV = tc.Bv
-
-	if tc.LeftDistribID != "" {
-		FindRecursiveTC(ruser, tc.LeftDistribID, tc.LeftPlace, "left")
-	}
-	if tc.RightDistribID != "" {
-		FindRecursiveTC(ruser, tc.RightDistribID, tc.RightPlace, "right")
-	}
-	return fiber.Map{"data": ruser}
-}
-
 func FindNextAvailUserSeq() string {
 	last_no := repositories.GetLastId()
 	distrib_no, _ := strconv.Atoi(strings.TrimPrefix(last_no, "IN-"))
@@ -154,7 +105,6 @@ func FindNextAvailSlot(distrib_id string, place string, side string) (string, st
 		distrib_id, place = repositories.GetNextItem(distrib_id, place, side)
 		fmt.Println("D: ", distrib_id, "C:", place)
 		if distrib_id == "" {
-			fmt.Printf("**************************************distrib %v place %v", old_distrib_id, old_place)
 			return old_distrib_id, old_place
 		}
 	}
@@ -192,6 +142,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		LeftPlace:      "002",
 		RightDistribID: distrib_id,
 		RightPlace:     "003",
+		IsActive:       false,
 	}
 	tc2 := models.TrackingCenter{
 		Name:       user_in.Name,
@@ -199,6 +150,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		Place:      "002",
 		PDistribId: distrib_id,
 		PPlace:     "001",
+		IsActive:   false,
 	}
 	tc3 := models.TrackingCenter{
 		Name:       user_in.Name,
@@ -206,6 +158,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		Place:      "003",
 		PDistribId: distrib_id,
 		PPlace:     "001",
+		IsActive:   false,
 	}
 
 	//Succeed all or fail all
@@ -225,7 +178,11 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return fiber.Map{"Error": err.Error()}, err
+
+	}
 	rspdata := dto.UserOut{DistribID: distrib_id}
 	return fiber.Map{"data": rspdata}, nil
 }
@@ -246,71 +203,6 @@ func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
 	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
 }
 
-func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string) (fiber.Map, int) {
-	var value int
-	//Adding Bv Points from the product to the tree
-	for _, placeBv := range placeBvs {
-		if placeBv.Place == "001" {
-			_, value = repositories.UpdateParentPlaceBv(distrib_id, placeBv)
-		} else if placeBv.Place == "002" {
-			_, value = repositories.UpdateLeftPointPlaceBv(distrib_id, placeBv)
-		} else if placeBv.Place == "003" {
-			_, value = repositories.UpdateRightPointPlaceBv(distrib_id, placeBv)
-		} else {
-			fmt.Println("Error in updating values of Place")
-			return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
-		}
-
-		//record transaction in BV Transaction table
-		tx := models.BvTransaction{
-			DisribId:     distrib_id,
-			Place:        placeBv.Place,
-			OrderId:      orderId,
-			Date:         time.Now(),
-			BvValue:      value,
-			ActivateDate: time.Now().AddDate(0, 0, 7),
-		}
-		//change name to add
-		repositories.SaveBvTransaction(tx)
-	}
-
-	return fiber.Map{"data": "Data Successfully Updated"}, http.StatusOK
-}
-
-func UpdateTreePlaceValuesByDistribId(distrib_id string) (fiber.Map, int) {
-
-	var place string = "001"
-	var i int = 0
-	for {
-		//Get Next parent tracking center(upward)
-		parentPlace := repositories.GetTrackingCenter(distrib_id, place)
-		fmt.Println("hello", i)
-		i = i + 1
-		//terminate condition of for loop
-		if parentPlace.PDistribId == "" {
-			return fiber.Map{"data": "Data successfully updated in the tree"}, http.StatusOK
-		}
-
-		LeftDistribID := parentPlace.LeftDistribID
-		leftPlace := parentPlace.LeftPlace
-		RightDistribID := parentPlace.RightDistribID
-		rightPlace := parentPlace.RightPlace
-
-		//Get LeftTc
-		leftTc := repositories.GetTrackingCenter(LeftDistribID, leftPlace)
-		//Get RightTc
-		rightTc := repositories.GetTrackingCenter(RightDistribID, rightPlace)
-		//ParentPlace left and right point final values
-		parentPlace.LeftPoint =  leftTc.RightPoint + leftTc.LeftPoint + leftTc.Bv
-		parentPlace.RightPoint = rightTc.RightPoint + rightTc.LeftPoint + rightTc.Bv
-		repositories.UpdateTrackingCenter(parentPlace.LeftPoint, parentPlace.RightPoint, parentPlace.DistribID, parentPlace.Place)
-
-		//update parameters
-		distrib_id = parentPlace.PDistribId
-		place = parentPlace.PPlace
-	}
-}
-
 func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 
 	var user []models.User
@@ -325,20 +217,4 @@ func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 	return fiber.Map{"data": user}, http.StatusOK
-}
-
-func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
-
-	var tracking_centers []models.TrackingCenter
-	var result *gorm.DB
-
-	tracking_centers, result = repositories.GetTrackingCenterByDistribId(distrib_id, tracking_centers)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
-	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
-	}
-	return fiber.Map{"data": tracking_centers}, http.StatusOK
 }

@@ -10,7 +10,7 @@ type RspTransaction struct {
 	gorm.Model
 	DistribId string    `json:"distrib_id"`
 	OrderId   string    `json:"order_id"`
-	Rsp       int       `json:"rsp" gorm:"default:0"`
+	Rsp       float64   `json:"rsp" gorm:"default:0"`
 	Date      time.Time `json:"date"`
-	DirectBv  int       `json:"direct_bv" gorm:"default:0"`
+	DirectBv  float64   `json:"direct_bv" gorm:"default:0"`
 }

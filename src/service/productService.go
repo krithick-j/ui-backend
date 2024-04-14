@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -92,20 +93,40 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 		}
 	}
 
+	fmt.Println("firstprodtype", firstProdType, "req prod type", request)
+
 	if firstProdType == "" || request.ProductType == firstProdType {
+
+		productsOut, res := repositories.GetAllCartProductsByDistribID(request.DistribID)
+
+		if res.Error != nil {
+			fmt.Println(res.Error.Error())
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusBadRequest
+		}
 
 		for _, item := range request.Items {
 			ids := []uint{item.ProductID}
 			_, err := repositories.GetAllProductByIDs(ids)
 			if err.RowsAffected == 0 {
 				return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
+
 			}
-			product := models.CartItem{
-				DistribID: request.DistribID,
-				ProductID: item.ProductID,
-				Quantity:  item.Quantity,
+
+			for _, existingCartProduct := range productsOut {
+				fmt.Println("item product id", item.ProductID, "existing product id", existingCartProduct.ProductID)
+				if item.ProductID == existingCartProduct.ProductID {
+					fmt.Println("item quantity", existingCartProduct.Quantity)
+					repositories.UpdateCartProductQuantityById(existingCartProduct.ID, existingCartProduct.Quantity+1)
+				} else {
+					product := models.CartItem{
+						DistribID: request.DistribID,
+						ProductID: item.ProductID,
+						Quantity:  item.Quantity,
+					}
+					repositories.SaveToCart(product)
+				}
+
 			}
-			repositories.SaveToCart(product)
 		}
 		return fiber.Map{"success": "Added to Cart Successfully"}, fiber.StatusOK
 	} else {
@@ -117,7 +138,7 @@ func GetCartProductsByDistribId(user_id string) fiber.Map {
 
 	var products []dto.ProductsOut
 
-	products, result := repositories.GetAllCartProductsByDistribID(user_id, products)
+	products, result := repositories.GetAllCartProductsByDistribID(user_id)
 
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}
@@ -209,7 +230,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var userData models.User
 	var TotalTypeValue float64
 	//1. Retrieving All Products in Cart
-	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id, cartItems)
+	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
 
 	if result.Error != nil {
 		return orderDetails, http.StatusInternalServerError
@@ -260,7 +281,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
 		DistribId:       distrib_id,
-		TotalTypeValue: TotalTypeValue,
+		TotalTypeValue:  TotalTypeValue,
 	}
 
 	if result.Error != nil {

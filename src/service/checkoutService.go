@@ -145,7 +145,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 
 	if leftPoint >= 4000 && rightPoint >= 4000 {
 		LeftInsideTcObj := models.BvTransaction{
-			DisribId:     TakeChequeIn.DistribId,
+			DistribId:     TakeChequeIn.DistribId,
 			Place:        TakeChequeIn.Place,
 			OrderId:      checkoutId,
 			Date:         time.Now(),
@@ -155,7 +155,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			TransType:    "Cheque",
 		}
 		RightInsidetCObj := models.BvTransaction{
-			DisribId:     TakeChequeIn.DistribId,
+			DistribId:     TakeChequeIn.DistribId,
 			Place:        TakeChequeIn.Place,
 			OrderId:      checkoutId,
 			Date:         time.Now(),

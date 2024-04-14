@@ -141,7 +141,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 		sum += placeBv.AddBv
 	}
 
-	fmt.Println("sum", sum, "placebv", placeBvs)
+	fmt.Println("sum", sum, "placebv", placeBvs, "total bv", totalBv)
 	//Validation--> Sum of bv should match the totalValueType
 	if sum == totalBv {
 		//Adding Bv Points from the product to the tree
@@ -152,6 +152,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			}
 			err := repositories.ActivateTC(distrib_id, placeBv.Place)
 			if err != nil {
+				fmt.Println("Error on Activating TC")
 				tx.Rollback()
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
@@ -166,7 +167,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				side = "right"
 			} else {
 				fmt.Println("Error in updating values of Place")
-				return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
+				return fiber.Map{"error": "Error in updating values of Place"}, fiber.StatusInternalServerError
 			}
 			place := placeBv.Place
 			rdistrib_id := distrib_id
@@ -187,7 +188,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				}
 				bvretain_flag = false
 				BvObj := models.BvTransaction{
-					DisribId:     rdistrib_id,
+					DistribId:    rdistrib_id,
 					Place:        place,
 					OrderId:      orderId,
 					Date:         time.Now(),
@@ -199,6 +200,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				if currentTc.IsActive {
 					res := repositories.SaveBvTransaction(BvObj)
 					if res.Error != nil {
+						fmt.Println("Error on Saving Tc", res.Error.Error())
 						tx.Rollback()
 						return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 					}
@@ -211,7 +213,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				place = currentTc.PPlace
 			}
 		}
+		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK
 	}
-
-	return fiber.Map{"data": "Data Successfully Updated"}, http.StatusOK
+	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
 }

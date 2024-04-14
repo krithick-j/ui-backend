@@ -180,3 +180,4 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 		return fiber.Map{"data": "cheque unsuccessfull!"}, 403
 	}
 }
+

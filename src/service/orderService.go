@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -13,12 +14,12 @@ import (
 
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
-	var totalOrderAmount float64
 	//Generating unique Order ID
 	orderId := GenerateUniqueHexCode(10)
 	//sum product value
 	total, status := GetOrderDetails(OrderIn.DistribId)
 	tx := configs.DB.Begin()
+	totalOrderAmount := total.TotalAmount
 
 	if status != http.StatusOK {
 		return fiber.Map{"data": "Something gone wrong"}, http.StatusInternalServerError
@@ -33,7 +34,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		OrderId:        orderId,
 		SubTotal:       total.SubTotal,
 		TotalSandH:     total.TotalSandH,
-		TotalAmount:    OrderIn.TotalAmount, //total amount after applying coupon
+		TotalAmount:    total.TotalAmount, //total amount before applying coupon
 		TotalQuantity:  total.TotalQuantity,
 		TotalTypeValue: total.TotalTypeValue,
 		ProductType:    productType,
@@ -79,11 +80,13 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		for _, orderCoupon := range OrderIn.AppliedCoupons {
 			balance, result := repositories.GetICouponBalance(orderCoupon.VID)
 			if result.Error != nil {
+				tx.Rollback()
 				return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
 			}
 
 			if balance == 0 {
 				repositories.CloseCoupon(orderCoupon.VID)
+				tx.Rollback()
 				return fiber.Map{"error": "ICoupon used already!"}, fiber.StatusPaymentRequired
 			}
 			totalICouponBalance += balance
@@ -94,7 +97,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 			if result.Error != nil {
 				return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
 			}
-
+			fmt.Println(totalOrderAmount)
 			if totalOrderAmount >= balance {
 				totalOrderAmount = totalOrderAmount - balance
 
@@ -102,8 +105,10 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 				ICouponObj := models.ICouponTransaction{
 					DistribId: OrderIn.DistribId,
 					VID:       orderCoupon.VID,
+					Reference: orderId,
 					Value:     -balance, //using the full balance of ICoupon
 				}
+				fmt.Println("Balance ", balance)
 				err := repositories.SaveICouponTx(ICouponObj)
 				if err.Error != nil {
 					tx.Rollback()
@@ -122,6 +127,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 					VID:       orderCoupon.VID,
 					Value:     -totalOrderAmount, //The order amount is less than Icoupon Balance, so icoupon have remaining balance
 				}
+				fmt.Println("Balance from else block")
 				err := repositories.SaveICouponTx(ICouponObj)
 				if err.Error != nil {
 					tx.Rollback()
@@ -129,7 +135,6 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 				}
 				break //No need to loop again, since the order amount is satisfied with the coupon
 			}
-
 		}
 
 		if totalICouponBalance < total.TotalAmount {
@@ -145,12 +150,21 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 				tx.Rollback()
 				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 			}
+			fmt.Println("-----------------------------Tree starts from here-----------------------------------------")
 			//bv transaction insert is done in UpdateCurrentPlaceValues function
-			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId, tx)
+			UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId, tx, total.TotalTypeValue)
+			fmt.Println("----------------------------Tree ends here--------------------------------------------------")
 			//UpdateTreePlaceValuesByDistribId(OrderIn.DistribId, OrderIn.PlaceBvs)
 		} else if productType == "rsp" {
 			//save rsp transaction
-			repositories.AddRspTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
+			res := repositories.AddRspTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
+			if res.Error != nil {
+				tx.Rollback()
+				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+			}
+		} else {
+			tx.Rollback()
+			return fiber.Map{"error": "Product type does not match"}, fiber.StatusInternalServerError
 		}
 	} else if productType == "ep" {
 		totalEp, res := repositories.GetEpBalance(total.DistribId)
@@ -171,8 +185,16 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	}
 
 	//Cleaning cart after buying
-	repositories.DeleteAllCartProduct(OrderIn.DistribId)
+	_, res := repositories.DeleteAllCartProduct(OrderIn.DistribId)
+	if res.Error != nil {
+		tx.Rollback()
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
 
+	res = tx.Commit()
+	if res.Error != nil {
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 
 }

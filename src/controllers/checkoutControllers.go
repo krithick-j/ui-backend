@@ -55,10 +55,8 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 			if err.Error != nil {
 				return c.Status(http.StatusInternalServerError).JSON(err.Error.Error())
 			}
-			iCouponTxDetail := service.GenerateUniqueHexCode(10)
 			iCouponObj := dto.ICouponIn{
 				DistribID: TakeChequeIn.DistribId,
-				TxDetail:  iCouponTxDetail,
 				Coupons:   TakeChequeIn.Coupons,
 			}
 

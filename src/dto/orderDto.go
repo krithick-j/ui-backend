@@ -47,8 +47,8 @@ type ProductId struct {
 }
 
 type PlaceBv struct {
-	Place string `json:"place"`
-	AddBv int    `json:"add_bv"`
+	Place string  `json:"place"`
+	AddBv float64 `json:"add_bv"`
 }
 type PlaceOrderIn struct {
 	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"` //Coupons Applied

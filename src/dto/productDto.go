@@ -14,6 +14,7 @@ type CartItemIn struct {
 }
 
 type ProductsOut struct {
+	ID        uint           `json:"id"`
 	ProductID uint           `json:"product_id"`
 	Product   models.Product `json:"product"`
 	Quantity  uint           `json:"quantity"`

@@ -8,7 +8,7 @@ import (
 
 type BvTransaction struct {
 	gorm.Model
-	DisribId     string    `json:"distrib_id"`
+	DistribId    string    `json:"distrib_id"`
 	Place        string    `json:"place"`
 	OrderId      string    `json:"order_id"`
 	Date         time.Time `json:"date"`

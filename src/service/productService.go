@@ -111,21 +111,27 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 				return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
 
 			}
-
-			for _, existingCartProduct := range productsOut {
-				fmt.Println("item product id", item.ProductID, "existing product id", existingCartProduct.ProductID)
-				if item.ProductID == existingCartProduct.ProductID {
-					fmt.Println("item quantity", existingCartProduct.Quantity)
-					repositories.UpdateCartProductQuantityById(existingCartProduct.ID, existingCartProduct.Quantity+1)
-				} else {
-					product := models.CartItem{
-						DistribID: request.DistribID,
-						ProductID: item.ProductID,
-						Quantity:  item.Quantity,
+			if len(productsOut) != 0 {
+				for _, existingCartProduct := range productsOut {
+					if item.ProductID == existingCartProduct.ProductID {
+						repositories.UpdateCartProductQuantityById(existingCartProduct.ID, existingCartProduct.Quantity+1)
+					} else {
+						product := models.CartItem{
+							DistribID: request.DistribID,
+							ProductID: item.ProductID,
+							Quantity:  item.Quantity,
+						}
+						repositories.SaveToCart(product)
 					}
-					repositories.SaveToCart(product)
 				}
-
+			} else {
+				product := models.CartItem{
+					DistribID: request.DistribID,
+					ProductID: item.ProductID,
+					Quantity:  item.Quantity,
+				}
+				repositories.SaveToCart(product)
+				break
 			}
 		}
 		return fiber.Map{"success": "Added to Cart Successfully"}, fiber.StatusOK
@@ -220,79 +226,4 @@ func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 	return fiber.Map{"data": "Product Successfully created"}, http.StatusCreated
 }
 
-func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
-	var subTotal float64 = 0.0
-	var totalSandH float64 = 0.0
-	var quantity uint = 0
-	var orderProductArray []dto.OrderProduct
-	var orderDetails dto.OrderDetailsOut
-	var cartItems []dto.ProductsOut
-	var userData models.User
-	var TotalTypeValue float64
-	//1. Retrieving All Products in Cart
-	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
 
-	if result.Error != nil {
-		return orderDetails, http.StatusInternalServerError
-	}
-
-	//2. Populating OrderProduct Array field
-	for _, item := range cartItems {
-		orderProduct := dto.OrderProduct{
-			Name:        item.Product.Name,
-			Quantity:    item.Quantity,
-			UnitPrice:   uint64(item.Product.Price),
-			SandH:       item.Product.SandH,
-			SubTotal:    item.Product.Price * float64(item.Quantity),
-			ProductType: item.Product.ProductType,
-			TypeValue:   item.Product.TypeValue,
-		}
-
-		orderProductArray = append(orderProductArray, orderProduct)
-		subTotal += orderProduct.SubTotal
-		totalSandH += orderProduct.SandH
-		quantity += item.Quantity
-		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
-	}
-	//Retrieving User Data for Delivery Address
-	userData, result = repositories.GetUserByID(distrib_id, userData)
-	if result.Error != nil {
-		println(fiber.Map{"error": result.Error})
-		return orderDetails, http.StatusInternalServerError
-	}
-
-	deliveryAddress := dto.DeliveryAddress{
-		ContactName:   userData.Name,
-		ContactEmail:  userData.EmailAddress,
-		Address:       userData.Address1,
-		City:          userData.TownOrCity,
-		District:      userData.District,
-		State:         userData.StateOrProvince,
-		ZipCode:       userData.PinOrZipCode,
-		Country:       userData.Country,
-		HomePhoneNo:   userData.HomePhoneNo,
-		MobilePhoneNo: userData.MobilePhoneNo,
-	}
-	orderDetails = dto.OrderDetailsOut{
-		Items:           orderProductArray,
-		SubTotal:        subTotal,
-		TotalSandH:      totalSandH,
-		TotalAmount:     subTotal + totalSandH,
-		DeliveryAddress: deliveryAddress,
-		TotalQuantity:   float64(quantity),
-		DistribId:       distrib_id,
-		TotalTypeValue:  TotalTypeValue,
-	}
-
-	if result.Error != nil {
-		print(fiber.Map{"error": result.Error})
-		return orderDetails, http.StatusInternalServerError
-	}
-
-	if result.RowsAffected == 0 {
-		print(fiber.Map{"data": "No Products in Cart"})
-		return orderDetails, http.StatusNoContent
-	}
-
-	return orderDetails, http.StatusOK
-}

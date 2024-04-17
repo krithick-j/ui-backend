@@ -107,88 +107,113 @@ func GetTreeUserByDistId(distrib_id string) fiber.Map {
 
 func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 
-	var tracking_centers []models.TrackingCenter
-	var result *gorm.DB
-
-	tracking_centers, result = repositories.GetTrackingCenterByDistribId(distrib_id, tracking_centers)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+	// places := [3]string{"001", "002", "003"}
+	// var trackingCenters [][]models.TCBv
+	tcArr := []dto.TCBv{}
+	res, err := repositories.GetAllTrackingCenters(distrib_id)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+
+	tcOut := dto.TrackingCenterOut{}
+	tcOut.DistribId = distrib_id
+	for _, place := range res {
+		// fmt.Println(r.Place)
+		bvres, _ := repositories.GetBVforTCOneRow(distrib_id, place.Place)
+		obj := dto.TCBv{
+			Place:   place.Place,
+			LPoint:  bvres.LValue,
+			RPoint:  bvres.RValue,
+			BvPoint: bvres.BValue,
+		}
+		tcArr = append(tcArr, obj)
 	}
-	return fiber.Map{"data": tracking_centers}, http.StatusOK
+
+	tcOut.Tc = tcArr
+
+	return fiber.Map{"data": tcOut}, http.StatusOK
 }
 
-func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB) (fiber.Map, int) {
-	//Adding Bv Points from the product to the tree
+func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB, totalBv float64) (fiber.Map, int) {
+
+	sum := 0.0
 	for _, placeBv := range placeBvs {
-		if placeBv.AddBv == 0 {
-			//Skip updating for empty values
-			continue
-		}
-		err := repositories.ActivateTC(distrib_id, placeBv.Place)
-		if err != nil {
-			tx.Rollback()
-			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-		}
-		var side string
-		bvretain_flag := true
-		if placeBv.Place == "001" {
-			side = "bv"
-
-		} else if placeBv.Place == "002" {
-			side = "left"
-		} else if placeBv.Place == "003" {
-			side = "right"
-		} else {
-			fmt.Println("Error in updating values of Place")
-			return fiber.Map{"error": "Error in updating values of Place"}, http.StatusInternalServerError
-		}
-		place := placeBv.Place
-		rdistrib_id := distrib_id
-		nside := side
-		for {
-			currentTc := repositories.GetTrackingCenter(rdistrib_id, place)
-			parentPlace := repositories.GetTrackingCenter(currentTc.DistribID, currentTc.PPlace)
-
-			//Deciding left or right
-			//Dont change if it is bv and its first time
-			if !(place == "001" && bvretain_flag) {
-				if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
-					nside = "right"
-				}
-				if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
-					nside = "left"
-				}
-			}
-			bvretain_flag = false
-			BvObj := models.BvTransaction{
-				DisribId:     rdistrib_id,
-				Place:        place,
-				OrderId:      orderId,
-				Date:         time.Now(),
-				BvValue:      placeBv.AddBv,
-				ActivateDate: time.Now().AddDate(0, 0, 7),
-				Side:         nside,
-				TransType:    "Product",
-			}
-			if currentTc.IsActive {
-				res := repositories.SaveBvTransaction(BvObj)
-				if res.Error != nil {
-					tx.Rollback()
-					return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-				}
-
-			}
-			if currentTc.PDistribId == "" {
-				break
-			}
-			rdistrib_id = currentTc.PDistribId
-			place = currentTc.PPlace
-		}
+		sum += placeBv.AddBv
 	}
 
-	return fiber.Map{"data": "Data Successfully Updated"}, http.StatusOK
+	fmt.Println("sum", sum, "placebv", placeBvs, "total bv", totalBv)
+	//Validation--> Sum of bv should match the totalValueType
+	if sum == totalBv {
+		//Adding Bv Points from the product to the tree
+		for _, placeBv := range placeBvs {
+			if placeBv.AddBv == 0 {
+				//Skip updating for empty values
+				continue
+			}
+			err := repositories.ActivateTC(distrib_id, placeBv.Place)
+			if err != nil {
+				fmt.Println("Error on Activating TC")
+				tx.Rollback()
+				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+			}
+			var side string
+			bvretain_flag := true
+			if placeBv.Place == "001" {
+				side = "bv"
+
+			} else if placeBv.Place == "002" {
+				side = "left"
+			} else if placeBv.Place == "003" {
+				side = "right"
+			} else {
+				fmt.Println("Error in updating values of Place")
+				return fiber.Map{"error": "Error in updating values of Place"}, fiber.StatusInternalServerError
+			}
+			place := placeBv.Place
+			rdistrib_id := distrib_id
+			nside := side
+			for {
+				currentTc := repositories.GetTrackingCenter(rdistrib_id, place)
+				parentPlace := repositories.GetTrackingCenter(currentTc.DistribID, currentTc.PPlace)
+
+				//Deciding left or right
+				//Dont change if it is bv and its first time
+				bvretain_flag = false
+				BvObj := models.BvTransaction{
+					DistribId:    rdistrib_id,
+					Place:        place,
+					OrderId:      orderId,
+					Date:         time.Now(),
+					BvValue:      placeBv.AddBv,
+					ActivateDate: time.Now().AddDate(0, 0, 7),
+					Side:         nside,
+					TransType:    "Product",
+				}
+				if currentTc.IsActive {
+					res := repositories.SaveBvTransaction(BvObj)
+					if res.Error != nil {
+						fmt.Println("Error on Saving Tc", res.Error.Error())
+						tx.Rollback()
+						return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+					}
+
+				}
+				if currentTc.PDistribId == "" {
+					break
+				}
+				if !(place == "001" && bvretain_flag) {
+					if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
+						nside = "right"
+					}
+					if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
+						nside = "left"
+					}
+				}
+				rdistrib_id = currentTc.PDistribId
+				place = currentTc.PPlace
+			}
+		}
+		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK
+	}
+	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
 }

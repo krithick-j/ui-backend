@@ -13,14 +13,16 @@ type TrackingCenter struct {
 	RightDistribID string `json:"right_distrib_id"`
 	RightPlace     string `json:"right_place"`
 	Place          string `json:"place"`
-	Bv             int    `json:"bv"`
-	LeftPoint      int    `json:"left_point" gorm:"default:0"`
-	RightPoint     int    `json:"right_point" gorm:"default:0"`
 	IsActive       bool   `json:"is_active" gorm:"default:0"`
 }
 
 type TCBv struct {
-	DistribID string 
-	Side      string
-	BValue    int
+	Side   string `json:"side"`
+	BValue int    `json:"b_value"`
+}
+
+type TCBvOneRow struct {
+	BValue int `json:"b_value"`
+	LValue int `json:"l_value"`
+	RValue int `json:"r_value"`
 }

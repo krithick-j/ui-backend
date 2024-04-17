@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -29,8 +30,8 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&CheckoutIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, _, status := service.TotalChequeValueByDistribId(CheckoutIn)
-	return c.Status(status).JSON(fiber.Map{"data": res})
+	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
+	return c.Status(status).JSON(res)
 }
 
 func TakeChequeByDistribId(c *fiber.Ctx) error {
@@ -55,19 +56,20 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 			if err.Error != nil {
 				return c.Status(http.StatusInternalServerError).JSON(err.Error.Error())
 			}
-			iCouponTxDetail := service.GenerateUniqueHexCode(10)
 			iCouponObj := dto.ICouponIn{
 				DistribID: TakeChequeIn.DistribId,
-				TxDetail:  iCouponTxDetail,
 				Coupons:   TakeChequeIn.Coupons,
 			}
 
 			service.AddICoupon(iCouponObj, iCouponObj.DistribID, tx) //admin is sent as empty string because user generating iCoupon
 			if err := tx.Commit().Error; err != nil {
 				tx.Rollback()
-				// Handle error
 			}
 			return c.Status(status).JSON(res)
+		} else if status == 500 {
+			fmt.Println("---> res------->", res)
+			return c.Status(http.StatusForbidden).JSON(res)
+
 		} else {
 			tx.Rollback()
 			return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})

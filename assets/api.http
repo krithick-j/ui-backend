@@ -335,7 +335,7 @@ content-type: applicatiogetEpProductsn/json
 ###
 POST {{host}}/product/addToCart HTTP/1.1
 Authorization: Bearer {{authToken}}
-content-type: applicatiogetEpProductsn/json
+content-type: application/json
 
 {
 	"distrib_id": "IN-00001",
@@ -347,3 +347,8 @@ content-type: applicatiogetEpProductsn/json
 	],
 	"product_type": "bv"
 }
+
+###
+GET {{host}}/user/getTrackingCenters/IN-00007 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

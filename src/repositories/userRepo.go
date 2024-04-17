@@ -104,12 +104,8 @@ func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User
 	return user, result
 }
 
-func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
-	var tcbv []models.TCBv
-	result := configs.DB.Table("bv_transactions").
-		Select("side, sum(bv_value) as BValue").
-		Where("disrib_id = ? AND place = ? ", distrib_id, tc).
-		Group("side").
-		Scan(&tcbv)
-	return tcbv, result
+func GetRefDistribIdByDistribId(distribId string) (string, *gorm.DB) {
+	var refDistribId string
+	result := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Take(&refDistribId)
+	return refDistribId, result
 }

@@ -178,14 +178,6 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 
 				//Deciding left or right
 				//Dont change if it is bv and its first time
-				if !(place == "001" && bvretain_flag) {
-					if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
-						nside = "right"
-					}
-					if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
-						nside = "left"
-					}
-				}
 				bvretain_flag = false
 				BvObj := models.BvTransaction{
 					DistribId:    rdistrib_id,
@@ -208,6 +200,14 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				}
 				if currentTc.PDistribId == "" {
 					break
+				}
+				if !(place == "001" && bvretain_flag) {
+					if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
+						nside = "right"
+					}
+					if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
+						nside = "left"
+					}
 				}
 				rdistrib_id = currentTc.PDistribId
 				place = currentTc.PPlace

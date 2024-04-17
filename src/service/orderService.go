@@ -214,15 +214,18 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 
 	value := bvValue * 2.4
 
+	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
+	if err.Error != nil {
+		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+	}
+
 	obj := models.DirectCommissionTransaction{
-		DistribId: distribId,
+		DistribId: refDistribId,
 		Value:     value,
 		Reference: reference,
 	}
 
-	res := repositories.SaveDirectCommissionTransaction(obj)
-
-	if res.Error != nil {
+	if res := repositories.SaveDirectCommissionTransaction(obj); res.Error != nil {
 		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 	}
 

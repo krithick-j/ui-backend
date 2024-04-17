@@ -29,3 +29,23 @@ func GetAllBvHistory(distribId string) ([]models.BvTransaction, error) {
 	result := configs.DB.Find(BvHistory, "distrib_id=?", distribId)
 	return BvHistory, result.Error
 }
+
+func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
+	tcbv := []models.TCBv{}
+	result := configs.DB.Table("bv_transactions").
+		Select("side, sum(bv_value) as BValue").
+		Where("distrib_id = ? AND place = ? ", distrib_id, tc).
+		Group("side").
+		Scan(&tcbv)
+	return tcbv, result
+}
+
+func GetBVforTCOneRow(distrib_id string, tc string) (models.TCBvOneRow, *gorm.DB) {
+	tcbv := models.TCBvOneRow{}
+	result := configs.DB.Table("bv_transactions").
+		Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
+		Where("distrib_id = ? AND place = ? ", distrib_id, tc).
+		//Group("side").
+		Take(&tcbv)
+	return tcbv, result
+}

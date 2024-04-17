@@ -20,8 +20,8 @@ func GetTrackingCenterByDistribId(distrib_id string, trackingCenters []models.Tr
 	return trackingCenters, result
 }
 
-func UpdateParentPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, int) {
-	var currentBv int
+func UpdateParentPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, float64) {
+	var currentBv float64
 	fmt.Println("place", placeBv.Place)
 	currentBv, _ = GetCurrentBvFromTc(distrib_id, placeBv.Place, currentBv)
 	updatedBv := currentBv + placeBv.AddBv
@@ -34,16 +34,16 @@ func UpdateParentPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, int)
 	return result, currentBv
 }
 
-func UpdateLeftPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, int) {
-	var currentLeftPoint int
+func UpdateLeftPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, float64) {
+	var currentLeftPoint float64
 	currentLeftPoint, _ = GetCurrentLeftPointFromTc(distrib_id, placeBv.Place, currentLeftPoint)
 	currentLeftPoint += placeBv.AddBv
 	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("left_point", currentLeftPoint)
 	return result, currentLeftPoint
 }
 
-func UpdateRightPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, int) {
-	var currentRightPoint int
+func UpdateRightPointPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, float64) {
+	var currentRightPoint float64
 	currentRightPoint, _ = GetCurrentRightPointFromTc(distrib_id, placeBv.Place, currentRightPoint)
 	currentRightPoint += placeBv.AddBv
 	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("right_point", currentRightPoint)
@@ -56,17 +56,17 @@ func UpdateTrackingCenter(leftPoint int, rightPoint int, distrib_id string, plac
 	return result
 }
 
-func GetCurrentBvFromTc(distrib_id string, place string, bv int) (int, *gorm.DB) {
+func GetCurrentBvFromTc(distrib_id string, place string, bv float64) (float64, *gorm.DB) {
 	result := configs.DB.Table("tracking_centers").Select("bv").Where("distrib_id=? AND place=?", distrib_id, place).Take(&bv)
 	return bv, result
 }
 
-func GetCurrentLeftPointFromTc(distrib_id string, place string, leftPoint int) (int, *gorm.DB) {
+func GetCurrentLeftPointFromTc(distrib_id string, place string, leftPoint float64) (float64, *gorm.DB) {
 	result := configs.DB.Table("tracking_centers").Select("left_point").Where("distrib_id=? AND place=?", distrib_id, place).Take(&leftPoint)
 	return leftPoint, result
 }
 
-func GetCurrentRightPointFromTc(distrib_id string, place string, rightPoint int) (int, *gorm.DB) {
+func GetCurrentRightPointFromTc(distrib_id string, place string, rightPoint float64) (float64, *gorm.DB) {
 	result := configs.DB.Table("tracking_centers").Select("right_point").Where("distrib_id=? AND place=?", distrib_id, place).Take(&rightPoint)
 	return rightPoint, result
 }
@@ -75,6 +75,12 @@ func GetTrackingCenter(distrib_id, place string) *models.TrackingCenter {
 	tc := new(models.TrackingCenter)
 	configs.DB.First(tc, "distrib_id = ? AND place = ?", distrib_id, place)
 	return tc
+}
+
+func GetAllTrackingCenters(distrib_id string) ([]models.TrackingCenter, error) {
+	var tcs []models.TrackingCenter
+	result := configs.DB.Find(&tcs, "distrib_id = ?", distrib_id).Error
+	return tcs, result
 }
 
 func ActivateTC(distrib_id string, place string) error {

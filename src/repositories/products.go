@@ -61,11 +61,16 @@ func SaveToCart(product models.CartItem) error {
 	return nil
 }
 
-func GetAllCartProductsByDistribID(distrib_id string, productsOut []dto.ProductsOut) ([]dto.ProductsOut, *gorm.DB) {
-	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity").Where("distrib_id= ?", distrib_id).Find(&productsOut)
+func GetAllCartProductsByDistribID(distrib_id string) ([]dto.ProductsOut, *gorm.DB) {
+	var productsOut []dto.ProductsOut
+	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity", "id").Where("distrib_id= ?", distrib_id).Find(&productsOut)
 	return productsOut, result
 }
 
+func UpdateCartProductQuantityById(cartId uint, quantity uint) *gorm.DB {
+	result := configs.DB.Model(models.CartItem{}).Where("id=?", cartId).Update("quantity", quantity)
+	return result
+}
 func DeleteCartProduct(distrib_id string, product_id string, cartItem models.CartItem) (models.CartItem, *gorm.DB) {
 	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("distrib_id= ? AND product_id=?", distrib_id, product_id).Delete(&cartItem)
 	return cartItem, result

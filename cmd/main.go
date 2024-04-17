@@ -50,5 +50,5 @@ func main() {
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)
 
-	app.Listen(":8080")
+	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

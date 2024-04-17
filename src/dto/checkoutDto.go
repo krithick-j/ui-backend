@@ -15,21 +15,21 @@ type ChequeAvailableIn struct {
 }
 
 type TakeChequeIn struct {
-	DistribId       string   `json:"distrib_id"`
-	Place           string   `json:"place"`
-	Coupons         []Coupon `json:"coupons"`
-	ICouponTxDetail uint64   `json:"tx_detail"`
+	DistribId string   `json:"distrib_id"`
+	Place     string   `json:"place"`
+	Coupons   []Coupon `json:"coupons"`
 }
 
 type TakeChequeOut struct {
-	TotalBalance          float32          `json:"total_balance"`
-	TotalAvailableBalance float32          `json:"total_available_balance"`
-	PlacePointsArr        []PlacePointsArr `json:"place_points"`
+	TotalBalance           float64          `json:"total_balance"`
+	TotalAvailableBalance  float64          `json:"total_available_balance"`
+	PlacePointsArr         []PlacePointsArr `json:"place_points"`
+	DirectCommissionPoints float64          `json:"direct_commission_points"`
 }
 
 type PlacePointsArr struct {
 	Place string  `json:"place,omitempty"`
-	Value float32 `json:"value,omitempty"`
+	Value float64 `json:"value,omitempty"`
 }
 
 type CheckoutIn struct {

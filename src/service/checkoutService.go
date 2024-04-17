@@ -12,61 +12,24 @@ import (
 	"gorm.io/gorm"
 )
 
-// func IsCheckqueAvailable(chequeDetailsIn dto.ChequeAvailableIn) (fiber.Map, int) {
-
-// 	var chequeCounter, err = repositories.GetCheckoutFrequency(chequeDetailsIn.DistribId)
-// 	if err.Error != nil {
-// 		return fiber.Map{"error": err}, 500
-// 	}
-
-// 	const checkoutValue int = 4000
-
-// 	if chequeCounter > 5 {
-// 		return fiber.Map{"error": "Maximum checkout limit reached"}, 403
-// 	}
-
-// 	leftSumValue := chequeDetailsIn.LTc.BvPoint + chequeDetailsIn.LTc.LPoint + chequeDetailsIn.LTc.RPoint
-// 	rightSumValue := chequeDetailsIn.RTc.BvPoint + chequeDetailsIn.RTc.LPoint + chequeDetailsIn.RTc.RPoint
-
-// 	arr := []dto.Tc{chequeDetailsIn.LTc, chequeDetailsIn.RTc}
-
-// 	if (leftSumValue >= checkoutValue) && (rightSumValue >= checkoutValue) {
-
-// 		err := repositories.IncrementCheckoutFrequency(chequeDetailsIn.DistribId, chequeDetailsIn.Place, chequeCounter)
-
-// 		if err.Error != nil {
-// 			return fiber.Map{"error": err.Error}, 500
-// 		}
-
-// 		checkoutId := GenerateUniqueHexCode(10)
-
-// 		for _, user := range arr {
-
-// 			tx := models.BvTransaction{
-// 				DisribId: user.DistribId,
-// 				Place:    user.Place,
-// 				OrderId:  checkoutId, //checkout id is saved in OrderID for now temporarily
-// 				Date:     time.Now(),
-// 				BvValue:  -checkoutValue,
-// 				TransType: "Cheque",
-// 			}
-// 			repositories.SaveBvTransaction(tx)
-// 		}
-
-// 		return fiber.Map{"success": "checkout done"}, 200
-// 	} else {
-// 		return fiber.Map{"error": "cannot checkout"}, 400
-// 	}
-// }
-
-func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut, dto.CheckoutFrequency, int) {
+// Get Total Cheque Value By Distrib ID
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	var (
 		parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
 		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue
 	)
 
-	rank, _ := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
+	rank, res := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
+	if res.Error != nil {
+		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	directCommissionValue, res := repositories.GetDirectCommissionValueByDistribId(TakeChequeIn.DistribId)
+	if res.Error != nil {
+		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
 	COUNT := 2 //Left and Right inside the tracking center
 
 	types := []struct {
@@ -78,14 +41,18 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 		{"003", &rightTCCheckoutFrequency},
 	}
 
-	totalCheckoutFrequency := 0
-	totalPoints := float32(0)
+	var totalCheckoutFrequency int
+	var totalPoints float64
 	placePointsObj := []dto.PlacePointsArr{}
 
 	for _, t := range types {
 		var leftPoint, rightPoint int
 
-		tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, t.Place)
+		tcbv, res := repositories.GetBVforTC(TakeChequeIn.DistribId, t.Place)
+		if res.Error != nil {
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
+
 		for _, val := range tcbv {
 			if val.Side == "left" {
 				leftPoint = val.BValue
@@ -98,7 +65,8 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 
 		checkoutFrequency := *t.CheckoutFrequency
 		totalCheckoutFrequency += checkoutFrequency
-		points := float32(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
+
+		points := float64(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT)*rank + directCommissionValue
 
 		if points != 0 {
 			placePointsObj = append(placePointsObj, dto.PlacePointsArr{
@@ -111,24 +79,27 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (dto.TakeChequeOut
 	}
 
 	pointsObj := dto.TakeChequeOut{
-		TotalBalance:          totalPoints,
-		TotalAvailableBalance: totalPoints,
-		PlacePointsArr:        placePointsObj,
+		TotalBalance:           totalPoints,
+		TotalAvailableBalance:  totalPoints,
+		PlacePointsArr:         placePointsObj,
+		DirectCommissionPoints: directCommissionValue,
 	}
 
-	checkoutFrequencyObj := dto.CheckoutFrequency{
-		TotalCheckoutFrequency:  totalCheckoutFrequency,
-		ParentCheckoutFrequency: parentTCCheckoutFrequency,
-		LeftCheckoutFrequency:   leftTCCheckoutFrequency,
-		RightCheckoutFrequency:  rightTCCheckoutFrequency,
-	}
+	// checkoutFrequencyObj := dto.CheckoutFrequency{
+	// 	TotalCheckoutFrequency:  totalCheckoutFrequency,
+	// 	ParentCheckoutFrequency: parentTCCheckoutFrequency,
+	// 	LeftCheckoutFrequency:   leftTCCheckoutFrequency,
+	// 	RightCheckoutFrequency:  rightTCCheckoutFrequency,
+	// }
 
-	return pointsObj, checkoutFrequencyObj, 200
+	return fiber.Map{"points_obj": pointsObj, "code": fiber.StatusOK}, fiber.StatusOK
 }
 
 func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (fiber.Map, int) {
 
 	checkoutId := GenerateUniqueHexCode(10)
+
+	var checkDrawValue int = configs.GlobalConfig.ChequeDrawValue
 
 	var leftPoint, rightPoint int
 	side := TakeChequeIn.Place
@@ -143,23 +114,23 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 		}
 	}
 
-	if leftPoint >= 4000 && rightPoint >= 4000 {
+	if leftPoint >= checkDrawValue && rightPoint >= checkDrawValue {
 		LeftInsideTcObj := models.BvTransaction{
-			DisribId:     TakeChequeIn.DistribId,
+			DistribId:    TakeChequeIn.DistribId,
 			Place:        TakeChequeIn.Place,
 			OrderId:      checkoutId,
 			Date:         time.Now(),
-			BvValue:      -4000,
+			BvValue:      -float64(checkDrawValue),
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "left",
 			TransType:    "Cheque",
 		}
 		RightInsidetCObj := models.BvTransaction{
-			DisribId:     TakeChequeIn.DistribId,
+			DistribId:    TakeChequeIn.DistribId,
 			Place:        TakeChequeIn.Place,
 			OrderId:      checkoutId,
 			Date:         time.Now(),
-			BvValue:      -4000,
+			BvValue:      -float64(checkDrawValue),
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "right",
 			TransType:    "Cheque",

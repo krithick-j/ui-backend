@@ -56,8 +56,8 @@ func GetProductsById(c *fiber.Ctx) error {
 
 func GetEpProductsByCategoryId(c *fiber.Ctx) error {
 
-	category_id := c.Params("category_id")
-	res, status := service.GetEpProductsByCategoryId(category_id)
+	categoryId := c.Params("category_id")
+	res, status := service.GetEpProductsByCategoryId(categoryId)
 
 	return c.Status(status).JSON(res)
 }

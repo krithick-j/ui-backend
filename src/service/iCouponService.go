@@ -18,6 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//Generates Unique Hex Code of length 10. Length != 10 return error
 func GenerateUniqueHexCode(length int) string {
 	randomBytes := make([]byte, length/2)
 	_, err := rand.Read(randomBytes)

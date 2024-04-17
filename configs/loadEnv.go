@@ -11,6 +11,7 @@ type Config struct {
 	DBHost          string `mapstructure:"MYSQL_HOST"`
 	DBPort          int    `mapstructure:"MYSQL_PORT"`
 	ChequeDrawValue int    `mapstructure:"CHEQUE_DRAW_VALUE"`
+	AppPort int    `mapstructure:"APP_PORT"`
 }
 
 var GlobalConfig *Config
@@ -20,6 +21,7 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetConfigType("env")
 	viper.SetConfigName("app")
 	viper.SetDefault("CHEQUE_DRAW_VALUE", 4000)
+	viper.SetDefault("APP_PORT", 8000)
 	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()

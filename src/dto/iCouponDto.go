@@ -9,7 +9,6 @@ type Coupon struct {
 
 type ICouponIn struct {
 	DistribID string   `json:"distrib_id"`
-	TxDetail  string   `json:"tx_detail"`
 	Coupons   []Coupon `json:"coupons"`
 }
 

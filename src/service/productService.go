@@ -39,20 +39,24 @@ func GetProductCategories() fiber.Map {
 	return fiber.Map{"data": productCategories}
 }
 
-func GetProductByCategoryID(category_id string) fiber.Map {
+func GetProductByCategoryID(categoryId string, productType string) (fiber.Map, int) {
 
 	var product []models.Product
 	var result *gorm.DB
 
-	product, result = repositories.GetAllProductByCategoryID(category_id, product)
+	if productType == "" {
+		product, result = repositories.GetAllProductByCategoryID(categoryId, product)
+	} else {
+		product, result = repositories.GetAllProductByCategoryIdAndProductType(categoryId, productType)
+	}
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": product}
+	return fiber.Map{"data": product}, fiber.StatusOK
 }
 
 func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
@@ -225,5 +229,3 @@ func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 	}
 	return fiber.Map{"data": "Product Successfully created"}, http.StatusCreated
 }
-
-

@@ -20,10 +20,11 @@ func GetProductCategoriesController(c *fiber.Ctx) error {
 }
 
 func GetProductsByCategoryID(c *fiber.Ctx) error {
-	category_id := c.Params("category_id")
-	res := service.GetProductByCategoryID(category_id)
+	categoryId := c.Params("category_id")
+	productType := c.Query("product_type")
+	res, status := service.GetProductByCategoryID(categoryId, productType)
 
-	return c.Status(http.StatusOK).JSON(res)
+	return c.Status(status).JSON(res)
 }
 
 func AddToCartController(c *fiber.Ctx) error {

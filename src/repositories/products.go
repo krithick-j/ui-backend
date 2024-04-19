@@ -26,6 +26,12 @@ func GetAllProductByCategoryID(category_id string, product []models.Product) ([]
 	return product, result
 }
 
+func GetAllProductByCategoryIdAndProductType(category_id string, productType string) ([]models.Product, *gorm.DB) {
+	var product []models.Product
+	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? AND product_type=?", category_id, productType)
+	return product, result
+}
+
 func GetAllEpProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
 	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
 	return product, result

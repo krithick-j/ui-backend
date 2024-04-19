@@ -354,6 +354,16 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 ###
+GET {{host}}/redeem/IN-00005 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
 GET {{host}}/product/filterByCategory/1?product_type= HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+GET {{host}}/product/cartProducts/:distrib_id HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

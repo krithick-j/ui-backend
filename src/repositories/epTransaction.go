@@ -23,7 +23,7 @@ func SaveEpTx(distrib_id string, order_id string, total_ep_value float64) *gorm.
 func GetEpBalance(distrib_id string) (float64, *gorm.DB) {
 	var total float64
 	result := configs.DB.Table("ep_transactions").
-		Select("sum(value)").
-		Where("disrib_id = ?", distrib_id).Scan(&total)
+		Select("COALESCE(sum(value), 0)").
+		Where("distrib_id = ?", distrib_id).Scan(&total)
 	return total, result
 }

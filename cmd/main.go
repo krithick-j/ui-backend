@@ -47,6 +47,7 @@ func main() {
 	api.Route("/rsp", routes.RspRouter)
 	api.Route("/history", routes.HistoryRouter)
 	api.Route("/ui", routes.UiRouter)
+	api.Route("/redeem", routes.RedeemRouter)
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)
 

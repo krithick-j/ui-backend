@@ -58,6 +58,7 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	if err := c.BodyParser(&user_in); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
+
 	res, status := service.EditUserByDistId(DistribID, user_in)
 
 	return c.Status(status).JSON(res)
@@ -73,5 +74,18 @@ func GetTrackingCenters(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 
 	res, status := service.GetTrackingCentersByDistribId(distrib_id)
+	return c.Status(status).JSON(res)
+}
+
+func UpdateUserPass(c *fiber.Ctx) error {
+
+	var user_in dto.UserPassIn
+
+	if err := c.BodyParser(&user_in); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	res, status := service.UpdateUserPass(user_in)
+
 	return c.Status(status).JSON(res)
 }

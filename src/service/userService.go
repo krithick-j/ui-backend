@@ -218,3 +218,26 @@ func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 	}
 	return fiber.Map{"data": user}, http.StatusOK
 }
+
+func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {
+
+	oldHashpassFromDB, res := repositories.GetUserPassByDistribId(payload.DistribId)
+	if res.Error != nil {
+		return fiber.Map{"err": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	oldHashpass := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.OldPass)))
+	if oldHashpass != oldHashpassFromDB {
+		return fiber.Map{"data": "Old password does not match"}, fiber.StatusForbidden
+	}
+
+	newHashpass := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPass)))
+
+	res = repositories.UpdatePassword(payload.DistribId, newHashpass)
+	if res.Error != nil {
+		return fiber.Map{"err": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	return fiber.Map{"data": "Password changed Successfully"}, http.StatusOK
+
+}

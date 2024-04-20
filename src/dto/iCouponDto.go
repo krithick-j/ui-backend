@@ -38,7 +38,7 @@ type ICouponHistoryIn struct {
 
 type BvHistoryIn struct {
 	DistribId   string    `json:"distrib_id"`
-	HistoryType string    `json:"history_type"`
+	TransType string    `json:"trans_type"`
 	FromDate    time.Time `json:"from_date"`
 	ToDate      time.Time `json:"to_date"`
 }

@@ -48,35 +48,37 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	if err.Error == gorm.ErrRecordNotFound {
 		repositories.CreateCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place)
 	}
-	if count < 5 {
-		res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn, tx)
 
-		if status == 200 {
-			err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count)
-			if err.Error != nil {
-				return c.Status(http.StatusInternalServerError).JSON(err.Error.Error())
-			}
-			iCouponObj := dto.ICouponIn{
-				DistribID: TakeChequeIn.DistribId,
-				Coupons:   TakeChequeIn.Coupons,
-			}
+	if count%5 == 0 {
+		tx.Rollback()
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"data": "Maximum cheque limit reached!"})
 
-			service.AddICoupon(iCouponObj, iCouponObj.DistribID, tx) //admin is sent as empty string because user generating iCoupon
-			if err := tx.Commit().Error; err != nil {
-				tx.Rollback()
-			}
-			return c.Status(status).JSON(res)
-		} else if status == 500 {
-			fmt.Println("---> res------->", res)
-			return c.Status(http.StatusForbidden).JSON(res)
+	}
 
-		} else {
-			tx.Rollback()
-			return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
+	res, status := service.TakeChequeByDistribIdAndPlace(TakeChequeIn, tx)
+
+	if status == 200 {
+		err := repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count)
+		if err.Error != nil {
+			return c.Status(http.StatusInternalServerError).JSON(err.Error.Error())
 		}
+		iCouponObj := dto.ICouponIn{
+			DistribID: TakeChequeIn.DistribId,
+			Coupons:   TakeChequeIn.Coupons,
+		}
+
+		service.AddICoupon(iCouponObj, iCouponObj.DistribID, tx) //admin is sent as empty string because user generating iCoupon
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+		return c.Status(status).JSON(res)
+	} else if status == 500 {
+		fmt.Println("---> res------->", res)
+		return c.Status(fiber.StatusInternalServerError).JSON(res)
 
 	} else {
 		tx.Rollback()
-		return c.Status(http.StatusForbidden).JSON(fiber.Map{"data": "Maximum checkout limit reached!"})
+		fmt.Println("---> res from else------->", res)
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
 	}
 }

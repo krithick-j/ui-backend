@@ -32,8 +32,8 @@ type SendCoupon struct {
 
 type ICouponHistoryIn struct {
 	DistribId string    `json:"distrib_id"`
-	FromDate  time.Time `json:"from_date"`
-	ToDate    time.Time `json:"to_date"`
+	FromDate  string `json:"from_date"`
+	ToDate    string `json:"to_date"`
 }
 
 type BvHistoryIn struct {

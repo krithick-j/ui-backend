@@ -40,3 +40,9 @@ type RecursiveUser struct {
 	Left           *RecursiveUser `json:"left"`
 	Right          *RecursiveUser `json:"right"`
 }
+
+type UserPassIn struct {
+	DistribId string `json:"distrib_id"`
+	OldPass   string `json:"old_pass"`
+	NewPass   string `json:"new_pass"`
+}

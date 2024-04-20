@@ -79,10 +79,11 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 	}
 
 	pointsObj := dto.TakeChequeOut{
-		TotalBalance:           totalPoints,
-		TotalAvailableBalance:  totalPoints,
-		PlacePointsArr:         placePointsObj,
-		DirectCommissionPoints: directCommissionValue,
+		TotalBalance:                     totalPoints,
+		TotalAvailableBalance:            totalPoints,
+		PlacePointsArr:                   placePointsObj,
+		DirectCommissionBalance:          directCommissionValue,
+		DirectCommissionAvailableBalance: directCommissionValue,
 	}
 
 	// checkoutFrequencyObj := dto.CheckoutFrequency{
@@ -123,7 +124,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			BvValue:      -float64(checkDrawValue),
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "left",
-			TransType:    "Cheque",
+			TransType:    "cheque",
 		}
 		RightInsidetCObj := models.BvTransaction{
 			DistribId:    TakeChequeIn.DistribId,
@@ -133,7 +134,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			BvValue:      -float64(checkDrawValue),
 			ActivateDate: time.Now().AddDate(0, 0, 7),
 			Side:         "right",
-			TransType:    "Cheque",
+			TransType:    "cheque",
 		}
 		res := repositories.SaveBvTransaction(LeftInsideTcObj)
 		if res.Error != nil {

@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//Generates Unique Hex Code of length 10. Length != 10 return error
+// Generates Unique Hex Code of length 10. Length != 10 return error
 func GenerateUniqueHexCode(length int) string {
 	randomBytes := make([]byte, length/2)
 	_, err := rand.Read(randomBytes)
@@ -201,7 +201,32 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 }
 
 func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
-	iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId)
+	var fromDate, toDate time.Time
+
+	if payload.FromDate == "" || payload.ToDate == "" {
+		iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId)
+
+		if err == gorm.ErrRecordNotFound {
+			return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+		}
+		return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
+	}
+
+	fromDate, err := time.Parse("2006-01-02", payload.FromDate)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusNotFound
+	}
+
+	toDate, err = time.Parse("2006-01-02", payload.ToDate)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusNotFound
+	}
+
+	// Adjust time to start of the day (00:00:00) for fromDate and end of the day (23:59:59) for toDate
+	fromDateStart := fromDate.Format("2006-01-02 15:04:05")
+	toDateEnd := toDate.Add(24*time.Hour - time.Second).Format("2006-01-02 15:04:05")
+
+	iCouponHistory, err := repositories.GetICouponHistoryByDate(payload.DistribId, fromDateStart, toDateEnd)
 
 	if err == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound

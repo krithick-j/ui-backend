@@ -109,3 +109,15 @@ func GetRefDistribIdByDistribId(distribId string) (string, *gorm.DB) {
 	result := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Take(&refDistribId)
 	return refDistribId, result
 }
+
+func GetUserPassByDistribId(distribId string) (string, *gorm.DB) {
+	var pass string
+	result := configs.DB.Model(&models.User{}).Where("distrib_id=?", distribId).Select("pass").Take(&pass)
+	fmt.Println("User pass", pass)
+	return pass, result
+}
+
+func UpdatePassword(distrib_id string, newHashPass string) *gorm.DB {
+	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Update("pass", newHashPass)
+	return result
+}

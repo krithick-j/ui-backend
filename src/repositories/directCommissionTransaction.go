@@ -14,6 +14,6 @@ func SaveDirectCommissionTransaction(obj models.DirectCommissionTransaction) *go
 
 func GetDirectCommissionValueByDistribId(distribId string) (float64, *gorm.DB) {
 	var value float64
-	result := configs.DB.Model(&models.DirectCommissionTransaction{}).Select("sum(value)").Where("distrib_id=?", distribId).Take(&value)
+	result := configs.DB.Model(&models.DirectCommissionTransaction{}).Select("COALESCE(sum(value), 0)").Where("distrib_id=?", distribId).Take(&value)
 	return value, result
 }

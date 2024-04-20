@@ -24,7 +24,8 @@ type TakeChequeOut struct {
 	TotalBalance           float64          `json:"total_balance"`
 	TotalAvailableBalance  float64          `json:"total_available_balance"`
 	PlacePointsArr         []PlacePointsArr `json:"place_points"`
-	DirectCommissionPoints float64          `json:"direct_commission_points"`
+	DirectCommissionBalance float64          `json:"direct_commission_balance"`
+	DirectCommissionAvailableBalance float64          `json:"direct_commission_available_balance"`
 }
 
 type PlacePointsArr struct {

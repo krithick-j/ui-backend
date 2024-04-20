@@ -20,7 +20,7 @@ func GetBvHistoryByTransType(distribId string, transType string, fromDate time.T
 	if !fromDate.IsZero() && !toDate.IsZero() {
 		query = query.Where("created_at BETWEEN ? AND ?", fromDate, toDate)
 	}
-	result := query.Find(&BvHistory)
+	result := query.Find(&BvHistory).Limit(5)
 	return BvHistory, result.Error
 }
 

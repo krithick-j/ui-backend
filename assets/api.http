@@ -8,7 +8,7 @@ content-type: application/json
 
 {
 	"username": "IN-00015",
-	"password": "1234"
+	"password": "12345"
 }
 
 ###
@@ -367,3 +367,14 @@ Content-Type: application/json
 GET {{host}}/product/cartProducts/:distrib_id HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+###
+PUT {{host}}/user/changePass HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00015",
+	"old_pass": "1234",
+	"new_pass": "123456"
+}

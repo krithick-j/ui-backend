@@ -104,3 +104,9 @@ func GetIDCard(c *fiber.Ctx) error {
 	service.GenerateIDCard(data.DistribId)
 	return c.Status(fiber.StatusCreated).JSON("{msg:success}")
 }
+
+func GetMediaFile(c *fiber.Ctx) error {
+	filename := c.Params("filename")
+	c.Status(fiber.StatusOK).SendFile("tmp/" + filename)
+	return nil
+}

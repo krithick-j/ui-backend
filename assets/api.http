@@ -1,5 +1,5 @@
-# @host = http://localhost:8080/api 
-@host = https://ui-network.com/api 
+@host = http://localhost:8080/api 
+# @host = https://ui-network.com/api 
 
 
 ###
@@ -378,6 +378,15 @@ Content-Type: application/json
 	"distrib_id": "IN-00015",
 	"old_pass": "1234",
 	"new_pass": "123456"
+}
+
+###
+POST {{host}}/user/idCard HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00015"
 }
 
 ###

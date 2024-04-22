@@ -19,6 +19,7 @@ import (
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
+	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
@@ -240,4 +241,15 @@ func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {
 
 	return fiber.Map{"data": "Password changed Successfully"}, http.StatusOK
 
+}
+
+func GenerateIDCard(distrib_id string) error {
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	filename := fmt.Sprintf("tmp/%s.pdf", distrib_id)
+	err := pdf.OutputFileAndClose(filename)
+	if err != nil {
+		return err
+	}
+	return nil
 }

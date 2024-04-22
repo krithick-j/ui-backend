@@ -92,13 +92,12 @@ func UpdateUserPass(c *fiber.Ctx) error {
 }
 
 func GetIDCard(c *fiber.Ctx) error {
-
 	data := struct {
 		DistribId string `json:"distrib_id"`
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).Send([]byte("Bad Request"))
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	fmt.Println(data.DistribId)
 	service.GenerateIDCard(data.DistribId)

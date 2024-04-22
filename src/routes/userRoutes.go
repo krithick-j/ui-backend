@@ -9,6 +9,7 @@ import (
 func UserRouter(router fiber.Router) {
 
 	//User Crud
+	router.Post("/idCard", controllers.GetIDCard)
 	router.Get("/", controllers.GetAllUsers)
 	router.Get("/:dist_id", controllers.GetUserByDistId)
 	router.Put("/updateUser/:distrib_id", controllers.EditUserByDistId)
@@ -18,5 +19,4 @@ func UserRouter(router fiber.Router) {
 	router.Get("/newReferral/:distrib_id", controllers.NewReferrals)
 	router.Get("/allReferrals", controllers.AllReferrals)
 	router.Get("/getTrackingCenters/:distrib_id", controllers.GetTrackingCenters)
-	router.Post("/idCard", controllers.GetIDCard)
 }

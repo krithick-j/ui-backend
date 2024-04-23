@@ -19,6 +19,7 @@ import (
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
+	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
@@ -241,3 +242,138 @@ func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {
 	return fiber.Map{"data": "Password changed Successfully"}, http.StatusOK
 
 }
+
+func GenerateIDCard(distrib_id string) error {
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	// Outer Rect
+	pdf.Rect(5, 5, 180, 60, "D")
+	// Inner Left Rect
+	pdf.Rect(10, 10, 80, 50, "D")
+	// Inner Right Rect
+	pdf.Rect(100, 10, 80, 50, "D")
+	//Disclaimer Box
+	pdf.SetFillColor(234, 234, 245)
+	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
+	//Address Footer
+	pdf.Rect(100, 45, 80, 15, "DF")
+
+	pdf.Image("assets/images/photo.png", 15, 10, 25, 0, false, "png", 0, "")
+	pdf.Image("assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
+	pdf.Image("assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
+	// Inner Right Rect
+	pdf.SetFillColor(0, 255, 0)
+	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
+	pdf.SetFont("Arial", "B", 12)
+	var (
+		currX float64 = 12
+		currY float64 = 45
+	)
+
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "UI Distributor")
+	currX += 8
+	currY += 7
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Of")
+	currX += -8
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Universe International - India")
+	pdf.SetFont("Arial", "B", 10)
+	currX += 36
+	currY -= 34
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "V Jegatheesan")
+	pdf.SetFont("Arial", "", 8)
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Dist ID: IN-00001")
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Email: JEGA@JEGA.IN")
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Phone: +91-8056034174")
+	pdf.SetFont("Arial", "I", 8)
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• No Registration Fees"))
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• No Deposits"))
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• No Investments"))
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• No Job Offerings"))
+	/*
+		Back of the card
+	*/
+	currX += 55
+	currY -= 34
+	pdf.SetFont("Arial", "", 6)
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Phone No: XX-XXXX-XXXXX")
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "CIN: XXXXXXX-XXXXX")
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "GST: XXXXXXXXXXXX")
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• Check Government ID Card for Proof"))
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• This card is not transferable"))
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, tr("• This card should be shown before presentation"))
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "B", 8)
+	pdf.Cell(0, 0, tr("In Case of Any Enquiry, Write to:"))
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "support@ui-network.com")
+	//Footer
+	currX += 10
+	currY += 6
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(0, 0, "Universe International - India")
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "", 6)
+	pdf.Cell(0, 0, "144 - 6th Main Road, Anna Nagar West")
+	currY += 3
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Chennai - 600001 - TAMIL NADU")
+	filename := fmt.Sprintf("tmp/%s.pdf", distrib_id)
+	err := pdf.OutputFileAndClose(filename)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/* Already Implemented by Fiber */
+// func GetMediaFile(filename string) []byte {
+// 	file, err := os.Open("tmp/" + filename)
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 	}
+// 	defer file.Close()
+// 	// Get the file size
+// 	stat, err := file.Stat()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return nil
+// 	}
+// 	bs := make([]byte, stat.Size())
+// 	bufio.NewReader(file).Read(bs)
+// 	return bs
+// }

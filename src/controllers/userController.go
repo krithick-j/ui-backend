@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -88,4 +89,23 @@ func UpdateUserPass(c *fiber.Ctx) error {
 	res, status := service.UpdateUserPass(user_in)
 
 	return c.Status(status).JSON(res)
+}
+
+func GetIDCard(c *fiber.Ctx) error {
+	data := struct {
+		DistribId string `json:"distrib_id"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	fmt.Println(data.DistribId)
+	service.GenerateIDCard(data.DistribId)
+	return c.Status(fiber.StatusCreated).JSON("{msg:success}")
+}
+
+func GetMediaFile(c *fiber.Ctx) error {
+	filename := c.Params("filename")
+	c.Status(fiber.StatusOK).SendFile("tmp/" + filename)
+	return nil
 }

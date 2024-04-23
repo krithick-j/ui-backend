@@ -29,7 +29,7 @@ func main() {
 	app.Use(recover.New())
 	app.Use(cors.New())
 	app.Use(logger.New())
-
+	app.Get("/media/:filename", controllers.GetMediaFile)
 	api := app.Group("/api")
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)

@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/fmorenovr/gomail v0.0.0-20190819174001-821728186f39
+	github.com/go-pdf/fpdf v0.9.0
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 )

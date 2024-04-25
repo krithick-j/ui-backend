@@ -109,3 +109,17 @@ func GetMediaFile(c *fiber.Ctx) error {
 	c.Status(fiber.StatusOK).SendFile("tmp/" + filename)
 	return nil
 }
+
+func SendEmailCode(c *fiber.Ctx) error {
+
+	data := struct {
+		Email string `json:"email"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	service.SendEmailCode(data.Email)
+	c.Status(fiber.StatusCreated).SendString("Created")
+	return nil
+}

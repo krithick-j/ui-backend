@@ -360,20 +360,15 @@ func GenerateIDCard(distrib_id string) error {
 	return nil
 }
 
-/* Already Implemented by Fiber */
-// func GetMediaFile(filename string) []byte {
-// 	file, err := os.Open("tmp/" + filename)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 	}
-// 	defer file.Close()
-// 	// Get the file size
-// 	stat, err := file.Stat()
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return nil
-// 	}
-// 	bs := make([]byte, stat.Size())
-// 	bufio.NewReader(file).Read(bs)
-// 	return bs
-// }
+func SendEmailCode(toMail string) error {
+	otp := GenOPT()
+	fmt.Println(otp)
+	err := repositories.SaveOTP("email", toMail, otp)
+	if err != nil {
+		return err
+	}
+	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
+	tomail := fmt.Sprintf("<%s>", toMail)
+	SendMail(tomail, "Your Email Verification OTP", msg)
+	return nil
+}

@@ -121,3 +121,9 @@ func UpdatePassword(distrib_id string, newHashPass string) *gorm.DB {
 	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Update("pass", newHashPass)
 	return result
 }
+
+func SaveOTP(Type string, Value string, OTP string) error {
+	fmt.Println("Entering here as well")
+	err := configs.DB.Create(&models.OTPVerify{Type: Type, Value: Value, OTP: OTP}).Error
+	return err
+}

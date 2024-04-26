@@ -372,3 +372,24 @@ func SendEmailCode(toMail string) error {
 	SendMail(tomail, "Your Email Verification OTP", msg)
 	return nil
 }
+
+func VerifyEmailCode(otp string, email string) error {
+	return repositories.CheckAndUpdateOTP("email", email, otp)
+}
+
+func SendPhoneCode(phone string) error {
+	otp := GenOPT()
+	fmt.Println(otp)
+	err := repositories.SaveOTP("phone", phone, otp)
+	if err != nil {
+		return err
+	}
+	//msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
+	//tomail := fmt.Sprintf("<%s>", toMail)
+	//SendMail(tomail, "Your Email Verification OTP", msg)
+	return nil
+}
+
+func VerifyPhoneCode(otp string, phone string) error {
+	return repositories.CheckAndUpdateOTP("phone", phone, otp)
+}

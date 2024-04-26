@@ -30,8 +30,6 @@ func SendMail(tomail string, subject string, msg string) {
 	auth := mail.WithSMTPAuth(mail.SMTPAuthPlain)
 	user := mail.WithUsername("api")
 	pass := mail.WithPassword("bff432da147b065253a96ea52db78a9d")
-	fmt.Println("We are here...")
-	fmt.Println("We are here too...")
 	go func() {
 		client, err := mail.NewClient("live.smtp.mailtrap.io", port, auth, user, pass)
 		if err != nil {

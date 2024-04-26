@@ -34,6 +34,9 @@ func main() {
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)
 	api.Post("/auth/emailcode", controllers.SendEmailCode)
+	api.Put("/auth/emailcode", controllers.VerifyEmailCode)
+	api.Post("/auth/phonecode", controllers.SendPhoneCode)
+	api.Put("/auth/phonecode", controllers.VerifyPhoneCode)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},

@@ -123,3 +123,55 @@ func SendEmailCode(c *fiber.Ctx) error {
 	c.Status(fiber.StatusCreated).SendString("Created")
 	return nil
 }
+
+func VerifyEmailCode(c *fiber.Ctx) error {
+
+	data := struct {
+		OTP   string `json:"otp"`
+		Email string `json:"email"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	err = service.VerifyEmailCode(data.OTP, data.Email)
+	if err == nil {
+		c.Status(fiber.StatusOK).SendString("Ok")
+	} else {
+		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+	return nil
+}
+
+func SendPhoneCode(c *fiber.Ctx) error {
+
+	data := struct {
+		Phone string `json:"phone"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	service.SendPhoneCode(data.Phone)
+	c.Status(fiber.StatusCreated).SendString("Created")
+	return nil
+}
+
+func VerifyPhoneCode(c *fiber.Ctx) error {
+
+	data := struct {
+		OTP   string `json:"otp"`
+		Phone string `json:"phone"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	err = service.VerifyPhoneCode(data.OTP, data.Phone)
+	if err == nil {
+		c.Status(fiber.StatusOK).SendString("Ok")
+	} else {
+		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+	return nil
+}

@@ -5,6 +5,7 @@ import (
 	"log"
 	"ui-back-end/configs"
 	"ui-back-end/src/controllers"
+	"ui-back-end/src/models"
 	"ui-back-end/src/routes"
 
 	jwtware "github.com/gofiber/contrib/jwt"
@@ -22,6 +23,7 @@ func init() {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
 	configs.DbConnect(config)
+	configs.DB.AutoMigrate(&models.User{})
 }
 
 func main() {

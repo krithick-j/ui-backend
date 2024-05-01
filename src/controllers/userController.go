@@ -106,7 +106,8 @@ func GetIDCard(c *fiber.Ctx) error {
 
 func GetMediaFile(c *fiber.Ctx) error {
 	filename := c.Params("filename")
-	c.Status(fiber.StatusOK).SendFile("tmp/" + filename)
+	print(filename)
+	c.Status(fiber.StatusOK).SendFile("assets/" + filename)
 	return nil
 }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/wneessen/go-mail"
 	"gorm.io/gorm"
 )
 
@@ -369,7 +370,7 @@ func SendEmailCode(toMail string) error {
 	}
 	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
 	tomail := fmt.Sprintf("<%s>", toMail)
-	SendMail(tomail, "Your Email Verification OTP", msg)
+	SendMail(tomail, "Your Email Verification OTP", mail.TypeTextPlain, msg)
 	return nil
 }
 
@@ -378,8 +379,9 @@ func VerifyEmailCode(otp string, email string) error {
 }
 
 func SendPhoneCode(phone string) error {
-	otp := GenOPT()
-	fmt.Println(otp)
+	// otp := GenOPT()
+	otp := "555555"
+	// fmt.Println(otp)
 	err := repositories.SaveOTP("phone", phone, otp)
 	if err != nil {
 		return err
@@ -391,5 +393,6 @@ func SendPhoneCode(phone string) error {
 }
 
 func VerifyPhoneCode(otp string, phone string) error {
+	fmt.Println("phone verify-->")
 	return repositories.CheckAndUpdateOTP("phone", phone, otp)
 }

@@ -424,5 +424,10 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 	user.KYCStatus = "pending"
 	repositories.UpdateKyc(&user)
 	return nil
+}
 
+func ApproveKYC(distrib_id string) error {
+	user := models.User{DistribID: distrib_id, KYCStatus: "verified"}
+	repositories.UpdateKyc(&user)
+	return nil
 }

@@ -188,3 +188,18 @@ func KycUpload(c *fiber.Ctx) error {
 	c.Status(fiber.StatusAccepted).SendString("Accepted")
 	return nil
 }
+
+func ApproveKYC(c *fiber.Ctx) error {
+	data := struct {
+		DistribId string `json:"distrib_id"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
+	}
+	err = service.ApproveKYC(data.DistribId)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
+	}
+	return nil
+}

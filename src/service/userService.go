@@ -50,7 +50,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
-	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring}
+	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring, KYCStatus: res.KYCStatus}
 	return fiber.Map{"data": authout}, http.StatusAccepted
 
 }

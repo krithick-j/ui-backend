@@ -201,5 +201,6 @@ func ApproveKYC(c *fiber.Ctx) error {
 	if err != nil {
 		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
 	}
+	c.Status(fiber.StatusOK).SendString("{\"msg\":\"Verified\"}")
 	return nil
 }

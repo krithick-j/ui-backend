@@ -10,6 +10,7 @@ by default. The same center code if referred in other places called place
 import (
 	"crypto/sha256"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -386,13 +387,38 @@ func SendPhoneCode(phone string) error {
 	if err != nil {
 		return err
 	}
-	//msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
-	//tomail := fmt.Sprintf("<%s>", toMail)
-	//SendMail(tomail, "Your Email Verification OTP", msg)
 	return nil
 }
 
 func VerifyPhoneCode(otp string, phone string) error {
 	fmt.Println("phone verify-->")
 	return repositories.CheckAndUpdateOTP("phone", phone, otp)
+}
+
+func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
+	user := models.User{}
+	user.DistribID = form.Value["distrib_id"][0]
+	for fs, fhs := range form.File {
+		for _, fh := range fhs {
+			fullPath := "./assets/" + user.DistribID + "-" + fs + "-" + fh.Filename
+			err := c.SaveFile(fh, fullPath)
+			if err != nil {
+				return err
+			}
+			switch fs {
+			case "aadhar":
+				user.KYCAdhaar = fullPath
+			case "consent":
+				user.KYCConsentDoc = fullPath
+			case "pan":
+				user.KYCPAN = fullPath
+			case "user-image":
+				user.KYCPhoto = fullPath
+			}
+		}
+	}
+	user.KYCStatus = "pending"
+	repositories.UpdateKyc(&user)
+	return nil
+
 }

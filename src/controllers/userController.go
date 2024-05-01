@@ -182,12 +182,8 @@ func KycUpload(c *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	for _, fhs := range form.File {
-		for _, fh := range fhs {
-			// process uploaded file here
-			fmt.Println(fh)
-		}
-	}
+	service.KycUpload(c, form)
+	fmt.Println("Processing Files")
 	c.Status(fiber.StatusAccepted).SendString("Accepted")
 	return nil
 }

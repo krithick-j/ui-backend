@@ -136,3 +136,7 @@ func CheckAndUpdateOTP(Type string, Value string, OTP string) error {
 	}
 	return nil
 }
+
+func UpdateKyc(user *models.User) {
+	configs.DB.Model(user).Where("distrib_id", user.DistribID).Updates(user)
+}

@@ -20,6 +20,8 @@ import (
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
+	"path/filepath"
+
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -400,20 +402,22 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 	user.DistribID = form.Value["distrib_id"][0]
 	for fs, fhs := range form.File {
 		for _, fh := range fhs {
-			fullPath := "./assets/" + user.DistribID + "-" + fs + "-" + fh.Filename
+			extension := filepath.Ext(fh.Filename)
+			fullPath := "./assets/" + user.DistribID + "-" + fs + extension
+			mediapath := "media/" + user.DistribID + "-" + fs + extension
 			err := c.SaveFile(fh, fullPath)
 			if err != nil {
 				return err
 			}
 			switch fs {
 			case "aadhar":
-				user.KYCAdhaar = fullPath
+				user.KYCAdhaar = mediapath
 			case "consent":
-				user.KYCConsentDoc = fullPath
+				user.KYCConsentDoc = mediapath
 			case "pan":
-				user.KYCPAN = fullPath
+				user.KYCPAN = mediapath
 			case "user-image":
-				user.KYCPhoto = fullPath
+				user.KYCPhoto = mediapath
 			}
 		}
 	}

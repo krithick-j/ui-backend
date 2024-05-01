@@ -176,3 +176,18 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 	}
 	return nil
 }
+
+func KycUpload(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	for _, fhs := range form.File {
+		for _, fh := range fhs {
+			// process uploaded file here
+			fmt.Println(fh)
+		}
+	}
+	c.Status(fiber.StatusAccepted).SendString("Accepted")
+	return nil
+}

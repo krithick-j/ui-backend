@@ -99,7 +99,6 @@ func GetIDCard(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	fmt.Println(data.DistribId)
 	service.GenerateIDCard(data.DistribId)
 	return c.Status(fiber.StatusCreated).JSON("{msg:success}")
 }

@@ -356,7 +356,7 @@ func GenerateIDCard(distrib_id string) error {
 	currY += 3
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "Chennai - 600001 - TAMIL NADU")
-	filename := fmt.Sprintf("tmp/%s.pdf", distrib_id)
+	filename := fmt.Sprintf("assets/%s-idcard.pdf", distrib_id)
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
 		return err

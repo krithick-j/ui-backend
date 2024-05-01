@@ -20,12 +20,12 @@ func GenOPT() string {
 	return fmt.Sprintf("%06d", bi)
 }
 
-func SendMail(tomail string, subject string, msg string) {
+func SendMail(tomail string, subject string, mailtype mail.ContentType, msg string) {
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(tomail)
 	m.Subject(subject)
-	m.SetBodyString(mail.TypeTextPlain, msg)
+	m.SetBodyString(mailtype, msg)
 	port := mail.WithPort(mail.DefaultPortTLS)
 	auth := mail.WithSMTPAuth(mail.SMTPAuthPlain)
 	user := mail.WithUsername("api")

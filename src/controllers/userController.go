@@ -146,13 +146,13 @@ func VerifyEmailCode(c *fiber.Ctx) error {
 func SendPhoneCode(c *fiber.Ctx) error {
 
 	data := struct {
-		Phone string `json:"phone"`
+		PhoneNo string `json:"phone_no"`
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	service.SendPhoneCode(data.Phone)
+	service.SendPhoneCode(data.PhoneNo)
 	c.Status(fiber.StatusCreated).SendString("Created")
 	return nil
 }
@@ -160,14 +160,15 @@ func SendPhoneCode(c *fiber.Ctx) error {
 func VerifyPhoneCode(c *fiber.Ctx) error {
 
 	data := struct {
-		OTP   string `json:"otp"`
-		Phone string `json:"phone"`
+		OTP     string `json:"otp"`
+		PhoneNo string `json:"phone_no"`
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	err = service.VerifyPhoneCode(data.OTP, data.Phone)
+	fmt.Println("data", data)
+	err = service.VerifyPhoneCode(data.OTP, data.PhoneNo)
 	if err == nil {
 		c.Status(fiber.StatusOK).SendString("Ok")
 	} else {

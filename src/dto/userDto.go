@@ -28,6 +28,7 @@ type AuthOut struct {
 	DistribID string `json:"distrib_id"`
 	Name      string `json:"name"`
 	AuthToken string `json:"auth_token"`
+	KYCStatus string `json:"kyc_status"`
 }
 
 type RecursiveUser struct {

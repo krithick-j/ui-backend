@@ -1,8 +1,11 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -205,27 +208,38 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }
 
-func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
-	//saving product
-	product := &models.Product{
-		Name:              payload.Name,
-		Quantity:          payload.Quantity,
-		ShipmentTime:      payload.ShipmentTime,
-		Price:             payload.Price,
-		SandH:             payload.SandH,
-		ProductCategoryID: payload.ProductCategoryID,
-		TypeValue:         payload.TypeValue,
-		ProductType:       payload.ProductType,
-		AdminName:         adminName,
-	}
-	product = repositories.SaveProduct(product)
-	//group of pictures stores in product image table
-	for _, image := range payload.ProductImages {
-		productImage := &models.ProductImage{
-			Image:     image.Image,
-			ProductID: product.ID,
+// func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
+func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
+	data := c.FormValue("data")
+	product := models.Product{}
+	json.Unmarshal([]byte(data), &product)
+	fmt.Println("ID", product.ID)
+	fmt.Println("Admin Name", product.AdminName)
+	fmt.Println("Name", product.Name)
+	fmt.Println("TypeValue", product.TypeValue)
+	fmt.Println("ShipmentTime", product.ShipmentTime)
+	fmt.Println("Price", product.Price)
+	fmt.Println("ProductCategoryID", product.ProductCategoryID)
+	fmt.Println("ProductType", product.ProductType)
+	prod := repositories.SaveProduct(&product)
+	var pms []models.ProductImage
+	pid := prod.ID
+	for fs, fhs := range form.File {
+		for _, fh := range fhs {
+			pm := models.ProductImage{}
+			extension := filepath.Ext(fh.Filename)
+			fmt.Println(extension, fh.Filename)
+			fmt.Println(fs)
+			fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
+			err := c.SaveFile(fh, fullPath)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
+			pm.ProductID = pid
+			pms = append(pms, pm)
 		}
-		repositories.SaveProductImage(productImage)
 	}
+	repositories.SaveProductImage(pms)
 	return fiber.Map{"data": "Product Successfully created"}, http.StatusCreated
 }

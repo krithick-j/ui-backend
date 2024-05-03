@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -96,13 +97,20 @@ func EditCartProducts(c *fiber.Ctx) error {
 }
 
 func CreateProduct(c *fiber.Ctx) error {
-	adminName := c.Params("admin_name")
-	var payload dto.ProductIn
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	form, err := c.MultipartForm()
+	if err != nil {
+		fmt.Println(err.Error())
 	}
+	// service.KycUpload(c, form)
+	// fmt.Println("Processing Files")
+	// c.Status(fiber.StatusAccepted).SendString("Accepted")
+	// adminName := c.Params("admin_name")
+	// var payload dto.ProductIn
+	// if err := c.BodyParser(&payload); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	// }
 
-	res, status := service.CreateProduct(payload, adminName)
+	res, status := service.CreateProduct(c, form)
 	return c.Status(status).JSON(res)
 }
 

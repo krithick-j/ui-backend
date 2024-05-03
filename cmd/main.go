@@ -56,6 +56,7 @@ func main() {
 	api.Route("/redeem", routes.RedeemRouter)
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)
+	api.Route("/admin", routes.AdminRouter)
 
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

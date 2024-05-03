@@ -12,7 +12,7 @@ import (
 
 // has many
 func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Model(&models.Product{}).Preload("ProductImage").Preload("ProductImages").Find(&product)
+	result := configs.DB.Model(&models.Product{}).Preload("ProductImages").Find(&product)
 	return product, result
 }
 
@@ -93,11 +93,13 @@ func EditCartProducts(distrib_id string, product_id string, payload models.CartI
 	return payload, result
 }
 
-func SaveProductImage(productImage *models.ProductImage) error {
+func SaveProductImage(productImages []models.ProductImage) error {
 
-	result := configs.DB.Create(&productImage)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
+	for _, pm := range productImages {
+		result := configs.DB.Table("product_images").Create(&pm)
+		if result.Error != nil {
+			fmt.Printf("Error %v\n", result.Error.Error())
+		}
 	}
 
 	return nil

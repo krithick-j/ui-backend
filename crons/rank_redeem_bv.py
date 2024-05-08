@@ -21,25 +21,39 @@ def get_all_users_with_frequency() -> List[str]:
 
 def get_rank(user_id:str) -> str:
     ''' Calculate rank here
-    The logic is for current month how many 
+        The logic is for current month how many 
         1. Cheques collected
         2. How many sign up happened
         3. How many bv they generated
     '''
-    return '2.0'
+    # Check COllected
+    sql = f"""
+            SELECT count(*) as total_checkout FROM bv_transactions WHERE distrib_id='{user_id}'
+            AND trans_type='cheque';
+        """
+    rank = 2.0
+    cursor = DB.cursor()
+    cursor.execute(sql)
+    row = cursor.fetchone()
+    if 100 > row[0] >= 2:
+        rank += 0.5
+    elif row[0] > 100:
+        rank += 1
+    return rank
 
 def alluser_upsert_rank() -> None:
     cursor = DB.cursor()
     for user in users:
         rank = get_rank(user["id"])
-        sql = f"""
-            INSERT INTO user_rank (user_id, year, month, rank)
-            VALUES ('{user["id"]}', {current_dt.year}, {current_dt.month}, '{rank}')
-            ON DUPLICATE KEY UPDATE rank = '{rank}';
-        """
-        cursor.execute(sql)
-    DB.commit()
-    cursor.close()
+        print(rank)
+    #     sql = f"""
+    #         INSERT INTO user_rank (user_id, year, month, rank)
+    #         VALUES ('{user["id"]}', {current_dt.year}, {current_dt.month}, '{rank}')
+    #         ON DUPLICATE KEY UPDATE rank = '{rank}';
+    #     """
+    #     cursor.execute(sql)
+    # DB.commit()
+    # cursor.close()
 
 def process_ep(distrib_id: str, 
                place: str) -> None:
@@ -109,9 +123,9 @@ def activate_bv() -> None:
 
 def main()->None:
     # Update the rank for all users
-    # alluser_upsert_rank()
+    alluser_upsert_rank()
     # Check earning point on 6th check
-    allusers_update_earning_point()
+    # allusers_update_earning_point()
     # Close the db at the end
     # activate_bv()
     DB.close()

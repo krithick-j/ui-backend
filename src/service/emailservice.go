@@ -20,18 +20,16 @@ func GenOPT() string {
 	return fmt.Sprintf("%06d", bi)
 }
 
-func SendMail(tomail string, subject string, msg string) {
+func SendMail(tomail string, subject string, mailtype mail.ContentType, msg string) {
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(tomail)
 	m.Subject(subject)
-	m.SetBodyString(mail.TypeTextPlain, msg)
+	m.SetBodyString(mailtype, msg)
 	port := mail.WithPort(mail.DefaultPortTLS)
 	auth := mail.WithSMTPAuth(mail.SMTPAuthPlain)
 	user := mail.WithUsername("api")
 	pass := mail.WithPassword("bff432da147b065253a96ea52db78a9d")
-	fmt.Println("We are here...")
-	fmt.Println("We are here too...")
 	go func() {
 		client, err := mail.NewClient("live.smtp.mailtrap.io", port, auth, user, pass)
 		if err != nil {

@@ -10,6 +10,7 @@ by default. The same center code if referred in other places called place
 import (
 	"crypto/sha256"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,10 +20,13 @@ import (
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
+	"path/filepath"
+
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/wneessen/go-mail"
 	"gorm.io/gorm"
 )
 
@@ -49,7 +53,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
-	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring}
+	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring, KYCStatus: res.KYCStatus}
 	return fiber.Map{"data": authout}, http.StatusAccepted
 
 }
@@ -352,7 +356,7 @@ func GenerateIDCard(distrib_id string) error {
 	currY += 3
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "Chennai - 600001 - TAMIL NADU")
-	filename := fmt.Sprintf("tmp/%s.pdf", distrib_id)
+	filename := fmt.Sprintf("assets/%s-idcard.pdf", distrib_id)
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
 		return err
@@ -369,6 +373,72 @@ func SendEmailCode(toMail string) error {
 	}
 	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
 	tomail := fmt.Sprintf("<%s>", toMail)
-	SendMail(tomail, "Your Email Verification OTP", msg)
+	SendMail(tomail, "Your Email Verification OTP", mail.TypeTextPlain, msg)
+	return nil
+}
+
+func VerifyEmailCode(otp string, email string) error {
+	return repositories.CheckAndUpdateOTP("email", email, otp)
+}
+
+func SendPhoneCode(c *fiber.Ctx, phone string) error {
+	otp := GenOPT()
+	url := "https://www.textguru.in/api/v22.0/?"
+	payload := fmt.Sprintf("username=jega.in&password=60423479&source=GSENTS&dmobile=91%s&dlttempid=1707171500974884924&message=Dear Customer,\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\nGSENTS", phone, otp)
+	agent := fiber.Post(url)
+	agent.Body([]byte(payload)) // set body received by request
+	statusCode, body, errs := agent.Bytes()
+	defer agent.ConnectionClose()
+	if len(errs) > 0 {
+		for _, err := range errs {
+			fmt.Println("Error is ", err.Error())
+		}
+	}
+	fmt.Println(statusCode)
+	fmt.Println(string(body[:]))
+	err := repositories.SaveOTP("phone", phone, otp)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func VerifyPhoneCode(otp string, phone string) error {
+	fmt.Println("phone verify-->")
+	return repositories.CheckAndUpdateOTP("phone", phone, otp)
+}
+
+func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
+	user := models.User{}
+	user.DistribID = form.Value["distrib_id"][0]
+	for fs, fhs := range form.File {
+		for _, fh := range fhs {
+			extension := filepath.Ext(fh.Filename)
+			fullPath := "./assets/" + user.DistribID + "-" + fs + extension
+			mediapath := "media/" + user.DistribID + "-" + fs + extension
+			err := c.SaveFile(fh, fullPath)
+			if err != nil {
+				return err
+			}
+			switch fs {
+			case "aadhar":
+				user.KYCAdhaar = mediapath
+			case "consent":
+				user.KYCConsentDoc = mediapath
+			case "pan":
+				user.KYCPAN = mediapath
+			case "user-image":
+				user.KYCPhoto = mediapath
+			}
+		}
+	}
+	user.KYCStatus = "pending"
+	repositories.UpdateKyc(&user)
+	return nil
+}
+
+func ApproveKYC(distrib_id string) error {
+	user := models.User{DistribID: distrib_id, KYCStatus: "verified"}
+	repositories.UpdateKyc(&user)
 	return nil
 }

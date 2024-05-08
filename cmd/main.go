@@ -5,6 +5,7 @@ import (
 	"log"
 	"ui-back-end/configs"
 	"ui-back-end/src/controllers"
+	"ui-back-end/src/models"
 	"ui-back-end/src/routes"
 
 	jwtware "github.com/gofiber/contrib/jwt"
@@ -22,6 +23,7 @@ func init() {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
 	configs.DbConnect(config)
+	configs.DB.AutoMigrate(&models.User{})
 }
 
 func main() {
@@ -34,6 +36,9 @@ func main() {
 	api.Post("/auth/login", controllers.Login)
 	api.Post("/auth/register", controllers.UserRegistration)
 	api.Post("/auth/emailcode", controllers.SendEmailCode)
+	api.Put("/auth/emailcode", controllers.VerifyEmailCode)
+	api.Post("/auth/phonecode", controllers.SendPhoneCode)
+	api.Put("/auth/phonecode", controllers.VerifyPhoneCode)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
@@ -51,6 +56,7 @@ func main() {
 	api.Route("/redeem", routes.RedeemRouter)
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)
+	api.Route("/admin", routes.AdminRouter)
 
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

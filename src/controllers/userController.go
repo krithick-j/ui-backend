@@ -152,7 +152,7 @@ func SendPhoneCode(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	service.SendPhoneCode(data.PhoneNo)
+	service.SendPhoneCode(c, data.PhoneNo)
 	c.Status(fiber.StatusCreated).SendString("Created")
 	return nil
 }

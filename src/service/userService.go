@@ -381,10 +381,21 @@ func VerifyEmailCode(otp string, email string) error {
 	return repositories.CheckAndUpdateOTP("email", email, otp)
 }
 
-func SendPhoneCode(phone string) error {
-	// otp := GenOPT()
-	otp := "555555"
-	// fmt.Println(otp)
+func SendPhoneCode(c *fiber.Ctx, phone string) error {
+	otp := GenOPT()
+	url := "https://www.textguru.in/api/v22.0/?"
+	payload := fmt.Sprintf("username=jega.in&password=60423479&source=GSENTS&dmobile=91%s&dlttempid=1707171500974884924&message=Dear Customer,\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\nGSENTS", phone, otp)
+	agent := fiber.Post(url)
+	agent.Body([]byte(payload)) // set body received by request
+	statusCode, body, errs := agent.Bytes()
+	defer agent.ConnectionClose()
+	if len(errs) > 0 {
+		for _, err := range errs {
+			fmt.Println("Error is ", err.Error())
+		}
+	}
+	fmt.Println(statusCode)
+	fmt.Println(string(body[:]))
 	err := repositories.SaveOTP("phone", phone, otp)
 	if err != nil {
 		return err

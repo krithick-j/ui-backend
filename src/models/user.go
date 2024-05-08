@@ -18,4 +18,9 @@ type User struct {
 	Country         string `json:"country"`
 	HomePhoneNo     string `json:"home_phone_no"`
 	MobilePhoneNo   string `json:"mobile_phone_no"`
+	KYCPhoto        string `json:"kyc_photo"`
+	KYCAdhaar       string `json:"kyc_adhaar"`
+	KYCPAN          string `json:"kyc_pan"`
+	KYCConsentDoc   string `json:"kyc_concesnt_doc"`
+	KYCStatus       string `json:"kyc_status" gorm:"default:not_submitted"` //not_submitted | pending | verified
 }

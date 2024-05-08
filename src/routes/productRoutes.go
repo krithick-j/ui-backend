@@ -10,7 +10,7 @@ func ProductRouter(router fiber.Router) {
 	router.Get("/", controllers.GetProductsController)
 	router.Post("/getProductsById", controllers.GetProductsById)
 	router.Get("/getEpProducts/:category_id", controllers.GetEpProductsByCategoryId)
-	router.Post("/create/:admin_name", controllers.CreateProduct)
+	router.Post("/admin/:admin_name", controllers.CreateProduct)
 	router.Post("/addToCart", controllers.AddToCartController)
 	router.Get("/cartProducts/:distrib_id", controllers.GetCartProductsByUserId)
 	router.Put("/cartProducts/", controllers.EditCartProducts)

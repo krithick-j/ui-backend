@@ -1,0 +1,11 @@
+package routes
+
+import (
+	"ui-back-end/src/controllers"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func AdminRouter(router fiber.Router) {
+	router.Post("/product", controllers.CreateProduct)
+}

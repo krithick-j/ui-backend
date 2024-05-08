@@ -12,7 +12,7 @@ import (
 
 // has many
 func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Model(&models.Product{}).Preload("ProductImage").Preload("ProductImages").Find(&product)
+	result := configs.DB.Model(&models.Product{}).Preload("ProductImages").Find(&product)
 	return product, result
 }
 
@@ -22,18 +22,18 @@ func GetAllProductCategories(productCategories []models.ProductCategory) ([]mode
 }
 
 func GetAllProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ?", category_id)
+	result := configs.DB.Find(&product, "product_category_id = ?", category_id)
 	return product, result
 }
 
 func GetAllProductByCategoryIdAndProductType(category_id string, productType string) ([]models.Product, *gorm.DB) {
 	var product []models.Product
-	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? AND product_type=?", category_id, productType)
+	result := configs.DB.Find(&product, "product_category_id = ? AND product_type=?", category_id, productType)
 	return product, result
 }
 
 func GetAllEpProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Preload("ProductImage").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
+	result := configs.DB.Preload("ProductImages").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
 	return product, result
 }
 
@@ -93,11 +93,13 @@ func EditCartProducts(distrib_id string, product_id string, payload models.CartI
 	return payload, result
 }
 
-func SaveProductImage(productImage *models.ProductImage) error {
+func SaveProductImage(productImages []models.ProductImage) error {
 
-	result := configs.DB.Create(&productImage)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
+	for _, pm := range productImages {
+		result := configs.DB.Table("product_images").Create(&pm)
+		if result.Error != nil {
+			fmt.Printf("Error %v\n", result.Error.Error())
+		}
 	}
 
 	return nil

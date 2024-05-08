@@ -113,7 +113,6 @@ func GetRefDistribIdByDistribId(distribId string) (string, *gorm.DB) {
 func GetUserPassByDistribId(distribId string) (string, *gorm.DB) {
 	var pass string
 	result := configs.DB.Model(&models.User{}).Where("distrib_id=?", distribId).Select("pass").Take(&pass)
-	fmt.Println("User pass", pass)
 	return pass, result
 }
 
@@ -123,7 +122,21 @@ func UpdatePassword(distrib_id string, newHashPass string) *gorm.DB {
 }
 
 func SaveOTP(Type string, Value string, OTP string) error {
-	fmt.Println("Entering here as well")
 	err := configs.DB.Create(&models.OTPVerify{Type: Type, Value: Value, OTP: OTP}).Error
 	return err
+}
+
+func CheckAndUpdateOTP(Type string, Value string, OTP string) error {
+	res := configs.DB.Model(&models.OTPVerify{}).Where("type=? AND value=? AND otp=?", Type, Value, OTP).Update("status", "verified")
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected < 1 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func UpdateKyc(user *models.User) {
+	configs.DB.Model(user).Where("distrib_id", user.DistribID).Updates(user)
 }

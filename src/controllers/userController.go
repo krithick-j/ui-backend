@@ -99,14 +99,14 @@ func GetIDCard(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	fmt.Println(data.DistribId)
 	service.GenerateIDCard(data.DistribId)
 	return c.Status(fiber.StatusCreated).JSON("{msg:success}")
 }
 
 func GetMediaFile(c *fiber.Ctx) error {
 	filename := c.Params("filename")
-	c.Status(fiber.StatusOK).SendFile("tmp/" + filename)
+	print(filename)
+	c.Status(fiber.StatusOK).SendFile("assets/" + filename)
 	return nil
 }
 
@@ -121,5 +121,85 @@ func SendEmailCode(c *fiber.Ctx) error {
 	}
 	service.SendEmailCode(data.Email)
 	c.Status(fiber.StatusCreated).SendString("Created")
+	return nil
+}
+
+func VerifyEmailCode(c *fiber.Ctx) error {
+
+	data := struct {
+		OTP   string `json:"otp"`
+		Email string `json:"email"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	err = service.VerifyEmailCode(data.OTP, data.Email)
+	if err == nil {
+		c.Status(fiber.StatusOK).SendString("Ok")
+	} else {
+		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+	return nil
+}
+
+func SendPhoneCode(c *fiber.Ctx) error {
+
+	data := struct {
+		PhoneNo string `json:"phone_no"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	service.SendPhoneCode(c, data.PhoneNo)
+	c.Status(fiber.StatusCreated).SendString("Created")
+	return nil
+}
+
+func VerifyPhoneCode(c *fiber.Ctx) error {
+
+	data := struct {
+		OTP     string `json:"otp"`
+		PhoneNo string `json:"phone_no"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+	}
+	fmt.Println("data", data)
+	err = service.VerifyPhoneCode(data.OTP, data.PhoneNo)
+	if err == nil {
+		c.Status(fiber.StatusOK).SendString("Ok")
+	} else {
+		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+	return nil
+}
+
+func KycUpload(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	service.KycUpload(c, form)
+	fmt.Println("Processing Files")
+	c.Status(fiber.StatusAccepted).SendString("Accepted")
+	return nil
+}
+
+func ApproveKYC(c *fiber.Ctx) error {
+	data := struct {
+		DistribId string `json:"distrib_id"`
+	}{}
+	err := c.BodyParser(&data)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
+	}
+	err = service.ApproveKYC(data.DistribId)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
+	}
+	c.Status(fiber.StatusOK).SendString("{\"msg\":\"Verified\"}")
 	return nil
 }

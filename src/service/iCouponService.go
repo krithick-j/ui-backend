@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -75,7 +74,6 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	m.Set("To", toMail)
 
 	m.Set("Subject", "Your new iCoupon")
-	fmt.Println(coupons)
 
 	m.Set("BodyMessage", string(renderedEmail))
 

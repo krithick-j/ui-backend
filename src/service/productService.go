@@ -100,8 +100,6 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 		}
 	}
 
-	fmt.Println("firstprodtype", firstProdType, "req prod type", request)
-
 	if firstProdType == "" || request.ProductType == firstProdType {
 
 		productsOut, res := repositories.GetAllCartProductsByDistribID(request.DistribID)
@@ -213,14 +211,6 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
 	data := c.FormValue("data")
 	product := models.Product{}
 	json.Unmarshal([]byte(data), &product)
-	fmt.Println("ID", product.ID)
-	fmt.Println("Admin Name", product.AdminName)
-	fmt.Println("Name", product.Name)
-	fmt.Println("TypeValue", product.TypeValue)
-	fmt.Println("ShipmentTime", product.ShipmentTime)
-	fmt.Println("Price", product.Price)
-	fmt.Println("ProductCategoryID", product.ProductCategoryID)
-	fmt.Println("ProductType", product.ProductType)
 	prod := repositories.SaveProduct(&product)
 	var pms []models.ProductImage
 	pid := prod.ID

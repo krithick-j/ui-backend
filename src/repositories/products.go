@@ -40,7 +40,6 @@ func GetAllEpProductByCategoryID(category_id string, product []models.Product) (
 // Get the first cart item using distrib ID in cart table
 func GetFirstCartItem(distribId string) (models.CartItem, *gorm.DB) {
 	var item models.CartItem
-	fmt.Println("distrib id", distribId)
 	result := configs.DB.Model(&models.CartItem{}).Where("distrib_id=?", distribId).First(&item)
 	return item, result
 }

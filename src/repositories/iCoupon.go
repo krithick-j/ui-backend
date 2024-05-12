@@ -57,7 +57,6 @@ func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
 }
 
 func CloseCoupon(VID string) *gorm.DB {
-	fmt.Println("vid set to false---------------__>")
 	result := configs.DB.Table("i_coupons").Where("v_id=?", VID).Update("active", false) //0 means coupon closed //1 means active
 	return result
 }

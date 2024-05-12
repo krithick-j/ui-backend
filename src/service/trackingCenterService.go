@@ -118,7 +118,6 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 	tcOut := dto.TrackingCenterOut{}
 	tcOut.DistribId = distrib_id
 	for _, place := range res {
-		// fmt.Println(r.Place)
 		bvres, _ := repositories.GetBVforTCOneRow(distrib_id, place.Place)
 		obj := dto.TCBv{
 			Place:   place.Place,
@@ -141,7 +140,6 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 		sum += placeBv.AddBv
 	}
 
-	fmt.Println("sum", sum, "placebv", placeBvs, "total bv", totalBv)
 	//Validation--> Sum of bv should match the totalValueType
 	if sum == totalBv {
 		//Adding Bv Points from the product to the tree

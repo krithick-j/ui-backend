@@ -38,5 +38,4 @@ func SendMail(tomail string, subject string, mailtype mail.ContentType, msg stri
 		defer client.Close()
 		client.DialAndSend(m)
 	}()
-	fmt.Println("We are after email sent")
 }

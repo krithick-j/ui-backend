@@ -167,7 +167,6 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	fmt.Println("data", data)
 	err = service.VerifyPhoneCode(data.OTP, data.PhoneNo)
 	if err == nil {
 		c.Status(fiber.StatusOK).SendString("Ok")
@@ -183,7 +182,6 @@ func KycUpload(c *fiber.Ctx) error {
 		fmt.Println(err.Error())
 	}
 	service.KycUpload(c, form)
-	fmt.Println("Processing Files")
 	c.Status(fiber.StatusAccepted).SendString("Accepted")
 	return nil
 }

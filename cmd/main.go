@@ -5,7 +5,6 @@ import (
 	"log"
 	"ui-back-end/configs"
 	"ui-back-end/src/controllers"
-	"ui-back-end/src/models"
 	"ui-back-end/src/routes"
 
 	jwtware "github.com/gofiber/contrib/jwt"
@@ -17,16 +16,18 @@ import (
 )
 
 func init() {
+	configs.LoggerConfig()
 	config, err := configs.LoadConfig(".")
 	if err != nil {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
 	configs.DbConnect(config)
-	configs.DB.AutoMigrate(&models.User{})
 }
 
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 100 * 1024 * 1024,
+	})
 	app.Use(recover.New())
 	app.Use(cors.New())
 	app.Use(logger.New())
@@ -56,6 +57,5 @@ func main() {
 	api.Route("/cheque", routes.CheckoutRouter)
 	api.Route("/contactCenter", routes.ContactCenter)
 	api.Route("/admin", routes.AdminRouter)
-
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

@@ -17,7 +17,6 @@ import (
 )
 
 func init() {
-	fmt.Println("Initializing the DB")
 	config, err := configs.LoadConfig(".")
 	if err != nil {
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
@@ -39,13 +38,13 @@ func main() {
 	api.Put("/auth/emailcode", controllers.VerifyEmailCode)
 	api.Post("/auth/phonecode", controllers.SendPhoneCode)
 	api.Put("/auth/phonecode", controllers.VerifyPhoneCode)
+	api.Route("/user", routes.UserRouter)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
 	}))
 
 	/* Hereafter all the endpoints will be secured */
-	api.Route("/user", routes.UserRouter)
 	api.Route("/cpa", routes.CpaRouter)
 	api.Route("/iCoupon", routes.ICouponRouter)
 	api.Route("/product", routes.ProductRouter)

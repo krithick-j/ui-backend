@@ -1,7 +1,7 @@
-if ! [[ "$ENV" == "stg" || "$ENV" == "prod" ]]; then
-  echo "Usage ENV=prod|stg ./build.sh"
-  exit 1
-fi
+# if ! [[ "$ENV" == "stg" || "$ENV" == "prod" ]]; then
+#   echo "Usage ENV=prod|stg ./build.sh"
+#   exit 1
+# fi
 
 go build -o main cmd/main.go
 scp -i ~/ui-network/ui-network.pem main ubuntu@ui-network.com://home/ubuntu/

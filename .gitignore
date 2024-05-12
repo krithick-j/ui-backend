@@ -2,3 +2,6 @@ tmp
 email.html
 app.env
 __pycache__
+*.zip
+main
+assets/

@@ -11,7 +11,6 @@ import (
 func GetICouponHistory(c *fiber.Ctx) error {
 	var payload dto.ICouponHistoryIn
 	if err := c.BodyParser(&payload); err != nil {
-		fmt.Println("error -->", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	res, status := service.GetICouponHistory(payload)

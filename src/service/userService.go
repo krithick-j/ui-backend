@@ -102,13 +102,11 @@ func FindNextAvailSlot(distrib_id string, place string, side string) (string, st
 		Here we find an empty slot recursively on the same side
 		Caution a circular refernce by external db edit may cause an infinite loop
 	**/
-	fmt.Println("Finding Next Slot")
 	var old_distrib_id string
 	var old_place string
 	for {
 		old_distrib_id, old_place = distrib_id, place
 		distrib_id, place = repositories.GetNextItem(distrib_id, place, side)
-		fmt.Println("D: ", distrib_id, "C:", place)
 		if distrib_id == "" {
 			return old_distrib_id, old_place
 		}
@@ -366,7 +364,6 @@ func GenerateIDCard(distrib_id string) error {
 
 func SendEmailCode(toMail string) error {
 	otp := GenOPT()
-	fmt.Println(otp)
 	err := repositories.SaveOTP("email", toMail, otp)
 	if err != nil {
 		return err
@@ -388,14 +385,13 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	agent := fiber.Post(url)
 	agent.Body([]byte(payload)) // set body received by request
 	statusCode, body, errs := agent.Bytes()
+	_, _ = statusCode, body
 	defer agent.ConnectionClose()
 	if len(errs) > 0 {
 		for _, err := range errs {
 			fmt.Println("Error is ", err.Error())
 		}
 	}
-	fmt.Println(statusCode)
-	fmt.Println(string(body[:]))
 	err := repositories.SaveOTP("phone", phone, otp)
 	if err != nil {
 		return err
@@ -404,7 +400,6 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 }
 
 func VerifyPhoneCode(otp string, phone string) error {
-	fmt.Println("phone verify-->")
 	return repositories.CheckAndUpdateOTP("phone", phone, otp)
 }
 

@@ -9,9 +9,11 @@ by default. The same center code if referred in other places called place
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +29,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/wneessen/go-mail"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -246,6 +249,12 @@ func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {
 }
 
 func GenerateIDCard(distrib_id string) error {
+	configs.Log.Info("Started Generating ID Card")
+	user := models.User{}
+	userdata, _ := repositories.GetUserByID(distrib_id, user)
+	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
+	extension := filepath.Ext(userphoto)
+	extension, _ = strings.CutPrefix(extension, ".")
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	// Outer Rect
@@ -260,9 +269,16 @@ func GenerateIDCard(distrib_id string) error {
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
 
-	pdf.Image("assets/images/photo.png", 15, 10, 25, 0, false, "png", 0, "")
-	pdf.Image("assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
-	pdf.Image("assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
+	userphoto = filepath.Join("./assets", userphoto)
+	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
+		configs.Log.Errorf("File Does Not exit %s", userphoto)
+	}
+	if _, err := os.Stat("./assets/images/uilogo.png"); errors.Is(err, os.ErrNotExist) {
+		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/uilogo.png"))
+	}
+	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
+	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -286,17 +302,17 @@ func GenerateIDCard(distrib_id string) error {
 	currX += 36
 	currY -= 34
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "V Jegatheesan")
+	pdf.Cell(0, 0, userdata.Name)
 	pdf.SetFont("Arial", "", 8)
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Dist ID: IN-00001")
+	pdf.Cell(0, 0, "Dist ID: "+userdata.DistribID)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Email: JEGA@JEGA.IN")
+	pdf.Cell(0, 0, "Email: "+userdata.EmailAddress)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Phone: +91-8056034174")
+	pdf.Cell(0, 0, "Phone: +91-"+userdata.MobilePhoneNo)
 	pdf.SetFont("Arial", "I", 8)
 	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	currY += 5
@@ -318,13 +334,13 @@ func GenerateIDCard(distrib_id string) error {
 	currY -= 34
 	pdf.SetFont("Arial", "", 6)
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Phone No: XX-XXXX-XXXXX")
+	pdf.Cell(0, 0, "Phone No: 9080296128")
 	currY += 4
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "CIN: XXXXXXX-XXXXX")
+	//pdf.SetXY(currX, currY)
+	//pdf.Cell(0, 0, "CIN: XXXXXXX-XXXXX")
 	currY += 3
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "GST: XXXXXXXXXXXX")
+	pdf.Cell(0, 0, "GST: Applied")
 	currY += 5
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, tr("• Check Government ID Card for Proof"))
@@ -350,13 +366,14 @@ func GenerateIDCard(distrib_id string) error {
 	currY += 4
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 6)
-	pdf.Cell(0, 0, "144 - 6th Main Road, Anna Nagar West")
+	pdf.Cell(0, 0, "KASI ARCADE FIRST FLOOR, VOC STREET,KAIKANKUPPAM")
 	currY += 3
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Chennai - 600001 - TAMIL NADU")
-	filename := fmt.Sprintf("assets/%s-idcard.pdf", distrib_id)
+	pdf.Cell(0, 0, "RAMAPURAM, Chennai - PIN 600087 - TAMIL NADU")
+	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
+		configs.Log.Error("Error is ", zap.String("outfile", err.Error()))
 		return err
 	}
 	return nil

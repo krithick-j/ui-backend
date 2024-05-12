@@ -22,11 +22,8 @@ func GetTrackingCenterByDistribId(distrib_id string, trackingCenters []models.Tr
 
 func UpdateParentPlaceBv(distrib_id string, placeBv dto.PlaceBv) (*gorm.DB, float64) {
 	var currentBv float64
-	fmt.Println("place", placeBv.Place)
 	currentBv, _ = GetCurrentBvFromTc(distrib_id, placeBv.Place, currentBv)
 	updatedBv := currentBv + placeBv.AddBv
-	fmt.Println("Hello this is current bv ", currentBv)
-	fmt.Println("place bv", placeBv)
 	result := configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, placeBv.Place).Update("bv", updatedBv)
 	if result.Error != nil {
 		fmt.Println("ERROR IN UPDATING BV", result.Error)

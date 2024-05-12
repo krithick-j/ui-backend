@@ -43,7 +43,6 @@ func GetNextItem(distrib_id string, place string, side string) (string, string) 
 	}{}
 
 	configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, place).First(&next_item)
-	fmt.Println("place -------------->", place)
 	if side == "left" {
 		return next_item.LeftDistribID, next_item.LeftPlace
 	} else if side == "right" {

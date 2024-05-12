@@ -14,7 +14,6 @@ func GetTotalRspByDistribId(DistribID string) (fiber.Map, int) {
 	var totalRsp int = 0
 
 	rsp, result := repositories.GetAllRspByDistribId(DistribID)
-	fmt.Println("rsp array", rsp)
 	if result.Error == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": "No transaction Record Found"}, http.StatusNotFound
 	}

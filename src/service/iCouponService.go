@@ -75,7 +75,6 @@ func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 	m.Set("To", toMail)
 
 	m.Set("Subject", "Your new iCoupon")
-	fmt.Println(coupons)
 
 	m.Set("BodyMessage", string(renderedEmail))
 

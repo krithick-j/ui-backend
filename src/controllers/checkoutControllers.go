@@ -73,12 +73,10 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 		}
 		return c.Status(status).JSON(res)
 	} else if status == 500 {
-		fmt.Println("---> res------->", res)
 		return c.Status(fiber.StatusInternalServerError).JSON(res)
 
 	} else {
 		tx.Rollback()
-		fmt.Println("---> res from else------->", res)
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
 	}
 }

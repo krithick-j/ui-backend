@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"ui-back-end/src/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -18,7 +17,7 @@ func DbConnect(config *Config) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DBUserName, config.DBUserPassword, config.DBHost, config.DBPort, config.DBName)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 
 	if err != nil {
@@ -27,12 +26,6 @@ func DbConnect(config *Config) {
 	}
 
 	db.Logger.Info(context.Background(), "\x1b[32m🚀Successfully connected to Database\x1b[0m")
-
-	//create tables if not exists
-	if err := db.AutoMigrate(&models.OTPVerify{}); err != nil {
-		db.Logger.Info(context.Background(), "\x1b[31mAuto Migration failed\x1b[0m")
-		os.Exit(1)
-	}
 
 	DB = db
 

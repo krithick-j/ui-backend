@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
 
@@ -15,7 +14,7 @@ func GetICouponHistory(c *fiber.Ctx) error {
 	}
 	res, status := service.GetICouponHistory(payload)
 	return c.Status(status).JSON(res)
-} 	        
+}
 
 func GetBvHistory(c *fiber.Ctx) error {
 	var payload dto.BvHistoryIn

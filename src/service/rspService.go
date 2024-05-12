@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/repositories"

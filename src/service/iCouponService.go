@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"

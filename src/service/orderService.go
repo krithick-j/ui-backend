@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -13,7 +12,6 @@ import (
 )
 
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
-
 
 	//Generating unique Order ID
 	orderId := GenerateUniqueHexCode(10)
@@ -216,7 +214,6 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 	var (
 		totalICouponBalance float64
 	)
-
 
 	//Get Total ICoupon Balance and save transaction loop
 	for _, orderCoupon := range AppliedCoupons {

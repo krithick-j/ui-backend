@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"

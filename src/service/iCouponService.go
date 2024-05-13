@@ -3,16 +3,13 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"html/template"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
-	"github.com/fmorenovr/gomail"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -31,57 +28,57 @@ func GenerateUniqueHexCode(length int) string {
 	return strings.ToUpper(hexCode)
 }
 
-func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
+//func SendICouponMail(toMail string, coupons []dto.SendCoupon) error {
 
-	// Parse the email template
-	tmpl, err := template.ParseFiles("assets/templates/email_template.html")
-	if err != nil {
-		return err
-	}
+// Parse the email template
+// tmpl, err := template.ParseFiles("assets/templates/email_template.html")
+// if err != nil {
+// 	return err
+// }
 
-	// Create a new file to store the rendered email content
-	file, err := os.Create("email.html")
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+// // Create a new file to store the rendered email content
+// file, err := os.Create("email.html")
+// if err != nil {
+// 	return err
+// }
+// defer file.Close()
 
-	// Execute the template with the coupons data and write it to the file
-	err = tmpl.Execute(file, coupons)
-	if err != nil {
-		return err
-	}
+// Execute the template with the coupons data and write it to the file
+// err = tmpl.Execute(file, coupons)
+// if err != nil {
+// 	return err
+// }
 
-	// Read the contents of the rendered HTML file
-	renderedEmail, err := os.ReadFile("email.html")
-	if err != nil {
-		return err
-	}
+// Read the contents of the rendered HTML file
+// renderedEmail, err := os.ReadFile("email.html")
+// if err != nil {
+// 	return err
+// }
 
-	m, err := gomail.NewGoMail()
-	if err != nil {
-		return err
-	}
+// m, err := gomail.NewGoMail()
+// if err != nil {
+// 	return err
+// }
 
-	m.Set("Username", "j.krithick@gmail.com")
-	m.Set("Password", "gior zeiv xgga lqky")
+// m.Set("Username", "j.krithick@gmail.com")
+// m.Set("Password", "gior zeiv xgga lqky")
 
-	m.Set("Servername", "smtp.gmail.com:465")
+// m.Set("Servername", "smtp.gmail.com:465")
 
-	m.Set("From", "j.krithick@gmail.com")
-	m.Set("From_name", "Krithick ")
+// m.Set("From", "j.krithick@gmail.com")
+// m.Set("From_name", "Krithick ")
 
-	m.Set("To", toMail)
+// m.Set("To", toMail)
 
-	m.Set("Subject", "Your new iCoupon")
+// m.Set("Subject", "Your new iCoupon")
 
-	m.Set("BodyMessage", string(renderedEmail))
+// m.Set("BodyMessage", string(renderedEmail))
 
-	if err := m.SendMessage(); err != nil {
-		return err
-	}
-	return nil
-}
+// if err := m.SendMessage(); err != nil {
+// 	return err
+// }
+// 	return nil
+// }
 
 // This function is used to generate ICoupon and send email
 func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.Map, int) {
@@ -146,12 +143,7 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 			}
 		}
 	}
-
-	err := SendICouponMail(email, iCoupons)
-	if err != nil {
-		tx.Rollback()
-		return fiber.Map{"error": err.Error()}, http.StatusInternalServerError
-	}
+	SendHtmlMail(email, "Your new iCoupon", iCoupons)
 
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
 }

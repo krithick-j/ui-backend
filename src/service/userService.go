@@ -28,7 +28,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/wneessen/go-mail"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -248,13 +247,7 @@ func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {
 
 }
 
-func GenerateIDCard(distrib_id string) error {
-	configs.Log.Info("Started Generating ID Card")
-	user := models.User{}
-	userdata, _ := repositories.GetUserByID(distrib_id, user)
-	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
-	extension := filepath.Ext(userphoto)
-	extension, _ = strings.CutPrefix(extension, ".")
+func IDCardFactory() *fpdf.Fpdf {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	// Outer Rect
@@ -268,6 +261,19 @@ func GenerateIDCard(distrib_id string) error {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
+	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
+	// Inner Right Rect
+	pdf.SetFillColor(0, 255, 0)
+	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
+	return pdf
+}
+
+func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *fpdf.Fpdf {
+
+	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
+	extension := filepath.Ext(userphoto)
+	extension, _ = strings.CutPrefix(extension, ".")
 
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
@@ -277,17 +283,11 @@ func GenerateIDCard(distrib_id string) error {
 		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/uilogo.png"))
 	}
 	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
-	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
-	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
-	// Inner Right Rect
-	pdf.SetFillColor(0, 255, 0)
-	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
-	pdf.SetFont("Arial", "B", 12)
 	var (
 		currX float64 = 12
 		currY float64 = 45
 	)
-
+	pdf.SetFont("Arial", "B", 12)
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "UI Distributor")
 	currX += 8
@@ -327,9 +327,6 @@ func GenerateIDCard(distrib_id string) error {
 	currY += 3
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, tr("• No Job Offerings"))
-	/*
-		Back of the card
-	*/
 	currX += 55
 	currY -= 34
 	pdf.SetFont("Arial", "", 6)
@@ -370,6 +367,17 @@ func GenerateIDCard(distrib_id string) error {
 	currY += 3
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "RAMAPURAM, Chennai - PIN 600087 - TAMIL NADU")
+
+	return pdf
+}
+
+func GenerateIDCard(distrib_id string) error {
+	configs.Log.Info("Started Generating ID Card")
+	user := models.User{}
+	userdata, _ := repositories.GetUserByID(distrib_id, user)
+	// Create ID Card Layout
+	pdf := IDCardFactory()
+	pdf = IDCardAddContent(pdf, distrib_id, userdata)
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
@@ -387,7 +395,7 @@ func SendEmailCode(toMail string) error {
 	}
 	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
 	tomail := fmt.Sprintf("<%s>", toMail)
-	SendMail(tomail, "Your Email Verification OTP", mail.TypeTextPlain, msg)
+	SendPlainMail(tomail, "Your Email Verification OTP", msg)
 	return nil
 }
 

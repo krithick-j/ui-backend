@@ -143,7 +143,7 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 			}
 		}
 	}
-	SendHtmlMail(email, "Your new iCoupon", iCoupons)
+	SendHtmlMailICouopon(email, "Your new iCoupon", iCoupons)
 
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
 }

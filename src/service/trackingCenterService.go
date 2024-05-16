@@ -171,7 +171,10 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			rdistrib_id := distrib_id
 			nside := side
 			for {
+				fmt.Printf("%v, %v\n", rdistrib_id, place)
 				currentTc := repositories.GetTrackingCenter(rdistrib_id, place)
+				fmt.Printf("Current TC: %v, %v\n", currentTc.DistribID, currentTc.PPlace)
+
 				parentPlace := repositories.GetTrackingCenter(currentTc.DistribID, currentTc.PPlace)
 
 				//Deciding left or right

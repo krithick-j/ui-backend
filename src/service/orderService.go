@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -39,6 +40,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	if commitRes := tx.Commit(); commitRes.Error != nil {
 		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
 	}
+	//SendHtmlMailOrder(dto.OrderDetailsOut{})
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }
 
@@ -78,6 +80,8 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
+	fmt.Println("Order details")
+	fmt.Printf("%v\n", OrderIn)
 	return nil, fiber.StatusOK
 }
 
@@ -197,9 +201,10 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 	}
 
 	obj := models.DirectCommissionTransaction{
-		DistribId: refDistribId,
-		Value:     value,
-		Reference: reference,
+		DistribId:     distribId,
+		Value:         value,
+		Reference:     reference,
+		FromDistribId: refDistribId,
 	}
 
 	if res := repositories.SaveDirectCommissionTransaction(obj); res.Error != nil {

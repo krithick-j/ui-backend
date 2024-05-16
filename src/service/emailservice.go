@@ -47,7 +47,7 @@ func SendPlainMail(tomail string, subject string, msg string) {
 	}()
 }
 
-func SendHtmlMail(tomail string, subject string, data []dto.SendCoupon) {
+func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) {
 	fmt.Println("Yes, Reached spot 2")
 	htmltemplate := `
 <!DOCTYPE html>
@@ -101,7 +101,6 @@ func SendHtmlMail(tomail string, subject string, data []dto.SendCoupon) {
     </table>
 </body>
 </html>`
-	fmt.Println("Reached sport 4")
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(tomail)
@@ -120,4 +119,8 @@ func SendHtmlMail(tomail string, subject string, data []dto.SendCoupon) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+}
+
+func SendHtmlMailOrder(orderDetails dto.OrderDetailsOut) error {
+	return nil
 }

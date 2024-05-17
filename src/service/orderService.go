@@ -80,8 +80,11 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	fmt.Println("Order details")
-	fmt.Printf("%v\n", OrderIn)
+	fmt.Printf("orderin, %v, orderout %v\n", orderId, total)
+	err := SendHtmlMailOrder(total)
+	if err != nil {
+		configs.Log.Errorf("Error sending email : %s", err.Error())
+	}
 	return nil, fiber.StatusOK
 }
 

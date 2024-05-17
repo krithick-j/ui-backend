@@ -8,11 +8,14 @@ by default. The same center code if referred in other places called place
 **/
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -98,9 +101,9 @@ func FindNextAvailUserSeq() string {
 func FindNextAvailSlot(distrib_id string, place string, side string) (string, string) {
 	/**
 		On a Pyramid network, a reference can only be added either on left or right
-		if a person adds thrid person an so on, the actual referree becomes the person below
+		if a person adds thrid person and so on, the actual referree becomes the person below
 		the person, if he has an empty slot on the same side
-		if not the tree traverse till the botton where it finds an empty slot
+		if not the tree traverse till the bottoM where it finds an empty slot
 		Here we find an empty slot recursively on the same side
 		Caution a circular refernce by external db edit may cause an infinite loop
 	**/
@@ -405,22 +408,47 @@ func VerifyEmailCode(otp string, email string) error {
 
 func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	otp := GenOPT()
-	url := "https://www.textguru.in/api/v22.0/?"
-	payload := fmt.Sprintf("username=jega.in&password=60423479&source=GSENTS&dmobile=91%s&dlttempid=1707171500974884924&message=Dear Customer,\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\nGSENTS", phone, otp)
-	agent := fiber.Post(url)
-	agent.Body([]byte(payload)) // set body received by request
-	statusCode, body, errs := agent.Bytes()
-	_, _ = statusCode, body
-	defer agent.ConnectionClose()
-	if len(errs) > 0 {
-		for _, err := range errs {
-			fmt.Println("Error is ", err.Error())
-		}
-	}
 	err := repositories.SaveOTP("phone", phone, otp)
 	if err != nil {
 		return err
 	}
+	urlStr := "https://www.textguru.in/api/v22.0/?"
+
+	// Data to be sent in the POST request
+	data := url.Values{}
+	data.Set("username", "jega.in")
+	data.Set("password", "60423479")
+	data.Set("source", "GSENTS")
+	data.Set("dmobile", "91"+phone)
+	data.Set("dlttempid", "1707171500974884924")
+	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\r\nGSENTS", otp))
+
+	// Create a new POST request
+	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	// Set the appropriate headers
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Create an HTTP client and send the request
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error sending request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading response body: %v", err)
+	}
+
+	// Print the response status and body
+	configs.Log.Infof("Response status: %s\n", resp.Status)
+	configs.Log.Infof("Response body: %s\n", string(body))
 	return nil
 }
 

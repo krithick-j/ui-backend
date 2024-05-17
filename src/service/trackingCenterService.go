@@ -190,6 +190,8 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 					Side:         nside,
 					TransType:    "product",
 				}
+				rdistrib_id = currentTc.PDistribId
+				place = currentTc.PPlace
 				if currentTc.IsActive {
 					res := repositories.SaveBvTransaction(BvObj)
 					if res.Error != nil {
@@ -210,8 +212,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 						nside = "left"
 					}
 				}
-				rdistrib_id = currentTc.PDistribId
-				place = currentTc.PPlace
+
 			}
 		}
 		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK

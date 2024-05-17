@@ -121,6 +121,83 @@ func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) 
 	}
 }
 
-func SendHtmlMailOrder(orderDetails dto.OrderDetailsOut) error {
+func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
+	htmltemplate := `<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Order Detail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <p>This is a noreply email. Your Order Details are:</p>
+	<p>Dear {{.DeliveryAddress.ContactName}}, </p>
+	<p>We received your order on <date>. You have 15 days refund window from the date of order</p>
+	<p>Your order details as below</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.Quantity}}</td>
+                <td>{{.UnitPrice}}</td>
+                <td>{{.SubTotal}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+</html>`
+	fmt.Println("stage 1")
+	m := mail.NewMsg()
+	m.From("No Reply<admin@ui-network.com>")
+	m.To(order.DeliveryAddress.ContactEmail)
+	m.Subject("Your order is received")
+	t, err := template.New("email").Parse(htmltemplate)
+	fmt.Println("stage 2", t)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	err = m.SetBodyHTMLTemplate(t, order)
+	fmt.Println("stage 3")
+
+	if err != nil {
+		panic(err.Error())
+	}
+	client := MailFactory()
+	fmt.Println("stage 4")
+
+	defer client.Close()
+	err = client.DialAndSend(m)
+	fmt.Println("stage 5")
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	return nil
 }

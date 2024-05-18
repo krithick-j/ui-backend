@@ -1,4 +1,4 @@
-@host = http://localhost:8080/api 
+@host = http://localhost:8000/api 
 # @host = https://ui-network.com/api 
 
 
@@ -9,7 +9,7 @@ content-type: application/json
 
 {
 	"username": "IN-00001",
-	"password": "1234"
+	"password": "12345"
 }
 
 ###
@@ -400,3 +400,7 @@ Content-Type: application/json
 	"from_date": "",
 	"to_date": ""
 }
+
+###
+GET {{host}}/order HTTP/1.1
+Authorization: Bearer {{authToken}}

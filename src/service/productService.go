@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -145,21 +146,34 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 	}
 }
 
-func GetCartProductsByDistribId(user_id string) fiber.Map {
+func GetCartProductsByDistribId(user_id string) (fiber.Map, int) {
 
 	var products []dto.ProductsOut
 
+	configs.Log.Infoln("Retrieving all products from cart INIT")
 	products, result := repositories.GetAllCartProductsByDistribID(user_id)
 
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		configs.Log.Errorf("Error while retrieving the cart products, %s", result.Error.Error())
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 
 	if result.RowsAffected == 0 {
-		return fiber.Map{"data": "No Products in Cart"}
+		configs.Log.Infoln("No Products in Cart")
+		return fiber.Map{"data": "No Products in Cart"}, fiber.StatusOK
 	}
+	configs.Log.Infoln("Retrieving all products from cart DONE")
+	configs.Log.Infoln("validating cart products that exists in Product table")
+	for _, product := range products { 
+		_, result := repositories.GetProductById(product.ProductID)
+		if result.Error != nil {
+			configs.Log.Errorf("Error while retrieving the cart products, %s", result.Error.Error())
+				return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		} 
+	}
+	configs.Log.Infoln("validating cart products that exists in Product table DONE")
 
-	return fiber.Map{"data": products}
+	return fiber.Map{"data": products}, fiber.StatusOK
 }
 
 func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {

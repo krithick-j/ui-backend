@@ -66,8 +66,8 @@ func GetEpProductsByCategoryId(c *fiber.Ctx) error {
 
 func GetCartProductsByUserId(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
-	res := service.GetCartProductsByDistribId(distrib_id)
-	return c.Status(http.StatusOK).JSON(res)
+	res, status := service.GetCartProductsByDistribId(distrib_id)
+	return c.Status(status).JSON(res)
 }
 
 func DeleteCartProduct(c *fiber.Ctx) error {

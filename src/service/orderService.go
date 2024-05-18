@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -14,8 +13,8 @@ import (
 
 func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
-	//Generating unique Order ID
 	orderId := GenerateUniqueHexCode(10)
+	configs.Log.Infof("Generating a new order id %s", orderId)
 
 	//sum product value
 	total, status := GetOrderDetails(OrderIn.DistribId)
@@ -28,7 +27,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	totalOrderAmount := total.TotalAmount
 
 	productType := total.Items[0].ProductType
-
+	configs.Log.Infof("Product type %v", productType)
 	if res, status := handleProductHeaderAndLines(OrderIn, orderId, total, productType, tx); status != fiber.StatusOK {
 		return fiber.Map{"error": res["error"]}, status
 	}
@@ -45,14 +44,17 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 }
 
 func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId string, totalOrderAmount float64, tx *gorm.DB, total dto.OrderDetailsOut) (fiber.Map, int) {
+	configs.Log.Infoln("Starting BV Product")
 	if OrderIn.AppliedCoupons != nil && productType != "ep" {
 
 		if res, status := handlePlaceOrderICoupons(OrderIn.AppliedCoupons, OrderIn.DistribId, orderId, totalOrderAmount, tx); status != fiber.StatusOK {
 			return fiber.Map{"error": res["error"]}, status
 		}
 
+		configs.Log.Infoln("Coupon applied successfully")
+		configs.Log.Infof("The product type is %s", productType)
 		if productType == "bv" {
-
+			configs.Log.Infoln("The product is of bv type")
 			if res, status := handleBvProduct(OrderIn, orderId, total, tx); status != fiber.StatusOK {
 				return fiber.Map{"error": res["error"]}, fiber.StatusInternalServerError
 			}
@@ -80,11 +82,11 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	fmt.Printf("orderin, %v, orderout %v\n", orderId, total)
 	err := SendHtmlMailOrder(total)
 	if err != nil {
 		configs.Log.Errorf("Error sending email : %s", err.Error())
 	}
+	configs.Log.Infoln("Mail Sent!")
 	return nil, fiber.StatusOK
 }
 
@@ -108,8 +110,10 @@ func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOr
 }
 
 func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDetailsOut, tx *gorm.DB) (fiber.Map, int) {
+	configs.Log.Infoln("Preparing BV product handling...")
 
 	res := repositories.AddDirectBvTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
+	configs.Log.Infoln("Direct BV Added")
 	if res.Error != nil {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
@@ -119,12 +123,13 @@ func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDe
 	if status == fiber.StatusInternalServerError {
 		return fiber.Map{"error": msg}, status
 	}
+	configs.Log.Infoln("Place BV Added")
 
 	Dcmessage, status := SaveDirectCommissionTransaction(OrderIn.DistribId, total.TotalTypeValue, orderId)
 	if status != 200 {
 		return fiber.Map{"error": Dcmessage}, status
 	}
-
+	configs.Log.Infoln("Direct Commison Added")
 	return nil, fiber.StatusOK
 }
 
@@ -194,6 +199,22 @@ func GetOrdersByDistribId(distrib_id string) (fiber.Map, int) {
 	return fiber.Map{"data": order}, http.StatusOK
 }
 
+func GetAlOrders() (fiber.Map, int) {
+
+	var order []models.OrdersHeader
+	var result *gorm.DB
+
+	order, result = repositories.GetAllOrders(order)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	return fiber.Map{"data": order}, http.StatusOK
+}
+
 func SaveDirectCommissionTransaction(distribId string, bvValue float64, reference string) (fiber.Map, int) {
 
 	value := bvValue * 2.4
@@ -223,17 +244,19 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 		totalICouponBalance float64
 	)
 
-	//Get Total ICoupon Balance and save transaction loop
+	configs.Log.Infoln("Checking the ICoupons")
 	for _, orderCoupon := range AppliedCoupons {
 		balance, result := repositories.GetICouponBalance(orderCoupon.VID)
 		if result.Error != nil {
 			tx.Rollback()
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+			configs.Log.Errorln("Error Retrieving the ICoupons")
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
 		}
 
 		if balance == 0 {
 			repositories.CloseCoupon(orderCoupon.VID)
 			tx.Rollback()
+			configs.Log.Errorln("Error Detecting used Icoupons")
 			return fiber.Map{
 				"error": "ICoupon used already!",
 			}, fiber.StatusPaymentRequired
@@ -253,13 +276,17 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 
 			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
 				tx.Rollback()
-				return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+				configs.Log.Errorln("Not enough Icoupon Balance")
+
+				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
 			}
 
 			//Balance will be zero after using full coupon, so active set to false
 			if res := repositories.CloseCoupon(orderCoupon.VID); res.Error != nil {
 				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+				configs.Log.Errorf("Error while closing the icoupon, %s", res.Error.Error())
+
+				return fiber.Map{"error": res.Error.Error()}, fiber.StatusBadRequest
 			}
 		} else {
 
@@ -270,19 +297,22 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 			}
 			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
 				tx.Rollback()
-				return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+				configs.Log.Errorw("Error while saving icoupon transactions %v", ICouponObj)
+				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
 			}
 			break //No need to loop again, since the order amount is satisfied with the coupon
 		}
+		configs.Log.Infoln("ICoupons checking done")
 
 		totalICouponBalance += balance
 	}
-
+	configs.Log.Infoln("Checking ICoupon value with total value")
 	if totalICouponBalance < totalOrderAmount {
 		tx.Rollback()
+		configs.Log.Errorln("Insufficient Balance")
 		return fiber.Map{"error": "Insufficient Balance!"}, fiber.StatusInternalServerError
 	}
-
+	configs.Log.Infoln("Place Coupons handled successfully")
 	return fiber.Map{"data": "Place Coupons handled successfully"}, fiber.StatusOK
 }
 
@@ -301,9 +331,15 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	if result.Error != nil {
 		return orderDetails, http.StatusInternalServerError
 	}
+	configs.Log.Infof("%v", orderDetails.Items)
+	if len(cartItems) < 1 {
+		configs.Log.Warnln("No Items found on the card")
+		return orderDetails, fiber.StatusNotFound
+	}
 
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
+		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
 			Name:        item.Product.Name,
 			Quantity:    item.Quantity,
@@ -323,8 +359,8 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	//Retrieving User Data for Delivery Address
 	userData, result = repositories.GetUserByID(distrib_id, userData)
 	if result.Error != nil {
-		println(fiber.Map{"error": result.Error})
-		return orderDetails, http.StatusInternalServerError
+		configs.Log.Warnf("%v", orderDetails)
+		return orderDetails, fiber.StatusBadRequest
 	}
 
 	deliveryAddress := dto.DeliveryAddress{
@@ -351,14 +387,12 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	}
 
 	if result.Error != nil {
-		print(fiber.Map{"error": result.Error})
-		return orderDetails, http.StatusInternalServerError
+		return orderDetails, fiber.StatusBadRequest
 	}
 
 	if result.RowsAffected == 0 {
-		print(fiber.Map{"data": "No Products in Cart"})
 		return orderDetails, http.StatusNoContent
 	}
-
+	configs.Log.Infof("%v", orderDetails)
 	return orderDetails, http.StatusOK
 }

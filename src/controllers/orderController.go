@@ -30,7 +30,7 @@ func GetOrdersByDistribId(c *fiber.Ctx) error {
 
 func GetAllOrders(c *fiber.Ctx) error {
 
-	res, status := service.GetAlOrders()
+	res, status := service.GetAllOrders()
 	return c.Status(status).JSON(res)
 
 }

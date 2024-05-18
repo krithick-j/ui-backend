@@ -16,13 +16,15 @@ type DeliveryAddress struct {
 }
 
 type OrderProduct struct {
-	Name        string  `json:"name"`
-	Quantity    uint    `json:"quantity"`
-	UnitPrice   uint64  `json:"unit_price"`
-	SubTotal    float64 `json:"sub_total"`
-	SandH       float64 `json:"s_and_h"`
-	ProductType string  `json:"product_type"`
-	TypeValue   float64 `json:"type_value"`
+	ProductID    uint    `json:"product_id"`
+	ProductImage string  `json:"product_image"`
+	Name         string  `json:"name"`
+	Quantity     uint    `json:"quantity"`
+	UnitPrice    float64 `json:"unit_price"`
+	SubTotal     float64 `json:"sub_total"`
+	SandH        float64 `json:"s_and_h"`
+	ProductType  string  `json:"product_type"`
+	TypeValue    float64 `json:"type_value"`
 }
 
 type OrderDetailsOut struct {
@@ -59,4 +61,46 @@ type PlaceOrderIn struct {
 type OrdersOut struct {
 	OrderHeader models.OrdersHeader
 	OrderLiners models.OrdersLiner
+}
+
+type AllOrdersOut struct {
+	OrderId            string           `json:"order_id"`
+	SubTotal           float64          `json:"sub_total"`
+	TotalAmount        float64          `json:"total"`
+	TotalSandH         float64          `json:"sand_h"`
+	DeliveryStatus     string           `json:"delivery_status"`
+	ShipmentTrackingNo string           `json:"shipment_tracking_no"`
+	CourierName        string           `json:"courier_name"`
+	CreatedAt          string           `json:"created_at"`
+	UpdatedAt          string           `json:"updated_at"`
+	DeletedAt          string           `json:"deleted_at"`
+	DeliveredAt        string           `json:"delivered_at"`
+	ShippingAddress    ShippingAddress  `json:"shipping_address"`
+	CustomerDetails    CustomerDetails  `json:"customerDetails"`
+	ProductDetails     []ProductDetails `json:"products"`
+}
+
+type ShippingAddress struct {
+	Address  string `json:"address"`
+	City     string `json:"city"`
+	District string `json:"district"`
+	State    string `json:"state"`
+	ZipCode  uint64 `json:"zip_code"`
+	Country  string `json:"country"`
+}
+
+type CustomerDetails struct {
+	DistribId     string `json:"distrib_id"`
+	Name          string `json:"name"`
+	Email         string `json:"email"`
+	MobilePhoneNo string `json:"mobile_phone_no"`
+}
+
+type ProductDetails struct {
+	Id          uint    `json:"id"`
+	Name        string  `json:"name"`
+	Image       string  `json:"image"`
+	Quantity    uint    `json:"quantity"`
+	Price       float64 `json:"price"`
+	TotalAmount float64 `json:"total_amount"`
 }

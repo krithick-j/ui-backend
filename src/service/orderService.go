@@ -166,6 +166,8 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
+			ProductImage:   product.ProductImage,
+			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       product.Quantity,
 			UnitPrice:      product.UnitPrice,
@@ -174,6 +176,7 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
 		}
+
 		err = repositories.SaveOrderLiner(OrderLinerObj)
 		if err != nil {
 			tx.Rollback()
@@ -199,20 +202,73 @@ func GetOrdersByDistribId(distrib_id string) (fiber.Map, int) {
 	return fiber.Map{"data": order}, http.StatusOK
 }
 
-func GetAlOrders() (fiber.Map, int) {
+func GetAllOrders() (fiber.Map, int) {
 
-	var order []models.OrdersHeader
-	var result *gorm.DB
+	var OrdersOut []dto.AllOrdersOut
 
-	order, result = repositories.GetAllOrders(order)
+	configs.Log.Infoln("Retrieving All Orders INIT")
+	order, result := repositories.GetAllOrders()
 
 	if result.Error == gorm.ErrRecordNotFound {
+		configs.Log.Infoln("No Orders Found")
 		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
 	}
 	if result.Error != nil {
+		configs.Log.Errorf("%v", result.Error.Error())
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
-	return fiber.Map{"data": order}, http.StatusOK
+	configs.Log.Infoln("Retrieving All Orders DONE")
+	for _, order := range order {
+		var productArr []dto.ProductDetails
+
+		ShippingAddressObj := dto.ShippingAddress{
+			Address:  order.Address,
+			City:     order.City,
+			District: order.District,
+			State:    order.State,
+			ZipCode:  order.ZipCode,
+			Country:  order.Country,
+		}
+
+		CustomerDetailsObj := dto.CustomerDetails{
+			DistribId:     order.DistribId,
+			Name:          order.ContactName,
+			Email:         order.ContactEmail,
+			MobilePhoneNo: order.MobilePhoneNo,
+		}
+
+		for _, productLine := range order.OrdersLiner {
+			productArrObj := dto.ProductDetails{
+				Id:          productLine.ID,
+				Name:        productLine.Name,
+				Image:       productLine.ProductImage,
+				Quantity:    productLine.Quantity,
+				Price:       productLine.UnitPrice,
+				TotalAmount: productLine.SubTotal,
+			}
+			productArr = append(productArr, productArrObj)
+		}
+
+		OrderArr := dto.AllOrdersOut{
+			OrderId:            order.OrderId,
+			SubTotal:           order.SubTotal,
+			TotalAmount:        order.TotalAmount,
+			TotalSandH:         order.TotalSandH,
+			DeliveryStatus:     order.DeliveryStatus,
+			ShipmentTrackingNo: order.ShipmentTrackingNo,
+			CourierName:        order.CourierName,
+			CreatedAt:          order.CreatedAt.String(),
+			UpdatedAt:          order.UpdatedAt.String(),
+			DeletedAt:          order.DeletedAt.Time.String(),
+			DeliveredAt:        order.DeliveredAt,
+			ShippingAddress:    ShippingAddressObj,
+			CustomerDetails:    CustomerDetailsObj,
+			ProductDetails:     productArr,
+		}
+		
+		OrdersOut = append(OrdersOut, OrderArr)
+	}
+	return fiber.Map{"data": OrdersOut}, http.StatusOK
 }
 
 func SaveDirectCommissionTransaction(distribId string, bvValue float64, reference string) (fiber.Map, int) {
@@ -304,14 +360,14 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 			configs.Log.Infoln("TotalICouponBalance +=", totalICouponBalance)
 			break //No need to loop again, since the order amount is satisfied with the coupon
 		}
-		configs.Log.Infoln("ICoupon ", orderCoupon.VID," checking done")
+		configs.Log.Infoln("ICoupon ", orderCoupon.VID, " checking done")
 
 		totalICouponBalance += balance
 		configs.Log.Infoln("TotalICouponBalance +=", totalICouponBalance)
 	}
 	configs.Log.Infoln("Checking ICoupon values done")
 	configs.Log.Infoln("Checking ICoupon value with total value")
-	configs.Log.Infoln("totalICoupon Balance-> ", totalICouponBalance," totalOrderAmount-> ", totalOrderAmount)
+	configs.Log.Infoln("totalICoupon Balance-> ", totalICouponBalance, " totalOrderAmount-> ", totalOrderAmount)
 
 	if totalICouponBalance < totalOrderAmount {
 		tx.Rollback()
@@ -348,9 +404,10 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
+			ProductID:   item.Product.ID,
 			Name:        item.Product.Name,
 			Quantity:    item.Quantity,
-			UnitPrice:   uint64(item.Product.Price),
+			UnitPrice:   item.Product.Price,
 			SandH:       item.Product.SandH,
 			SubTotal:    item.Product.Price * float64(item.Quantity),
 			ProductType: item.Product.ProductType,

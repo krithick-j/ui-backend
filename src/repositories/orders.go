@@ -33,7 +33,8 @@ func GetOrderByDistribId(distrib_id string, order []models.OrdersHeader) ([]mode
 	return order, result
 }
 
-func GetAllOrders(order []models.OrdersHeader) ([]models.OrdersHeader, *gorm.DB) {
+func GetAllOrders() ([]models.OrdersHeader, *gorm.DB) {
+	var order []models.OrdersHeader
 	result := configs.DB.Preload("OrdersLiner").Find(&order)
 	return order, result
 }

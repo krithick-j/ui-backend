@@ -32,3 +32,8 @@ func GetOrderByDistribId(distrib_id string, order []models.OrdersHeader) ([]mode
 	result := configs.DB.Preload("OrdersLiner").Find(&order, "distrib_id = ?", distrib_id)
 	return order, result
 }
+
+func GetAllOrders(order []models.OrdersHeader) ([]models.OrdersHeader, *gorm.DB) {
+	result := configs.DB.Preload("OrdersLiner").Find(&order)
+	return order, result
+}

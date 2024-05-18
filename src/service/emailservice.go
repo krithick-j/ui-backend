@@ -12,6 +12,8 @@ import (
 	"github.com/wneessen/go-mail"
 )
 
+var adminmail string = "selangodson@gmail.com"
+
 func GenOPT() string {
 	bi, err := rand.Int(
 		rand.Reader,
@@ -50,10 +52,11 @@ func SendPlainMail(tomail string, subject string, msg string) {
 }
 
 func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) {
-
+	//Add admin mail to every email
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(tomail)
+	m.Bcc(adminmail)
 	m.Subject(subject)
 	t, err := template.New("email").Parse(tmplts.ICouponTemplate)
 	if err != nil {
@@ -76,9 +79,9 @@ func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(order.DeliveryAddress.ContactEmail)
+	m.Bcc(adminmail)
 	m.Subject("Your order is received")
 	t, err := template.New("email").Parse(tmplts.OrderTemplate)
-	fmt.Println("stage 2", t)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

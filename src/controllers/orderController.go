@@ -27,3 +27,10 @@ func GetOrdersByDistribId(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 
 }
+
+func GetAllOrders(c *fiber.Ctx) error {
+
+	res, status := service.GetAlOrders()
+	return c.Status(status).JSON(res)
+
+}

@@ -192,6 +192,10 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 
 	}
 	rspdata := dto.UserOut{DistribID: distrib_id}
+	msg := fmt.Sprintf(`Dear User,
+We received your signup. Your login id/distributor id is %s.
+Please login and upload your KYC documents to proceed.`, distrib_id)
+	SendPlainMail(user_in.EmailAddress, "Your Signup Details", msg)
 	return fiber.Map{"data": rspdata}, nil
 }
 

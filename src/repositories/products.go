@@ -16,6 +16,12 @@ func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
 	return product, result
 }
 
+func GetProductById(productId uint) (models.Product, *gorm.DB) {
+	var product models.Product 
+	result := configs.DB.Model(&models.Product{}).Find(&product, productId)
+	return product, result
+}
+
 func GetAllProductCategories(productCategories []models.ProductCategory) ([]models.ProductCategory, *gorm.DB) {
 	result := configs.DB.Find(&productCategories) //select * from product_category
 	return productCategories, result

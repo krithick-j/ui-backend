@@ -345,6 +345,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
+
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
 			Name:        item.Product.Name,

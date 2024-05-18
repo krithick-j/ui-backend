@@ -276,7 +276,7 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 
 			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
 				tx.Rollback()
-				configs.Log.Errorln("Not enough Icoupon Balance")
+				configs.Log.Errorln("Error while saving Icoupon Balance Transaction")
 
 				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
 			}
@@ -300,13 +300,19 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 				configs.Log.Errorw("Error while saving icoupon transactions %v", ICouponObj)
 				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
 			}
+			totalICouponBalance += balance
+			configs.Log.Infoln("TotalICouponBalance +=", totalICouponBalance)
 			break //No need to loop again, since the order amount is satisfied with the coupon
 		}
-		configs.Log.Infoln("ICoupons checking done")
+		configs.Log.Infoln("ICoupon ", orderCoupon.VID," checking done")
 
 		totalICouponBalance += balance
+		configs.Log.Infoln("TotalICouponBalance +=", totalICouponBalance)
 	}
+	configs.Log.Infoln("Checking ICoupon values done")
 	configs.Log.Infoln("Checking ICoupon value with total value")
+	configs.Log.Infoln("totalICoupon Balance-> ", totalICouponBalance," totalOrderAmount-> ", totalOrderAmount)
+
 	if totalICouponBalance < totalOrderAmount {
 		tx.Rollback()
 		configs.Log.Errorln("Insufficient Balance")

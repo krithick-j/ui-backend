@@ -13,7 +13,7 @@ func LoggerConfig() {
 	  "level": "info",
 	  "encoding": "json",
 	  "outputPaths": ["stdout", "/tmp/logs"],
-	  "errorOutputPaths": ["stderr","/tmp/error"],
+	  "errorOutputPaths": ["stderr","/tmp/logs"],
 	  "initialFields": {"name": "ui-backend"},
 	  "encoderConfig": {
 	    "messageKey": "message",

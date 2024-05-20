@@ -257,15 +257,15 @@ func GetAllOrders() (fiber.Map, int) {
 			DeliveryStatus:     order.DeliveryStatus,
 			ShipmentTrackingNo: order.ShipmentTrackingNo,
 			CourierName:        order.CourierName,
-			CreatedAt:          order.CreatedAt.String(),
-			UpdatedAt:          order.UpdatedAt.String(),
-			DeletedAt:          order.DeletedAt.Time.String(),
+			CreatedAt:          order.CreatedAt.UTC().String(),
+			UpdatedAt:          order.UpdatedAt.UTC().String(),
+			DeletedAt:          order.DeletedAt.Time.UTC().String(),
 			DeliveredAt:        order.DeliveredAt,
 			ShippingAddress:    ShippingAddressObj,
 			CustomerDetails:    CustomerDetailsObj,
 			ProductDetails:     productArr,
 		}
-		
+
 		OrdersOut = append(OrdersOut, OrderArr)
 	}
 	return fiber.Map{"data": OrdersOut}, http.StatusOK

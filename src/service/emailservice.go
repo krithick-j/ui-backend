@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"math"
 	"math/big"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/tmplts"
 
@@ -20,6 +21,7 @@ func GenOPT() string {
 		big.NewInt(int64(math.Pow(10, 6))),
 	)
 	if err != nil {
+		configs.Log.Errorln("Error on rand Int fn from GenOPT service fn", err.Error())
 		panic(err)
 	}
 	return fmt.Sprintf("%06d", bi)
@@ -47,6 +49,7 @@ func SendPlainMail(tomail string, subject string, msg string) {
 	defer client.Close()
 	err := client.DialAndSend(m)
 	if err != nil {
+		configs.Log.Errorln("Error on DialAndSend fn from SendPlainMail service fn", err.Error())
 		fmt.Println(err.Error())
 	}
 }

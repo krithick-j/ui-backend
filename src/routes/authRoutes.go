@@ -7,10 +7,10 @@ import (
 )
 
 func AuthRouter(router fiber.Router) {
-	router.Post("/auth/login", controllers.Login)
-	router.Post("/auth/register", controllers.UserRegistration)
-	router.Post("/auth/emailcode", controllers.SendEmailCode)
-	router.Put("/auth/emailcode", controllers.VerifyEmailCode)
-	router.Post("/auth/phonecode", controllers.SendPhoneCode)
-	router.Put("/auth/phonecode", controllers.VerifyPhoneCode)
+	router.Post("/login", controllers.Login)
+	router.Post("/register", controllers.UserRegistration)
+	router.Post("/emailcode", controllers.SendEmailCode)
+	router.Put("/emailcode", controllers.VerifyEmailCode)
+	router.Post("/phonecode", controllers.SendPhoneCode)
+	router.Put("/phonecode", controllers.VerifyPhoneCode)
 }

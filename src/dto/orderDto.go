@@ -99,7 +99,6 @@ type CustomerDetails struct {
 type ProductDetails struct {
 	Id          uint    `json:"id"`
 	Name        string  `json:"name"`
-	Image       string  `json:"image"`
 	Quantity    uint    `json:"quantity"`
 	Price       float64 `json:"price"`
 	TotalAmount float64 `json:"total_amount"`

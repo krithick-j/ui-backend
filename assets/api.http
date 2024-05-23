@@ -404,3 +404,13 @@ Content-Type: application/json
 ###
 GET {{host}}/order HTTP/1.1
 Authorization: Bearer {{authToken}}
+
+###
+POST {{host}}/iCoupon/validate/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"v_id": "75F8C2021D",
+	"pin": "04C2915DBB"
+}

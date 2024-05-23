@@ -35,7 +35,6 @@ type OrdersLiner struct {
 	gorm.Model
 	OrdersHeaderID uint
 	ProductID      uint
-	ProductImage   string
 	Name           string
 	Quantity       uint
 	UnitPrice      float64

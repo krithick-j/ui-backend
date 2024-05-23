@@ -48,6 +48,7 @@ func GetNextItem(distrib_id string, place string, side string) (string, string) 
 	} else if side == "right" {
 		return next_item.RightDistribID, next_item.RightPlace
 	} else {
+		configs.Log.Errorf("SIDE NOT PROPERLY GIVEN %v", side)
 		return fmt.Sprintf("SIDE NOT PROPERLY GIVEN %v", side), "error"
 	}
 }
@@ -55,6 +56,7 @@ func GetNextItem(distrib_id string, place string, side string) (string, string) 
 func CreateUser(tx *gorm.DB, user models.User) error {
 	res := tx.Create(&user)
 	if res.Error != nil {
+		configs.Log.Errorln("Error on Create User Repositories", res.Error.Error())
 		return res.Error
 	}
 	return nil
@@ -64,6 +66,7 @@ func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
 	for _, tc := range tcs {
 		res := tx.Create(&tc)
 		if res.Error != nil {
+			configs.Log.Errorln("Error on Create TCs Repositories", res.Error.Error())
 			return res.Error
 		}
 	}
@@ -73,7 +76,6 @@ func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
 func UpdateTC(tx *gorm.DB, distrib_id string, parent_distrib_id string, place string, side string) error {
 	var updatecols models.TrackingCenter
 	if side == "left" {
-		fmt.Print("hi inside if left")
 		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: "001"}
 	} else if side == "right" {
 		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: "001"}
@@ -128,9 +130,11 @@ func SaveOTP(Type string, Value string, OTP string) error {
 func CheckAndUpdateOTP(Type string, Value string, OTP string) error {
 	res := configs.DB.Model(&models.OTPVerify{}).Where("type=? AND value=? AND otp=?", Type, Value, OTP).Update("status", "verified")
 	if res.Error != nil {
+		configs.Log.Errorln("Error on CheckAndUpdateOTP repositories fn", res.Error.Error())
 		return res.Error
 	}
 	if res.RowsAffected < 1 {
+		configs.Log.Errorln("Record not found in CheckAndUpdateOTP repositories fn")
 		return gorm.ErrRecordNotFound
 	}
 	return nil

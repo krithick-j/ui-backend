@@ -42,6 +42,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	}
 	res, err := repositories.AuthUser(username, pass)
 	if err != nil {
+		configs.Log.Errorln("Error on AuthUser", err.Error())
 		return fiber.Map{"err": err.Error()}, http.StatusUnauthorized
 	}
 	claims := jwt.MapClaims{
@@ -56,6 +57,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	// Generate encoded token and send it as response.
 	tokenstring, err := token.SignedString([]byte("secret"))
 	if err != nil {
+		configs.Log.Errorln("Error on SignedString", err.Error())
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
 	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring, KYCStatus: res.KYCStatus}
@@ -174,19 +176,23 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	res := repositories.CreateUser(tx, user)
 	if res != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Error on calling CreateUser repositories fn from Register User service", res.Error())
 		return fiber.Map{"error": res.Error()}, res
 	}
 	res = repositories.CreateTCs(tx, []models.TrackingCenter{tc1, tc2, tc3})
 	if res != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Error on calling CreateTCs repositories fn from Register User service", res.Error())
 		return fiber.Map{"error": res.Error()}, res
 	}
 	res = repositories.UpdateTC(tx, distrib_id, parent_distrib_id, parent_ref_place, user_in.Side)
 	if res != nil {
+		configs.Log.Errorln("Error on calling UpdateTC repositories fn from Register User service", res.Error())
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
 	if err := tx.Commit().Error; err != nil {
+		configs.Log.Errorln("Error on Committing Transaction RegisterUser service fn", err.Error())
 		tx.Rollback()
 		return fiber.Map{"Error": err.Error()}, err
 
@@ -205,14 +211,10 @@ func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {
 	user, result := repositories.EditUserByDistId(DistribId, userIn, user)
 
 	if result.Error != nil {
-		log.Info("Error saving user to the database:", result.Error)
-		return fiber.Map{"error": result.Error}, http.StatusBadGateway
+		configs.Log.Errorln("Error calling EditUserByDistId fn from EditUserByDistId service fn", result.Error.Error())
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
-	}
-	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, http.StatusOK
+	return fiber.Map{"success": "User Updated Successfully", "Deleted_User": user}, fiber.StatusOK
 }
 
 func GetNewReferrals(distrib_id string) (fiber.Map, int) {
@@ -223,9 +225,11 @@ func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 	user, result = repositories.GetUserByRefDistribId(distrib_id, user)
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+		configs.Log.Errorln("Error calling GetUserByRefDistribId fn from GetNewReferrals service fn", result.Error.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
+		configs.Log.Errorln("Error calling GetUserByRefDistribId fn from GetNewReferrals service fn", result.Error.Error())
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 	return fiber.Map{"data": user}, http.StatusOK
@@ -398,6 +402,7 @@ func SendEmailCode(toMail string) error {
 	otp := GenOPT()
 	err := repositories.SaveOTP("email", toMail, otp)
 	if err != nil {
+		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendEmailCode service fn", err.Error())
 		return err
 	}
 	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
@@ -414,6 +419,7 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	otp := GenOPT()
 	err := repositories.SaveOTP("phone", phone, otp)
 	if err != nil {
+		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendPhoneCode service fn", err.Error())
 		return err
 	}
 	urlStr := "https://www.textguru.in/api/v22.0/?"

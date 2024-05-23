@@ -81,7 +81,7 @@ func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
 
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
-	m.To(order.DeliveryAddress.ContactEmail)
+	m.To(order.CustomerDetails.Email)
 	m.Bcc(adminmail)
 	m.Subject("Your order is received")
 	t, err := template.New("email").Parse(tmplts.OrderTemplate)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -136,10 +137,12 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB, totalBv float64) (fiber.Map, int) {
 
 	sum := 0.0
+	configs.Log.Infoln("place bv array===>", placeBvs)
 	for _, placeBv := range placeBvs {
 		sum += placeBv.AddBv
 	}
 
+	configs.Log.Infoln("sum is ", sum, "total bv is", totalBv)
 	//Validation--> Sum of bv should match the totalValueType
 	if sum == totalBv {
 		//Adding Bv Points from the product to the tree
@@ -151,6 +154,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			err := repositories.ActivateTC(distrib_id, placeBv.Place)
 			if err != nil {
 				fmt.Println("Error on Activating TC")
+				configs.Log.Errorln("Error on Activating TC", err.Error())
 				tx.Rollback()
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
@@ -164,7 +168,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			} else if placeBv.Place == "003" {
 				side = "right"
 			} else {
-				fmt.Println("Error in updating values of Place")
+				configs.Log.Errorln("Error in updating values of Place")
 				return fiber.Map{"error": "Error in updating values of Place"}, fiber.StatusInternalServerError
 			}
 			place := placeBv.Place
@@ -195,7 +199,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				if currentTc.IsActive {
 					res := repositories.SaveBvTransaction(BvObj)
 					if res.Error != nil {
-						fmt.Println("Error on Saving Tc", res.Error.Error())
+						configs.Log.Errorln("Error on Saving Tc", res.Error.Error())
 						tx.Rollback()
 						return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 					}
@@ -217,5 +221,6 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 		}
 		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK
 	}
+	configs.Log.Errorln("total value and Total Bv in distribution table does not match!!Check the input values")
 	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
 }

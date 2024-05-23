@@ -28,7 +28,8 @@ func SaveOrderLiner(order *models.OrdersLiner) error {
 	return nil
 }
 
-func GetOrderByDistribId(distrib_id string, order []models.OrdersHeader) ([]models.OrdersHeader, *gorm.DB) {
+func GetOrderByDistribId(distrib_id string) ([]models.OrdersHeader, *gorm.DB) {
+	var order []models.OrdersHeader
 	result := configs.DB.Preload("OrdersLiner").Find(&order, "distrib_id = ?", distrib_id)
 	return order, result
 }

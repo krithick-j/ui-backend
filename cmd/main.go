@@ -19,6 +19,7 @@ func init() {
 	configs.LoggerConfig()
 	config, err := configs.LoadConfig(".")
 	if err != nil {
+		configs.Log.Errorln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 		log.Fatalln("\x1b[31mFailed to load environment variables!\x1b[0m \n", err.Error())
 	}
 	configs.DbConnect(config)
@@ -33,12 +34,7 @@ func main() {
 	app.Use(logger.New())
 	app.Get("/media/:filename", controllers.GetMediaFile)
 	api := app.Group("/api")
-	api.Post("/auth/login", controllers.Login)
-	api.Post("/auth/register", controllers.UserRegistration)
-	api.Post("/auth/emailcode", controllers.SendEmailCode)
-	api.Put("/auth/emailcode", controllers.VerifyEmailCode)
-	api.Post("/auth/phonecode", controllers.SendPhoneCode)
-	api.Put("/auth/phonecode", controllers.VerifyPhoneCode)
+	api.Route("/auth", routes.AuthRouter) //Logger Added
 	api.Route("/user", routes.UserRouter)
 
 	app.Use(jwtware.New(jwtware.Config{

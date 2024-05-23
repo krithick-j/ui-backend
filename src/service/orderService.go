@@ -145,16 +145,16 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		TotalQuantity:  total.TotalQuantity,
 		TotalTypeValue: total.TotalTypeValue,
 		ProductType:    productType,
-		ContactName:    total.DeliveryAddress.ContactName,
-		ContactEmail:   total.DeliveryAddress.ContactEmail,
-		Address:        total.DeliveryAddress.Address,
-		City:           total.DeliveryAddress.City,
-		District:       total.DeliveryAddress.District,
-		State:          total.DeliveryAddress.State,
-		ZipCode:        total.DeliveryAddress.ZipCode,
-		Country:        total.DeliveryAddress.Country,
-		HomePhoneNo:    total.DeliveryAddress.HomePhoneNo,
-		MobilePhoneNo:  total.DeliveryAddress.MobilePhoneNo,
+		ContactName:    total.CustomerDetails.Name,
+		ContactEmail:   total.CustomerDetails.Email,
+		Address:        total.ShippingAddress.Address,
+		City:           total.ShippingAddress.City,
+		District:       total.ShippingAddress.District,
+		State:          total.ShippingAddress.State,
+		ZipCode:        total.ShippingAddress.ZipCode,
+		Country:        total.ShippingAddress.Country,
+		HomePhoneNo:    total.CustomerDetails.HomePhoneNo,
+		MobilePhoneNo:  total.CustomerDetails.MobilePhoneNo,
 	}
 	err := repositories.SaveOrderHeader(OrderHeaderObj)
 
@@ -219,6 +219,7 @@ func GetAllOrders() (fiber.Map, int) {
 			Name:          order.ContactName,
 			Email:         order.ContactEmail,
 			MobilePhoneNo: order.MobilePhoneNo,
+			HomePhoneNo:   order.HomePhoneNo,
 		}
 
 		for _, productLine := range order.OrdersLiner {
@@ -287,6 +288,7 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 			Name:          order.ContactName,
 			Email:         order.ContactEmail,
 			MobilePhoneNo: order.MobilePhoneNo,
+			HomePhoneNo:   order.HomePhoneNo,
 		}
 
 		for _, productLine := range order.OrdersLiner {
@@ -491,26 +493,32 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		return orderDetails, fiber.StatusBadRequest
 	}
 
-	deliveryAddress := dto.DeliveryAddress{
-		ContactName:   userData.Name,
-		ContactEmail:  userData.EmailAddress,
-		Address:       userData.Address1,
-		City:          userData.TownOrCity,
-		District:      userData.District,
-		State:         userData.StateOrProvince,
-		ZipCode:       userData.PinOrZipCode,
-		Country:       userData.Country,
-		HomePhoneNo:   userData.HomePhoneNo,
-		MobilePhoneNo: userData.MobilePhoneNo,
+	shippingAddress := dto.ShippingAddress{
+		Address:  userData.Address1,
+		City:     userData.TownOrCity,
+		District: userData.District,
+		State:    userData.StateOrProvince,
+		ZipCode:  userData.PinOrZipCode,
+		Country:  userData.Country,
 	}
+
+	customerDetails := dto.CustomerDetails{
+		DistribId:     distrib_id,
+		Name:          userData.Name,
+		Email:         userData.EmailAddress,
+		MobilePhoneNo: userData.MobilePhoneNo,
+		HomePhoneNo:   userData.HomePhoneNo,
+	}
+
 	orderDetails = dto.OrderDetailsOut{
+		DistribId:       distrib_id,
 		Items:           orderProductArray,
 		SubTotal:        subTotal,
 		TotalSandH:      totalSandH,
 		TotalAmount:     subTotal + totalSandH,
-		DeliveryAddress: deliveryAddress,
 		TotalQuantity:   float64(quantity),
-		DistribId:       distrib_id,
+		ShippingAddress: shippingAddress,
+		CustomerDetails: customerDetails,
 		TotalTypeValue:  TotalTypeValue,
 	}
 

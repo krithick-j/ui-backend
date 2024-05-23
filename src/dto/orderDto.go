@@ -34,7 +34,8 @@ type OrderDetailsOut struct {
 	TotalSandH      float64         `json:"total_s_and_h"`
 	TotalAmount     float64         `json:"total_amount"`
 	TotalQuantity   float64         `json:"total_quantity"`
-	DeliveryAddress DeliveryAddress `json:"delivery_address"`
+	ShippingAddress ShippingAddress `json:"shipping_address"`
+	CustomerDetails CustomerDetails `json:"customer_details"`
 	TotalTypeValue  float64         `json:"total_type_value"`
 }
 
@@ -66,8 +67,8 @@ type OrdersOut struct {
 type AllOrdersOut struct {
 	OrderId            string           `json:"order_id"`
 	SubTotal           float64          `json:"sub_total"`
-	TotalAmount        float64          `json:"total"`
-	TotalSandH         float64          `json:"sand_h"`
+	TotalAmount        float64          `json:"total_amount"`
+	TotalSandH         float64          `json:"total_s_and_h"`
 	DeliveryStatus     string           `json:"delivery_status"`
 	ShipmentTrackingNo string           `json:"shipment_tracking_no"`
 	CourierName        string           `json:"courier_name"`
@@ -76,8 +77,10 @@ type AllOrdersOut struct {
 	DeletedAt          string           `json:"deleted_at"`
 	DeliveredAt        string           `json:"delivered_at"`
 	ShippingAddress    ShippingAddress  `json:"shipping_address"`
-	CustomerDetails    CustomerDetails  `json:"customerDetails"`
+	CustomerDetails    CustomerDetails  `json:"customer_details"`
 	ProductDetails     []ProductDetails `json:"products"`
+	TotalQuantity      float64          `json:"total_quantity"`
+	TotalTypeValue     float64          `json:"total_type_value"`
 }
 
 type ShippingAddress struct {
@@ -94,6 +97,7 @@ type CustomerDetails struct {
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	MobilePhoneNo string `json:"mobile_phone_no"`
+	HomePhoneNo   string `json:"home_phone_no"`
 }
 
 type ProductDetails struct {

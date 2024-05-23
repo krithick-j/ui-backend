@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/service"
@@ -41,11 +42,16 @@ func GetUserTreeByDistId(c *fiber.Ctx) error {
 
 func UserRegistration(c *fiber.Ctx) error {
 	user_in := dto.UserIn{}
-	c.BodyParser(&user_in)
+	if err := c.BodyParser(&user_in); err != nil {
+		configs.Log.Errorln("Error on Parsing user_in UserRegistration Controller", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
 	resp, err := service.RegisterUser(user_in)
 	if err != nil {
+		configs.Log.Errorln("Error on Register User controller", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(resp)
 	} else {
+		configs.Log.Infoln("User Successfully Created")
 		return c.Status(http.StatusCreated).JSON(resp)
 	}
 }
@@ -105,7 +111,6 @@ func GetIDCard(c *fiber.Ctx) error {
 
 func GetMediaFile(c *fiber.Ctx) error {
 	filename := c.Params("filename")
-	print(filename)
 	c.Status(fiber.StatusOK).SendFile("assets/" + filename)
 	return nil
 }
@@ -117,6 +122,7 @@ func SendEmailCode(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Error on Parsing data from SendEmailCode controller fn")
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	service.SendEmailCode(data.Email)
@@ -132,13 +138,15 @@ func VerifyEmailCode(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Error on Parsing body data from VerifyEmailCode controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	err = service.VerifyEmailCode(data.OTP, data.Email)
-	if err == nil {
-		c.Status(fiber.StatusOK).SendString("Ok")
-	} else {
+	if err != nil {
+		configs.Log.Errorln("Error on Verify Email Code", err.Error())
 		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	} else {
+		c.Status(fiber.StatusOK).SendString("Ok")
 	}
 	return nil
 }
@@ -150,6 +158,7 @@ func SendPhoneCode(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Error on Parsing data from SendPhoneCode fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	service.SendPhoneCode(c, data.PhoneNo)
@@ -165,6 +174,7 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Error on Parsing data from VerifyPhoneCode controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	err = service.VerifyPhoneCode(data.OTP, data.PhoneNo)

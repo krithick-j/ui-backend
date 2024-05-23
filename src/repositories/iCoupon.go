@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
@@ -31,6 +32,12 @@ func GetICouponBalance(VID string) (float64, *gorm.DB) {
 	return balance, result
 }
 
+func GetICouponExpiryDate(VID string) (time.Time, *gorm.DB) {
+	var expiresOn time.Time
+	result := configs.DB.Table("i_coupons").Select("expires_on").Where("v_id=?", VID).Find(&expiresOn)
+	return expiresOn, result
+}
+
 // Validate Coupon
 func ValidateICoupon(VID string, Pin string, iCoupon models.ICoupon) models.ICoupon {
 
@@ -49,8 +56,7 @@ func GetICouponValue(VID string, Pin string) float64 {
 	return couponValue
 }
 
-//updating iCoupon Balance in Icoupons table
-
+// updating iCoupon Balance in Icoupons table
 func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
 	result := configs.DB.Where("v_id=?", coupon.VID).Delete(&coupon)
 	return coupon, result

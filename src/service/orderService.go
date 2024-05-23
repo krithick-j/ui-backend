@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -113,11 +114,11 @@ func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDe
 	configs.Log.Infoln("Preparing BV product handling...")
 
 	res := repositories.AddDirectBvTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
-	configs.Log.Infoln("Direct BV Added")
 	if res.Error != nil {
 		tx.Rollback()
 		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 	}
+	configs.Log.Infoln("Direct BV Added")
 
 	msg, status := UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId, tx, total.TotalTypeValue)
 	if status == fiber.StatusInternalServerError {
@@ -166,7 +167,6 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
-			ProductImage:   product.ProductImage,
 			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       product.Quantity,
@@ -184,22 +184,6 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		}
 	}
 	return fiber.Map{"data": "Product Header and Lines handled Successfully"}, fiber.StatusOK
-}
-
-func GetOrdersByDistribId(distrib_id string) (fiber.Map, int) {
-
-	var order []models.OrdersHeader
-	var result *gorm.DB
-
-	order, result = repositories.GetOrderByDistribId(distrib_id, order)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
-	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
-	}
-	return fiber.Map{"data": order}, http.StatusOK
 }
 
 func GetAllOrders() (fiber.Map, int) {
@@ -241,7 +225,74 @@ func GetAllOrders() (fiber.Map, int) {
 			productArrObj := dto.ProductDetails{
 				Id:          productLine.ID,
 				Name:        productLine.Name,
-				Image:       productLine.ProductImage,
+				Quantity:    productLine.Quantity,
+				Price:       productLine.UnitPrice,
+				TotalAmount: productLine.SubTotal,
+			}
+			productArr = append(productArr, productArrObj)
+		}
+
+		OrderArr := dto.AllOrdersOut{
+			OrderId:            order.OrderId,
+			SubTotal:           order.SubTotal,
+			TotalAmount:        order.TotalAmount,
+			TotalSandH:         order.TotalSandH,
+			DeliveryStatus:     order.DeliveryStatus,
+			ShipmentTrackingNo: order.ShipmentTrackingNo,
+			CourierName:        order.CourierName,
+			CreatedAt:          order.CreatedAt.UTC().String(),
+			UpdatedAt:          order.UpdatedAt.UTC().String(),
+			DeletedAt:          order.DeletedAt.Time.UTC().String(),
+			DeliveredAt:        order.DeliveredAt,
+			ShippingAddress:    ShippingAddressObj,
+			CustomerDetails:    CustomerDetailsObj,
+			ProductDetails:     productArr,
+		}
+
+		OrdersOut = append(OrdersOut, OrderArr)
+	}
+	return fiber.Map{"data": OrdersOut}, http.StatusOK
+}
+
+func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
+
+	var OrdersOut []dto.AllOrdersOut
+
+	configs.Log.Infoln("Retrieving All Orders INIT")
+	order, result := repositories.GetAllOrders()
+
+	if result.Error == gorm.ErrRecordNotFound {
+		configs.Log.Infoln("No Orders Found")
+		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+	}
+	if result.Error != nil {
+		configs.Log.Errorf("%v", result.Error.Error())
+		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	}
+	configs.Log.Infoln("Retrieving All Orders DONE")
+	for _, order := range order {
+		var productArr []dto.ProductDetails
+
+		ShippingAddressObj := dto.ShippingAddress{
+			Address:  order.Address,
+			City:     order.City,
+			District: order.District,
+			State:    order.State,
+			ZipCode:  order.ZipCode,
+			Country:  order.Country,
+		}
+
+		CustomerDetailsObj := dto.CustomerDetails{
+			DistribId:     order.DistribId,
+			Name:          order.ContactName,
+			Email:         order.ContactEmail,
+			MobilePhoneNo: order.MobilePhoneNo,
+		}
+
+		for _, productLine := range order.OrdersLiner {
+			productArrObj := dto.ProductDetails{
+				Id:          productLine.ID,
+				Name:        productLine.Name,
 				Quantity:    productLine.Quantity,
 				Price:       productLine.UnitPrice,
 				TotalAmount: productLine.SubTotal,
@@ -302,10 +353,23 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 
 	configs.Log.Infoln("Checking the ICoupons")
 	for _, orderCoupon := range AppliedCoupons {
+		expiresOn, result := repositories.GetICouponExpiryDate(orderCoupon.VID)
+		if result.Error != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error Retrieving the ICoupon Expiry Date")
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+		}
+
+		if expiresOn.Before(time.Now()) || expiresOn.Equal(time.Now()) {
+			tx.Rollback()
+			configs.Log.Errorln("ICoupon Expired")
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+		}
+
 		balance, result := repositories.GetICouponBalance(orderCoupon.VID)
 		if result.Error != nil {
 			tx.Rollback()
-			configs.Log.Errorln("Error Retrieving the ICoupons")
+			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
 			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
 		}
 

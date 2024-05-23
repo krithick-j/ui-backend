@@ -3,9 +3,11 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -165,14 +167,22 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	var iCoupon models.ICoupon
 	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
 
-	// if iCoupon.DistribID != distribID {
-	// 	return fiber.Map{"data": "Invalid ICoupon"}, http.StatusForbidden
-	// }
-
 	if !iCoupon.Active {
-		return fiber.Map{"data": "Icoupon expired"}, http.StatusOK
+		return fiber.Map{"data": "Icoupon expired"}, fiber.StatusBadRequest
 	}
 	//date expiry condition
+	expiresOn, result := repositories.GetICouponExpiryDate(payload.VID)
+	if result.Error != nil {
+		configs.Log.Errorln("Error Retrieving the ICoupon Expiry Date")
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+	}
+
+	if expiresOn.Before(time.Now()) || expiresOn.Equal(time.Now()) {
+		repositories.CloseCoupon(payload.VID)
+		configs.Log.Errorln("ICoupon Expired on ", expiresOn.String())
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+	}
+
 	balance, result := repositories.GetICouponBalance(payload.VID)
 
 	if result.Error == gorm.ErrRecordNotFound {
@@ -187,7 +197,9 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 		Value: balance,
 	}
 
-	return fiber.Map{"data": iCouponsOut}, http.StatusOK
+	fmt.Println("data", iCouponsOut)
+
+	return fiber.Map{"data": iCouponsOut}, fiber.StatusOK
 }
 
 func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {

@@ -259,8 +259,8 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 
 	var OrdersOut []dto.AllOrdersOut
 
-	configs.Log.Infoln("Retrieving All Orders INIT")
-	order, result := repositories.GetAllOrders()
+	configs.Log.Infoln("Retrieving AllOrdersByDistribId INIT")
+	order, result := repositories.GetOrderByDistribId(distribId)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		configs.Log.Infoln("No Orders Found")

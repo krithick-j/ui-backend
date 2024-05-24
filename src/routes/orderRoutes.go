@@ -10,6 +10,6 @@ func OrdersRouter(router fiber.Router) {
 
 	router.Post("/", controllers.PlaceOrder)
 	router.Get("/", controllers.GetAllOrders)
-	router.Get("/:distrib_id", controllers.GetOrdersByDistribId)
+	router.Get("/:distrib_id", controllers.GetOrdersByDistribId) ///////////////////////
 	router.Get("/trackShipment", controllers.TrackShipment)
 }

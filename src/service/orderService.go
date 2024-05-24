@@ -27,7 +27,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	totalOrderAmount := total.TotalAmount
 
-	productType := total.Items[0].ProductType
+	productType := total.Products[0].ProductType
 	configs.Log.Infof("Product type %v", productType)
 	if res, status := handleProductHeaderAndLines(OrderIn, orderId, total, productType, tx); status != fiber.StatusOK {
 		return fiber.Map{"error": res["error"]}, status
@@ -163,7 +163,7 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	for _, product := range total.Items {
+	for _, product := range total.Products {
 
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
@@ -224,11 +224,15 @@ func GetAllOrders() (fiber.Map, int) {
 
 		for _, productLine := range order.OrdersLiner {
 			productArrObj := dto.ProductDetails{
-				Id:          productLine.ID,
-				Name:        productLine.Name,
-				Quantity:    productLine.Quantity,
-				Price:       productLine.UnitPrice,
-				TotalAmount: productLine.SubTotal,
+				Id:           productLine.ID,
+				Name:         productLine.Name,
+				Quantity:     productLine.Quantity,
+				Price:        productLine.UnitPrice,
+				ProductImage: "",
+				ProductType:  productLine.ProductType,
+				SAndH:        productLine.SandH,
+				SubTotal:     productLine.SubTotal,
+				TypeValue:    productLine.TypeValue,
 			}
 			productArr = append(productArr, productArrObj)
 		}
@@ -260,18 +264,19 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 	var OrdersOut []dto.AllOrdersOut
 
 	configs.Log.Infoln("Retrieving AllOrdersByDistribId INIT")
-	order, result := repositories.GetOrderByDistribId(distribId)
+	orders, result := repositories.GetOrderByDistribId(distribId)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		configs.Log.Infoln("No Orders Found")
 		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
 	}
+
 	if result.Error != nil {
 		configs.Log.Errorf("%v", result.Error.Error())
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 	configs.Log.Infoln("Retrieving All Orders DONE")
-	for _, order := range order {
+	for _, order := range orders {
 		var productArr []dto.ProductDetails
 
 		ShippingAddressObj := dto.ShippingAddress{
@@ -293,11 +298,15 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 
 		for _, productLine := range order.OrdersLiner {
 			productArrObj := dto.ProductDetails{
-				Id:          productLine.ID,
-				Name:        productLine.Name,
-				Quantity:    productLine.Quantity,
-				Price:       productLine.UnitPrice,
-				TotalAmount: productLine.SubTotal,
+				Id:           productLine.ID,
+				Name:         productLine.Name,
+				Quantity:     productLine.Quantity,
+				Price:        productLine.UnitPrice,
+				ProductImage: "",
+				ProductType:  productLine.ProductType,
+				SAndH:        productLine.SandH,
+				SubTotal:     productLine.SubTotal,
+				TypeValue:    productLine.TypeValue,
 			}
 			productArr = append(productArr, productArrObj)
 		}
@@ -314,6 +323,8 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 			UpdatedAt:          order.UpdatedAt.UTC().String(),
 			DeletedAt:          order.DeletedAt.Time.UTC().String(),
 			DeliveredAt:        order.DeliveredAt,
+			TotalQuantity:      order.TotalQuantity,
+			TotalTypeValue:     order.TotalTypeValue,
 			ShippingAddress:    ShippingAddressObj,
 			CustomerDetails:    CustomerDetailsObj,
 			ProductDetails:     productArr,
@@ -459,7 +470,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	if result.Error != nil {
 		return orderDetails, http.StatusInternalServerError
 	}
-	configs.Log.Infof("%v", orderDetails.Items)
+	configs.Log.Infof("%v", orderDetails.Products)
 	if len(cartItems) < 1 {
 		configs.Log.Warnln("No Items found on the card")
 		return orderDetails, fiber.StatusNotFound
@@ -470,14 +481,15 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
-			ProductID:   item.Product.ID,
-			Name:        item.Product.Name,
-			Quantity:    item.Quantity,
-			UnitPrice:   item.Product.Price,
-			SandH:       item.Product.SandH,
-			SubTotal:    item.Product.Price * float64(item.Quantity),
-			ProductType: item.Product.ProductType,
-			TypeValue:   item.Product.TypeValue,
+			ProductID:    item.Product.ID,
+			ProductImage: "",
+			Name:         item.Product.Name,
+			Quantity:     item.Quantity,
+			UnitPrice:    item.Product.Price,
+			SubTotal:     item.Product.Price * float64(item.Quantity),
+			SandH:        item.Product.SandH,
+			ProductType:  item.Product.ProductType,
+			TypeValue:    item.Product.TypeValue,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)
@@ -512,7 +524,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 	orderDetails = dto.OrderDetailsOut{
 		DistribId:       distrib_id,
-		Items:           orderProductArray,
+		Products:        orderProductArray,
 		SubTotal:        subTotal,
 		TotalSandH:      totalSandH,
 		TotalAmount:     subTotal + totalSandH,

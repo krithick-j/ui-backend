@@ -17,7 +17,7 @@ func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
 }
 
 func GetProductById(productId uint) (models.Product, *gorm.DB) {
-	var product models.Product 
+	var product models.Product
 	result := configs.DB.Model(&models.Product{}).Find(&product, productId)
 	return product, result
 }
@@ -98,8 +98,8 @@ func EditCartProducts(distrib_id string, product_id string, payload models.CartI
 	return payload, result
 }
 
-func EditProduct(distrib_id string, product_id string, payload models.Product) (models.Product, *gorm.DB) {
-	result := configs.DB.Model(models.Product{}).Where("distrib_id=? AND product_id=?", distrib_id, product_id).Updates(payload)
+func EditProduct(product_id string, payload models.Product) (models.Product, *gorm.DB) {
+	result := configs.DB.Model(models.Product{}).Where("product_id=?", product_id).Updates(payload)
 	return payload, result
 }
 

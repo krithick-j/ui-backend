@@ -107,7 +107,6 @@ func CreateProduct(c *fiber.Ctx) error {
 }
 
 func EditProduct(c *fiber.Ctx) error {
-	distrib_id := c.Query("distrib_id")
 	product_id := c.Query("product_id")
 
 	var payload models.Product
@@ -115,7 +114,7 @@ func EditProduct(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
-	res, status := service.EditProduct(payload, distrib_id, product_id)
+	res, status := service.EditProduct(payload, product_id)
 	return c.Status(status).JSON(res)
 }
 

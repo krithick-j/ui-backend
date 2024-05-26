@@ -220,9 +220,9 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }
 
-func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
+func EditProduct(payload models.Product, product_id string) (fiber.Map, int) {
 
-	cartItem, result := repositories.EditProduct(distrib_id, product_id, payload)
+	cartItem, result := repositories.EditProduct(product_id, payload)
 
 	if result.Error != nil {
 		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())

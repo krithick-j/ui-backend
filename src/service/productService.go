@@ -222,14 +222,14 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 
 func EditProduct(payload models.Product, product_id string) (fiber.Map, int) {
 
-	cartItem, result := repositories.EditProduct(product_id, payload)
+	products, result := repositories.EditProduct(product_id, payload)
 
 	if result.Error != nil {
 		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, http.StatusBadGateway
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
 	}
 
-	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
+	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": products}, fiber.StatusOK
 }
 
 // func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {

@@ -29,7 +29,7 @@ type OrderProduct struct {
 
 type OrderDetailsOut struct {
 	DistribId       string
-	Items           []OrderProduct  `json:"items"`
+	Products        []OrderProduct  `json:"products"`
 	SubTotal        float64         `json:"sub_total"`
 	TotalSandH      float64         `json:"total_s_and_h"`
 	TotalAmount     float64         `json:"total_amount"`
@@ -101,9 +101,13 @@ type CustomerDetails struct {
 }
 
 type ProductDetails struct {
-	Id          uint    `json:"id"`
-	Name        string  `json:"name"`
-	Quantity    uint    `json:"quantity"`
-	Price       float64 `json:"price"`
-	TotalAmount float64 `json:"total_amount"`
+	Id           uint    `json:"product_id"`
+	Name         string  `json:"name"`
+	Quantity     uint    `json:"quantity"`
+	Price        float64 `json:"unit_price"`
+	ProductImage string  `json:"product_image"`
+	ProductType  string  `json:"product_type"`
+	SAndH        float64 `json:"s_and_h"`
+	SubTotal     float64 `json:"sub_total"`
+	TypeValue    float64 `json:"type_value"`
 }

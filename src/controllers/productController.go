@@ -106,6 +106,19 @@ func CreateProduct(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func EditProduct(c *fiber.Ctx) error {
+	distrib_id := c.Query("distrib_id")
+	product_id := c.Query("product_id")
+
+	var payload models.Product
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+	}
+
+	res, status := service.EditProduct(payload, distrib_id, product_id)
+	return c.Status(status).JSON(res)
+}
+
 func GetOrderDetails(c *fiber.Ctx) error {
 	distrib_id := c.Query("distrib_id")
 	res, status := service.GetOrderDetails(distrib_id)

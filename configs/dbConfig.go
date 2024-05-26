@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"ui-back-end/src/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

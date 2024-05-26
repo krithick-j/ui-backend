@@ -24,7 +24,7 @@ type OrdersHeader struct {
 	City               string
 	District           string
 	State              string
-	ZipCode            uint64
+	ZipCode            string
 	Country            string
 	HomePhoneNo        string
 	MobilePhoneNo      string

@@ -42,7 +42,7 @@ var OrderTemplate string = `<!DOCTYPE html>
             <tr>
                 <td>{{.Name}}</td>
                 <td>{{.Quantity}}</td>
-                <td>{{.Price}}</td>
+                <td>{{.UnitPrice}}</td>
                 <td>{{.SubTotal}}</td>
             </tr>
             {{end}}

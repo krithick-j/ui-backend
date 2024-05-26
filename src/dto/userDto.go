@@ -11,7 +11,7 @@ type UserIn struct {
 	District              string `json:"district"`
 	StateOrProvince       string `json:"state_or_province"`
 	EmailAddress          string `json:"email_address"`
-	PinOrZipCode          uint64 `json:"pin_or_zip_code"`
+	PinOrZipCode          string `json:"pin_or_zip_code"`
 	Country               string `json:"country"`
 	HomePhoneNo           string `json:"home_phone_no"`
 	MobilePhoneNo         string `json:"mobile_phone_no"`

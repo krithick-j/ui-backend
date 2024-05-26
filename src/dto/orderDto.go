@@ -88,7 +88,7 @@ type ShippingAddress struct {
 	City     string `json:"city"`
 	District string `json:"district"`
 	State    string `json:"state"`
-	ZipCode  uint64 `json:"zip_code"`
+	ZipCode  string `json:"zip_code"`
 	Country  string `json:"country"`
 }
 

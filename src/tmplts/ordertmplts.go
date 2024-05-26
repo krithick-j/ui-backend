@@ -38,7 +38,7 @@ var OrderTemplate string = `<!DOCTYPE html>
             </tr>
         </thead>
         <tbody>
-            {{range .ProductDetails}}
+            {{range .Products}}
             <tr>
                 <td>{{.Name}}</td>
                 <td>{{.Quantity}}</td>

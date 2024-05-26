@@ -424,3 +424,35 @@ Content-Type: application/json
 GET {{host}}/product/orderDetails?distrib_id=IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+###
+POST {{host}}/order/ HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id":"IN-00001",
+	"applied_coupons":
+	[
+		{
+			"v_id":"7D0D72694E",
+			"pin":"A0B73A9E51",
+			"amount_detected":6680
+		}
+	],
+	"place_bvs":
+	[
+		{
+			"place":"001",
+			"add_bv":500
+		},
+		{
+			"place":"002",
+			"add_bv":1100
+		},
+		{
+			"place":"003",
+			"add_bv":400
+		}
+	]
+}

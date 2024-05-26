@@ -98,6 +98,11 @@ func EditCartProducts(distrib_id string, product_id string, payload models.CartI
 	return payload, result
 }
 
+func EditProduct(distrib_id string, product_id string, payload models.Product) (models.Product, *gorm.DB) {
+	result := configs.DB.Model(models.Product{}).Where("distrib_id=? AND product_id=?", distrib_id, product_id).Updates(payload)
+	return payload, result
+}
+
 func SaveProductImage(productImages []models.ProductImage) error {
 
 	for _, pm := range productImages {

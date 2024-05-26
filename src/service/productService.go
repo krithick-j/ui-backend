@@ -164,12 +164,12 @@ func GetCartProductsByDistribId(user_id string) (fiber.Map, int) {
 	}
 	configs.Log.Infoln("Retrieving all products from cart DONE")
 	configs.Log.Infoln("validating cart products that exists in Product table")
-	for _, product := range products { 
+	for _, product := range products {
 		_, result := repositories.GetProductById(product.ProductID)
 		if result.Error != nil {
 			configs.Log.Errorf("Error while retrieving the cart products, %s", result.Error.Error())
-				return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
-		} 
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		}
 	}
 	configs.Log.Infoln("validating cart products that exists in Product table DONE")
 
@@ -217,6 +217,18 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	if result.Error != nil {
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
+	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
+}
+
+func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
+
+	cartItem, result := repositories.EditProduct(distrib_id, product_id, payload)
+
+	if result.Error != nil {
+		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
+		return fiber.Map{"error": result.Error.Error()}, http.StatusBadGateway
+	}
+
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
 }
 

@@ -9,5 +9,5 @@ import (
 func AdminRouter(router fiber.Router) {
 	router.Post("/product", controllers.CreateProduct)
 	router.Post("/icoupon/:admin_name", controllers.CreateICoupon)
-	router.Put("/product", controllers.EditProduct)
+	// router.Put("/product", controllers.EditProduct)
 }

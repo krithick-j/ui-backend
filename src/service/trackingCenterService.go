@@ -113,6 +113,7 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 	tcArr := []dto.TCBv{}
 	res, err := repositories.GetAllTrackingCenters(distrib_id)
 	if err != nil {
+		configs.Log.Errorln("Error on calling GetAllTrackingCenters repositories fn from GetTrackingCentersByDistribId", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 

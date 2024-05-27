@@ -1,6 +1,7 @@
 package service
 
 import (
+	"ui-back-end/configs"
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,10 +13,12 @@ func GetEpBalance(distribId string) (fiber.Map, int) {
 
 	balance, result := repositories.GetEpBalance(distribId)
 	if result.Error == gorm.ErrRecordNotFound {
+		configs.Log.Infoln("Record not found")
 		return fiber.Map{"data": "Not Found"}, fiber.StatusOK
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+		configs.Log.Errorln("Error on calling GetEpBalance service fn",result.Error.Error())
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
 	}
 	return fiber.Map{"data": balance}, fiber.StatusOK
 }

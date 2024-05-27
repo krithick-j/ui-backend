@@ -12,55 +12,70 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
 
-func GetProducts() fiber.Map {
+func GetProducts() (fiber.Map, int) {
 	var products []models.Product
 	var result *gorm.DB
 	products, result = repositories.GetAllProducts(products)
 	println(result)
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+		configs.Log.Infoln("RecordNotFound", result.Error.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		configs.Log.Errorln("Error on calling GetAllProducts repositories fn from GetProducts service fn",result.Error.Error())
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": products}
+	return fiber.Map{"data": products},fiber.StatusOK
 }
 
-func GetProductCategories() fiber.Map {
+func GetProductCategories() (fiber.Map,int) {
 	var productCategories []models.ProductCategory
 	var result *gorm.DB
 	productCategories, result = repositories.GetAllProductCategories(productCategories)
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+		configs.Log.Errorln("RecordNotFound",result.Error.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		configs.Log.Errorln("Error on calling GetAllProductCategories repositories fn from GetProductCategories service fn",result.Error.Error())
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": productCategories}
+	return fiber.Map{"data": productCategories}, fiber.StatusOK
 }
 
-func GetProductByCategoryID(categoryId string, productType string) (fiber.Map, int) {
+func GetProductByCategoryID(categoryId string, productType string) (fiber.Map,int) {
 
 	var product []models.Product
 	var result *gorm.DB
 
 	if productType == "" {
 		product, result = repositories.GetAllProductByCategoryID(categoryId, product)
+
+		if result.Error == gorm.ErrRecordNotFound {
+			configs.Log.Errorln("RecordNotFound",result.Error.Error())
+			return fiber.Map{"data": "Not Found"},fiber.StatusNotFound
+		}
+		if result.Error != nil {
+			configs.Log.Errorln("Error on calling GetAllProductByCategoryID repositories fn from GetProductByCategoryID service fn",result.Error.Error())
+			return fiber.Map{"error": result.Error},fiber.StatusInternalServerError
+		}
 	} else {
 		product, result = repositories.GetAllProductByCategoryIdAndProductType(categoryId, productType)
+		
+		if result.Error == gorm.ErrRecordNotFound {
+			configs.Log.Errorln("RecordNotFound",result.Error.Error())
+			return fiber.Map{"data": "Not Found"},fiber.StatusNotFound
+		}
+		if result.Error != nil {
+			configs.Log.Errorln("Error on calling GetAllProductByCategoryIdAndProductType repositories fn from GetProductByCategoryID service fn",result.Error.Error())
+			return fiber.Map{"error": result.Error},fiber.StatusInternalServerError
+		}
 	}
 
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
-	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
-	}
-	return fiber.Map{"data": product}, fiber.StatusOK
+	return fiber.Map{"data": product},fiber.StatusOK
 }
 
 func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
@@ -71,9 +86,12 @@ func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
 	product, result = repositories.GetAllEpProductByCategoryID(category_id, product)
 
 	if result.Error == gorm.ErrRecordNotFound {
+		configs.Log.Errorln("RecordNotFound",result.Error.Error())
+
 		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
+		configs.Log.Errorln("Error on calling GetAllEpProductByCategoryID repositories fn from GetEpProductsByCategoryId service fn",result.Error.Error())
 		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 
@@ -181,10 +199,12 @@ func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
 	cartItem, result := repositories.DeleteCartProduct(distrib_id, product_id, cartItem)
 
 	if result.Error != nil {
+		configs.Log.Errorln("Error on calling DeleteCartProduct repositories fn from DeleteCartProduct service fn ", result.Error.Error())
 		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
 	}
 
 	if result.Error == gorm.ErrRecordNotFound {
+		configs.Log.Errorln("RecordNotFound ", result.Error.Error())
 		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, http.StatusNoContent
 	}
 
@@ -195,14 +215,17 @@ func DeleteAllCartProduct(distrib_id string) (fiber.Map, int) {
 	cartItem, result := repositories.DeleteAllCartProduct(distrib_id)
 
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		configs.Log.Errorln("Error on calling DeleteAllCartProduct repositories fn from DeleteAllCartProduct service fn",result.Error.Error())
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, http.StatusNoContent
+		configs.Log.Errorln("RecordNotFound",result.Error.Error())
+
+		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, fiber.StatusNoContent
 	}
 
-	return fiber.Map{"success": "All Products in Cart Deleted Successfully", "deleted_products": cartItem}, http.StatusOK
+	return fiber.Map{"success": "All Products in Cart Deleted Successfully", "deleted_products": cartItem}, fiber.StatusOK
 }
 
 func EditCartProducts(payload models.CartItem, distrib_id string, product_id string) (fiber.Map, int) {
@@ -210,27 +233,24 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	cartItem, result := repositories.EditCartProducts(distrib_id, product_id, payload)
 
 	if result.Error != nil {
-		log.Info("Error saving user to the database:", result.Error)
-		return fiber.Map{"error": result.Error}, http.StatusBadGateway
-	}
-
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
-	}
-	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
-}
-
-func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
-
-	cartItem, result := repositories.EditProduct(distrib_id, product_id, payload)
-
-	if result.Error != nil {
 		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, http.StatusBadGateway
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
 	}
 
-	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
+	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, fiber.StatusOK
 }
+
+// func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
+
+// 	cartItem, result := repositories.EditProduct(distrib_id, product_id, payload)
+
+// 	if result.Error != nil {
+// 		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
+// 		return fiber.Map{"error": result.Error.Error()}, http.StatusBadGateway
+// 	}
+
+// 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
+// }
 
 // func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
@@ -249,6 +269,7 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
 			fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
 			err := c.SaveFile(fh, fullPath)
 			if err != nil {
+				configs.Log.Errorln("Error on SaveFile fn from CreateProduct service fn")
 				fmt.Println(err.Error())
 			}
 			pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
@@ -257,5 +278,21 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
 		}
 	}
 	repositories.SaveProductImage(pms)
-	return fiber.Map{"data": "Product Successfully created"}, http.StatusCreated
+	return fiber.Map{"data": "Product Successfully created"}, fiber.StatusCreated
 }
+
+// func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
+// 	func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
+// 							fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
+// 							err := c.SaveFile(fh, fullPath)
+// 							if err != nil {
+// 	                               configs.Log.Errorln("Error on SaveFile fn from CreateProduct service fn")
+// 									fmt.Println(err.Error())
+// 							}
+// 							pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
+// 	func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
+// 					}
+// 			}
+// 			repositories.SaveProductImage(pms)
+// 	       return fiber.Map{"data": "Product Successfully created"}, fiber.StatusCreated
+// 	 }

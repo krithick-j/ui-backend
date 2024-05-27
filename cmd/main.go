@@ -35,7 +35,7 @@ func main() {
 	app.Get("/media/:filename", controllers.GetMediaFile)
 	api := app.Group("/api")
 	api.Route("/auth", routes.AuthRouter) //Logger Added
-	api.Route("/user", routes.UserRouter)
+	api.Route("/user", routes.UserRouter) //Logger added
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
@@ -43,15 +43,15 @@ func main() {
 
 	/* Hereafter all the endpoints will be secured */
 	api.Route("/cpa", routes.CpaRouter)
-	api.Route("/iCoupon", routes.ICouponRouter)
-	api.Route("/product", routes.ProductRouter)
-	api.Route("/order", routes.OrdersRouter)
-	api.Route("/rsp", routes.RspRouter)
-	api.Route("/history", routes.HistoryRouter)
+	api.Route("/iCoupon", routes.ICouponRouter)//logger added
+	api.Route("/product", routes.ProductRouter)//logger added
+	api.Route("/order", routes.OrdersRouter)//logger added
+	api.Route("/rsp", routes.RspRouter)//logger added
+	api.Route("/history", routes.HistoryRouter)//logger added
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/redeem", routes.RedeemRouter)
-	api.Route("/cheque", routes.CheckoutRouter)
-	api.Route("/contactCenter", routes.ContactCenter)
-	api.Route("/admin", routes.AdminRouter)
+	api.Route("/cheque", routes.CheckoutRouter)//logger added
+	api.Route("/contactCenter", routes.ContactCenter)//logger added
+	api.Route("/admin", routes.AdminRouter)//logger added
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

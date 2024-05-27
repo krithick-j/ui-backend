@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
 
@@ -12,6 +13,7 @@ func PlaceOrder(c *fiber.Ctx) error {
 	var OrderIn dto.PlaceOrderIn
 
 	if err := c.BodyParser(&OrderIn); err != nil {
+		configs.Log.Errorln("Error on parsing OrderIn from PlaceOrder controller fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 

@@ -30,8 +30,8 @@ func GetUserByDistId(c *fiber.Ctx) error {
 }
 
 func GetAllUsers(c *fiber.Ctx) error {
-	res := service.GetUsers()
-	return c.Status(http.StatusOK).JSON(res)
+	res, status := service.GetUsers()
+	return c.Status(status).JSON(res)
 }
 
 func GetUserTreeByDistId(c *fiber.Ctx) error {
@@ -63,6 +63,7 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	var user_in models.User
 
 	if err := c.BodyParser(&user_in); err != nil {
+		configs.Log.Errorln("Error on parsing user_in from EditUserByDistId controller fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
@@ -89,6 +90,7 @@ func UpdateUserPass(c *fiber.Ctx) error {
 	var user_in dto.UserPassIn
 
 	if err := c.BodyParser(&user_in); err != nil {
+		configs.Log.Errorln("Error on parsing user_in from UpdateUserPass controller fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
@@ -103,6 +105,7 @@ func GetIDCard(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Erron on parsing data from GetIDCard controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
 	service.GenerateIDCard(data.DistribId)
@@ -189,6 +192,7 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 func KycUpload(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
+		configs.Log.Errorln("Error on calling MultipartForm fn from KycUpload controller fn",err.Error())
 		fmt.Println(err.Error())
 	}
 	service.KycUpload(c, form)
@@ -202,6 +206,7 @@ func ApproveKYC(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
+		configs.Log.Errorln("Error on parsing data from ApproveKYC controller function",err.Error())
 		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
 	}
 	err = service.ApproveKYC(data.DistribId)

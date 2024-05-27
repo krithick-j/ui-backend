@@ -199,7 +199,7 @@ func GetAllOrders() (fiber.Map, int) {
 	}
 	if result.Error != nil {
 		configs.Log.Errorf("%v", result.Error.Error())
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
 	}
 	configs.Log.Infoln("Retrieving All Orders DONE")
 	for _, order := range order {
@@ -468,7 +468,8 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
 
 	if result.Error != nil {
-		return orderDetails, http.StatusInternalServerError
+		configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID repositories fn from GetOrderDetails fn ",result.Error.Error())
+		return orderDetails, fiber.StatusInternalServerError
 	}
 	configs.Log.Infof("%v", orderDetails.Products)
 	if len(cartItems) < 1 {

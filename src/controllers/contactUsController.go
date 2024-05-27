@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/service"
@@ -13,6 +14,7 @@ import (
 func AddEnquiryType(c *fiber.Ctx) error {
 	var request dto.EnquiryTypeIn
 	if err := c.BodyParser(&request); err != nil {
+		configs.Log.Errorln("Error on parsing request from AddEnquiryType controllers function",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
@@ -33,13 +35,16 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 	var request dto.ContactUsIn
 	//for parsing textfield in form data
 	if err := c.BodyParser(&request); err != nil {
+		configs.Log.Errorln("Error on parsing request from SubmitContactUsQuery controllers fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid text format", "err": err.Error()})
 	}
 
 	if form, err := c.MultipartForm(); err != nil {
+		configs.Log.Errorln("Error on calling MultipartForm controller fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid form format", "err": err.Error()})
 	} else {
 		if fileFormObj, err := middleware.ParseForm(form.File); err != nil {
+			configs.Log.Errorln("Error on calling middleware.ParseForm controller function",err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot Parse input Form", "err": err.Error()})
 		} else {
 			res, formName, status := service.SubmitContactUsQuery(*fileFormObj, request)

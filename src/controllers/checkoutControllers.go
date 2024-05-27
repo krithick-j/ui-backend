@@ -27,6 +27,7 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 	var CheckoutIn dto.CheckoutIn
 
 	if err := c.BodyParser(&CheckoutIn); err != nil {
+		configs.Log.Errorln("Error on calling CheckoutIn from TotalChequeValueByDistribId controllers fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
@@ -38,6 +39,7 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	var TakeChequeIn dto.TakeChequeIn
 
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
+		configs.Log.Errorln("Error on calling TakeChequeIn from TakeChequeByDistribId controllers fn ",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 

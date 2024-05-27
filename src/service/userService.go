@@ -42,7 +42,7 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 	}
 	res, err := repositories.AuthUser(username, pass)
 	if err != nil {
-		configs.Log.Errorln("Error on AuthUser", err.Error())
+		configs.Log.Errorln("Error on calling AuthUser repositories fn from LoginUser service fn", err.Error())
 		return fiber.Map{"err": err.Error()}, http.StatusUnauthorized
 	}
 	claims := jwt.MapClaims{
@@ -73,25 +73,29 @@ func GetUserByDistId(dist_id string) (fiber.Map, int) {
 	user, result = repositories.GetUserByID(dist_id, user)
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+		configs.Log.Infoln("RecordNotFound")
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GetUserByDistId fn",result.Error.Error())
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": user}, http.StatusOK
+	return fiber.Map{"data": user}, fiber.StatusOK
 }
 
-func GetUsers() fiber.Map {
+func GetUsers() (fiber.Map, int) {
 	var users []models.User
 	var result *gorm.DB
 	users, result = repositories.GetAllUsers(users)
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+		configs.Log.Infoln("RecordNotFound")
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+		configs.Log.Errorln("Error on calling GetAllUsers repositories fn from GetUsers fn",result.Error.Error())
+		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": users}
+	return fiber.Map{"data": users}, fiber.StatusOK
 }
 
 func FindNextAvailUserSeq() string {
@@ -230,9 +234,9 @@ func GetNewReferrals(distrib_id string) (fiber.Map, int) {
 	}
 	if result.Error != nil {
 		configs.Log.Errorln("Error calling GetUserByRefDistribId fn from GetNewReferrals service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": user}, http.StatusOK
+	return fiber.Map{"data": user}, fiber.StatusOK
 }
 
 func UpdateUserPass(payload dto.UserPassIn) (fiber.Map, int) {

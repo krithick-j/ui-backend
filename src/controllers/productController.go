@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/service"
@@ -11,31 +12,29 @@ import (
 )
 
 func GetProductsController(c *fiber.Ctx) error {
-	res := service.GetProducts()
-	return c.Status(http.StatusOK).JSON(res)
+	res, status := service.GetProducts()
+	return c.Status(status).JSON(res)
 }
 
 func GetProductCategoriesController(c *fiber.Ctx) error {
-	res := service.GetProductCategories()
-	return c.Status(http.StatusOK).JSON(res)
+	res, status := service.GetProductCategories()
+	return c.Status(status).JSON(res)
 }
 
 func GetProductsByCategoryID(c *fiber.Ctx) error {
 	categoryId := c.Params("category_id")
 	productType := c.Query("product_type")
-	res, status := service.GetProductByCategoryID(categoryId, productType)
-
+	res, status:= service.GetProductByCategoryID(categoryId, productType)
 	return c.Status(status).JSON(res)
 }
 
 func AddToCartController(c *fiber.Ctx) error {
 	var request dto.CartItemIn
 	if err := c.BodyParser(&request); err != nil {
+		configs.Log.Errorln("Error on parsing request from AddToCartController controller fn ",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
-
 	res, status := service.AddToCart(request)
-
 	return c.Status(status).JSON(res)
 }
 
@@ -44,6 +43,7 @@ func GetProductsById(c *fiber.Ctx) error {
 		IDs []uint `json:"ids"`
 	}
 	if err := c.BodyParser(&request); err != nil {
+		configs.Log.Errorln("Error on parsing request from GetProductsById controller fn ",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
@@ -89,6 +89,7 @@ func EditCartProducts(c *fiber.Ctx) error {
 
 	var payload models.CartItem
 	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on parsing payload from EditCartProducts controllers fn",err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
 
@@ -99,6 +100,7 @@ func EditCartProducts(c *fiber.Ctx) error {
 func CreateProduct(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
+		configs.Log.Errorln("Error on parsing multipartForm from CreateProduct", err.Error())
 		fmt.Println(err.Error())
 	}
 
@@ -106,18 +108,18 @@ func CreateProduct(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
-func EditProduct(c *fiber.Ctx) error {
-	distrib_id := c.Query("distrib_id")
-	product_id := c.Query("product_id")
+// func EditProduct(c *fiber.Ctx) error {
+// 	distrib_id := c.Query("distrib_id")
+// 	product_id := c.Query("product_id")
 
-	var payload models.Product
-	if err := c.BodyParser(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
-	}
+// 	var payload models.Product
+// 	if err := c.BodyParser(&payload); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
+// 	}
 
-	res, status := service.EditProduct(payload, distrib_id, product_id)
-	return c.Status(status).JSON(res)
-}
+// 	res, status := service.EditProduct(payload, distrib_id, product_id)
+// 	return c.Status(status).JSON(res)
+// }
 
 func GetOrderDetails(c *fiber.Ctx) error {
 	distrib_id := c.Query("distrib_id")

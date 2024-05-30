@@ -160,10 +160,8 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
 			var side string
-			bvretain_flag := true
 			if placeBv.Place == "001" {
 				side = "bv"
-
 			} else if placeBv.Place == "002" {
 				side = "left"
 			} else if placeBv.Place == "003" {
@@ -172,32 +170,51 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				configs.Log.Errorln("Error in updating values of Place")
 				return fiber.Map{"error": "Error in updating values of Place"}, fiber.StatusInternalServerError
 			}
+			BvObj := models.BvTransaction{
+				DistribId:    distrib_id,
+				Place:        placeBv.Place,
+				OrderId:      orderId,
+				Date:         time.Now(),
+				BvValue:      placeBv.AddBv,
+				ActivateDate: time.Now().AddDate(0, 0, 7),
+				Side:         side,
+				TransType:    "product",
+			}
+			res := repositories.SaveBvTransaction(BvObj)
+			fmt.Printf("res: %v\n", BvObj)
+			if res.Error != nil {
+				configs.Log.Errorln("Error on saving BvTransaction", res.Error.Error())
+				tx.Rollback()
+				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+			}
 			place := placeBv.Place
-			rdistrib_id := distrib_id
-			nside := side
+			if side == "bv" {
+				side = "left"
+			}
+			currentTc := repositories.GetTrackingCenter(distrib_id, place)
 			for {
-				fmt.Printf("%v, %v\n", rdistrib_id, place)
-				currentTc := repositories.GetTrackingCenter(rdistrib_id, place)
-				fmt.Printf("Current TC: %v, %v\n", currentTc.DistribID, currentTc.PPlace)
-
-				parentPlace := repositories.GetTrackingCenter(currentTc.DistribID, currentTc.PPlace)
-
-				//Deciding left or right
-				//Dont change if it is bv and its first time
-				bvretain_flag = false
+				if currentTc.PDistribId == "" {
+					configs.Log.Infoln("Breaking from Infinite loop")
+					break
+				}
+				parentTc := repositories.GetTrackingCenter(currentTc.PDistribId, currentTc.PPlace)
+				if parentTc.RightDistribID == currentTc.DistribID && parentTc.RightPlace == currentTc.Place {
+					side = "right"
+				} else {
+					//if parentTc.LeftDistribID == currentTc.DistribID && parentTc.LeftPlace == currentTc.Place {
+					side = "left"
+				}
 				BvObj := models.BvTransaction{
-					DistribId:    rdistrib_id,
-					Place:        place,
+					DistribId:    parentTc.DistribID,
+					Place:        parentTc.Place,
 					OrderId:      orderId,
 					Date:         time.Now(),
 					BvValue:      placeBv.AddBv,
 					ActivateDate: time.Now().AddDate(0, 0, 7),
-					Side:         nside,
+					Side:         side,
 					TransType:    "product",
 				}
-				rdistrib_id = currentTc.PDistribId
-				place = currentTc.PPlace
-				if currentTc.IsActive {
+				if parentTc.IsActive {
 					res := repositories.SaveBvTransaction(BvObj)
 					if res.Error != nil {
 						configs.Log.Errorln("Error on Saving Tc", res.Error.Error())
@@ -206,18 +223,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 					}
 
 				}
-				if currentTc.PDistribId == "" {
-					break
-				}
-				if !(place == "001" && bvretain_flag) {
-					if parentPlace.RightDistribID == rdistrib_id && parentPlace.RightPlace == currentTc.Place {
-						nside = "right"
-					}
-					if parentPlace.LeftDistribID == rdistrib_id && parentPlace.LeftPlace == currentTc.Place {
-						nside = "left"
-					}
-				}
-
+				currentTc = parentTc
 			}
 		}
 		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK

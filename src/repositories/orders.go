@@ -30,12 +30,12 @@ func SaveOrderLiner(order *models.OrdersLiner) error {
 
 func GetOrderByDistribId(distrib_id string) ([]models.OrdersHeader, *gorm.DB) {
 	var order []models.OrdersHeader
-	result := configs.DB.Preload("OrdersLiner").Where( "distrib_id = ?", distrib_id).Find(&order)
+	result := configs.DB.Order("created_at DESC").Preload("OrdersLiner").Where("distrib_id = ?", distrib_id).Find(&order)
 	return order, result
 }
 
 func GetAllOrders() ([]models.OrdersHeader, *gorm.DB) {
 	var order []models.OrdersHeader
-	result := configs.DB.Preload("OrdersLiner").Find(&order)
+	result := configs.DB.Order("created_at DESC").Preload("OrdersLiner").Find(&order)
 	return order, result
 }

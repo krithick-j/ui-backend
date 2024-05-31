@@ -89,10 +89,10 @@ func UpdateTC(tx *gorm.DB, distrib_id string, parent_distrib_id string, place st
 	return nil
 }
 
-func GetUserEmailByDistribID(distribID string) (*gorm.DB, string) {
+func GetUserEmailByDistribID(distribID string) (string,*gorm.DB) {
 	var email string
 	result := configs.DB.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email)
-	return result, email
+	return email, result
 }
 
 func EditUserByDistId(distrib_id string, userIn models.User, user models.User) (models.User, *gorm.DB) {

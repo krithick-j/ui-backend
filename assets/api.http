@@ -456,3 +456,8 @@ Content-Type: application/json
 		}
 	]
 }
+
+###
+GET {{host}}/iCoupon/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

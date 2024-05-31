@@ -31,14 +31,30 @@ type SendCoupon struct {
 }
 
 type ICouponHistoryIn struct {
-	DistribId string    `json:"distrib_id"`
+	DistribId string `json:"distrib_id"`
 	FromDate  string `json:"from_date"`
 	ToDate    string `json:"to_date"`
 }
 
 type BvHistoryIn struct {
-	DistribId   string    `json:"distrib_id"`
+	DistribId string    `json:"distrib_id"`
 	TransType string    `json:"trans_type"`
-	FromDate    time.Time `json:"from_date"`
-	ToDate      time.Time `json:"to_date"`
+	FromDate  time.Time `json:"from_date"`
+	ToDate    time.Time `json:"to_date"`
+}
+
+type GetICouponOut struct {
+	DistribID      string  `json:"distrib_id"`
+	DateOn         string  `json:"date_on"`
+	Reference      string  `json:"reference"`
+	AdminName      string  `json:"admin_name"`
+	VID            string  `json:"v_id"`
+	TotalValue     float64 `json:"total_value"`
+	RemainingValue float64 `json:"remaining_value"`
+	ExpiresOn      string  `json:"expires_on"`
+	Pin            string  `json:"pin"`
+	Active         bool    `json:"active" default:"true"`
+	CreatedAt      string  `json:"created_at"`
+	UpdatedAt      string  `json:"updated_at"`
+	ID             uint    `json:"id"`
 }

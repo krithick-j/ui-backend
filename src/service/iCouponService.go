@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 	"ui-back-end/configs"
@@ -93,12 +92,12 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 
 	if result.Error != nil {
 		tx.Rollback()
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 
 	if result.RowsAffected == 0 {
 		tx.Rollback()
-		return fiber.Map{"data": "No emailID Found"}, http.StatusNotFound
+		return fiber.Map{"data": "No emailID Found"}, fiber.StatusNotFound
 	}
 
 	for _, Coupon := range iCouponIn.Coupons {
@@ -129,7 +128,7 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 			err := repositories.SaveICoupon(iCoupon)
 			if err != nil {
 				tx.Rollback()
-				return fiber.Map{"error": err.Error()}, http.StatusInternalServerError
+				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
 
 			ICouponTxObj := models.ICouponTransaction{
@@ -141,26 +140,59 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 			res := repositories.SaveICouponTx(ICouponTxObj)
 			if res.Error != nil {
 				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, http.StatusInternalServerError
+				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 			}
 		}
 	}
 	SendHtmlMailICouopon(email, "Your new iCoupon", iCoupons)
 
-	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, http.StatusCreated
+	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, fiber.StatusCreated
 }
 
 func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
-	var iCoupons []models.ICoupon
-	result, iCoupons := repositories.GetAllICouponsByDistribID(DistribID, iCoupons)
+	allICouponsOut := make([]dto.GetICouponOut, 0)
+	fmt.Println("all icoupons", allICouponsOut)
+	result, iCoupons := repositories.GetAllICouponsByDistribID(DistribID)
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound
+		return fiber.Map{"data": "No ICoupon exists"}, fiber.StatusNotFound
 	}
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": iCoupons}, http.StatusOK
 
+	for _, iCoupon := range iCoupons {
+
+		iCouponBalance, res := repositories.GetICouponBalance(iCoupon.VID)
+		if res.Error == gorm.ErrRecordNotFound {
+			configs.Log.Errorln("RecordNotFound on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId fn", res.Error.Error())
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusNotFound
+		}
+
+		if res.Error != nil {
+			configs.Log.Errorln("Error on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId service fn", res.Error.Error())
+			return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		}
+
+		iCouponDto := dto.GetICouponOut{
+			DistribID:      DistribID,
+			DateOn:         iCoupon.DateOn.UTC().String(),
+			Reference:      iCoupon.Reference,
+			AdminName:      iCoupon.AdminName,
+			VID:            iCoupon.VID,
+			TotalValue:     iCoupon.Value,
+			RemainingValue: iCouponBalance,
+			ExpiresOn:      iCoupon.ExpiresOn.UTC().String(),
+			Pin:            iCoupon.Pin,
+			Active:         iCoupon.Active,
+			CreatedAt:      iCoupon.CreatedAt.UTC().String(),
+			UpdatedAt:      iCoupon.UpdatedAt.UTC().String(),
+			ID:             iCoupon.ID,
+		}
+		fmt.Println("icoupon dto", iCouponDto)
+		allICouponsOut = append(allICouponsOut, iCouponDto)
+	}
+	fmt.Println("last allicoupons out", allICouponsOut)
+	return fiber.Map{"data": allICouponsOut}, fiber.StatusOK
 }
 
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
@@ -186,11 +218,11 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	balance, result := repositories.GetICouponBalance(payload.VID)
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "No ICoupon exists"}, http.StatusNotFound
+		return fiber.Map{"data": "No ICoupon exists"}, fiber.StatusNotFound
 	}
 
 	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 
 	iCouponsOut := dto.ValidateICouponOut{

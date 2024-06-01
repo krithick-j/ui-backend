@@ -468,7 +468,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
 
 	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID repositories fn from GetOrderDetails fn ",result.Error.Error())
+		configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID repositories fn from GetOrderDetails fn ", result.Error.Error())
 		return orderDetails, fiber.StatusInternalServerError
 	}
 	configs.Log.Infof("%v", orderDetails.Products)
@@ -495,7 +495,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 		orderProductArray = append(orderProductArray, orderProduct)
 		subTotal += orderProduct.SubTotal
-		totalSandH += orderProduct.SandH
+		totalSandH += orderProduct.SandH * float64(item.Quantity)
 		quantity += item.Quantity
 		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}

@@ -9,7 +9,7 @@ type ProductCart struct {
 
 type CartItemIn struct {
 	DistribID   string        `json:"distrib_id"`
-	Items       []ProductCart `json:"items"`
+	Product       ProductCart `json:"product"`
 	ProductType string        `json:"product_type"`
 }
 

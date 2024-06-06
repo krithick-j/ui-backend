@@ -176,7 +176,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				OrderId:      orderId,
 				Date:         time.Now(),
 				BvValue:      placeBv.AddBv,
-				ActivateDate: time.Now().AddDate(0, 0, 7),
+				ActivateDate: time.Now().AddDate(0, 0, 15),
 				Side:         side,
 				TransType:    "product",
 			}
@@ -210,7 +210,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 					OrderId:      orderId,
 					Date:         time.Now(),
 					BvValue:      placeBv.AddBv,
-					ActivateDate: time.Now().AddDate(0, 0, 7),
+					ActivateDate: time.Now().AddDate(0, 0, 15),
 					Side:         side,
 					TransType:    "product",
 				}

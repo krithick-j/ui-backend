@@ -202,7 +202,7 @@ func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
 	var iCoupon models.ICoupon
 	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
-
+	fmt.Println("icouponn------>>", iCoupon)
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, fiber.StatusBadRequest
 	}
@@ -230,7 +230,8 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 	}
 
 	iCouponsOut := dto.ValidateICouponOut{
-		Value: balance,
+		Value:      balance, //Remaining Value
+		TotalValue: iCoupon.Value,
 	}
 
 	fmt.Println("data", iCouponsOut)

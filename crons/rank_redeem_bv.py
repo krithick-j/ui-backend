@@ -114,7 +114,7 @@ def allusers_update_earning_point() -> None:
 def activate_bv() -> None:
     cursor = DB.cursor()
     sql = """
-    update bv_transactions set is_active = 1 where DATE(activate_date) = DATE(NOW())
+    update bv_transactions set is_active = 1 where DATE(activate_date) <= DATE(NOW())
     """
     cursor.execute(sql)
     DB.commit()
@@ -127,7 +127,7 @@ def main()->None:
     # Check earning point on 6th check
     # allusers_update_earning_point()
     # Close the db at the end
-    # activate_bv()
+    activate_bv()
     DB.close()
 
 #Keep the users in global scope to get repetive db hit

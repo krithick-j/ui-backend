@@ -21,10 +21,10 @@ type TakeChequeIn struct {
 }
 
 type TakeChequeOut struct {
-	TotalBalance           float64          `json:"total_balance"`
-	TotalAvailableBalance  float64          `json:"total_available_balance"`
-	PlacePointsArr         []PlacePointsArr `json:"place_points"`
-	DirectCommissionBalance float64          `json:"direct_commission_balance"`
+	TotalBalance                     float64          `json:"total_balance"`
+	TotalAvailableBalance            float64          `json:"total_available_balance"`
+	PlacePointsArr                   []PlacePointsArr `json:"place_points"`
+	DirectCommissionBalance          float64          `json:"direct_commission_balance"`
 	DirectCommissionAvailableBalance float64          `json:"direct_commission_available_balance"`
 }
 
@@ -42,4 +42,15 @@ type CheckoutFrequency struct {
 	ParentCheckoutFrequency int `json:"parent_checkout_frequency"`
 	LeftCheckoutFrequency   int `json:"left_checkout_frequency"`
 	RightCheckoutFrequency  int `json:"right_checkout_frequency"`
+}
+
+type ChequePinIn struct {
+	DistribId  string `json:"distrib_id"`
+	CurrentPin string `json:"current_pin"`
+	NewPin     string `json:"new_pin"`
+}
+
+type ChequeLogin struct {
+	DistribId string `json:"distrib_id"`
+	Pin       string `json:"pin"`
 }

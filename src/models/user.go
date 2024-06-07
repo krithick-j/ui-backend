@@ -8,6 +8,7 @@ type User struct {
 	RefDistribID    string `json:"ref_distrib_id"`
 	Name            string `json:"name"`
 	Pass            string `json:"pass"`
+	CpaPin          string `json:"cpa_pin"`
 	Address1        string `json:"address1"`
 	Address2        string `json:"address2"`
 	TownOrCity      string `json:"town_or_city"`

@@ -131,6 +131,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		Country:         user_in.Country,
 		HomePhoneNo:     user_in.HomePhoneNo,
 		MobilePhoneNo:   user_in.MobilePhoneNo,
+		CpaPin:          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
 	}
 	//if not empty don't overwrite but find next available free slot
 	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefPlacementDistribId, user_in.RefPlacementPlace, user_in.Side)

@@ -89,7 +89,7 @@ func UpdateTC(tx *gorm.DB, distrib_id string, parent_distrib_id string, place st
 	return nil
 }
 
-func GetUserEmailByDistribID(distribID string) (string,*gorm.DB) {
+func GetUserEmailByDistribID(distribID string) (string, *gorm.DB) {
 	var email string
 	result := configs.DB.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email)
 	return email, result
@@ -142,4 +142,15 @@ func CheckAndUpdateOTP(Type string, Value string, OTP string) error {
 
 func UpdateKyc(user *models.User) {
 	configs.DB.Model(user).Where("distrib_id", user.DistribID).Updates(user)
+}
+
+func GetChequePinByDistribID(distribId string) (string, *gorm.DB) {
+	var pin string
+	result := configs.DB.Model(&models.User{}).Select("cpa_pin").Where("distrib_id", distribId).Find(&pin)
+	return pin, result
+}
+
+func ChangeCpaPin(distribId string, newPin string) *gorm.DB {
+	result := configs.DB.Model(&models.User{}).Where("distrib_id", distribId).Update("cpa_pin", newPin)
+	return result
 }

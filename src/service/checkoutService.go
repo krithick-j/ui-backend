@@ -45,6 +45,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	var totalCheckoutFrequency int
 	var totalPoints float64
+	var totalBvPoints float64
 	placePointsObj := []dto.PlacePointsArr{}
 
 	for _, t := range types {
@@ -69,7 +70,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 		totalCheckoutFrequency += checkoutFrequency
 
 		points := float64(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT)*rank + directCommissionValue
-
+		bvPoints := float64(checkoutFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
 		if points != 0 {
 			placePointsObj = append(placePointsObj, dto.PlacePointsArr{
 				Place: t.Place,
@@ -78,22 +79,17 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 		}
 
 		totalPoints += points
+		totalBvPoints += bvPoints
 	}
 
 	pointsObj := dto.TakeChequeOut{
 		TotalBalance:                     totalPoints,
 		TotalAvailableBalance:            totalPoints,
+		BvBalance:                        totalBvPoints,
 		PlacePointsArr:                   placePointsObj,
 		DirectCommissionBalance:          directCommissionValue,
 		DirectCommissionAvailableBalance: directCommissionValue,
 	}
-
-	// checkoutFrequencyObj := dto.CheckoutFrequency{
-	// 	TotalCheckoutFrequency:  totalCheckoutFrequency,
-	// 	ParentCheckoutFrequency: parentTCCheckoutFrequency,
-	// 	LeftCheckoutFrequency:   leftTCCheckoutFrequency,
-	// 	RightCheckoutFrequency:  rightTCCheckoutFrequency,
-	// }
 
 	return fiber.Map{"points_obj": pointsObj, "code": fiber.StatusOK}, fiber.StatusOK
 }

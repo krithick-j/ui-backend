@@ -27,7 +27,7 @@ func TotalChequeValueByDistribId(c *fiber.Ctx) error {
 	var CheckoutIn dto.CheckoutIn
 
 	if err := c.BodyParser(&CheckoutIn); err != nil {
-		configs.Log.Errorln("Error on calling CheckoutIn from TotalChequeValueByDistribId controllers fn",err.Error())
+		configs.Log.Errorln("Error on parsing CheckoutIn from TotalChequeValueByDistribId controllers fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	res, status := service.TotalChequeValueByDistribId(CheckoutIn)
@@ -39,7 +39,7 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 	var TakeChequeIn dto.TakeChequeIn
 
 	if err := c.BodyParser(&TakeChequeIn); err != nil {
-		configs.Log.Errorln("Error on calling TakeChequeIn from TakeChequeByDistribId controllers fn ",err.Error())
+		configs.Log.Errorln("Error on calling TakeChequeIn from TakeChequeByDistribId controllers fn ", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
@@ -80,4 +80,27 @@ func TakeChequeByDistribId(c *fiber.Ctx) error {
 		tx.Rollback()
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"data": "Left and Right Points are insufficient"})
 	}
+}
+
+func EditChequePin(c *fiber.Ctx) error {
+
+	var payload dto.ChequePinIn
+
+	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on parsing payload from TotalChequeValueByDistribId controllers fn", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.ChangeChequePin(payload)
+	return c.Status(status).JSON(res)
+}
+
+func ChequeLogin(c *fiber.Ctx) error {
+
+	var payload dto.ChequeLogin
+	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on parsing payload from  controllers ChequeLogin fn", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.ChequeLogin(payload)
+	return c.Status(status).JSON(res)
 }

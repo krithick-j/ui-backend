@@ -461,3 +461,24 @@ Content-Type: application/json
 GET {{host}}/iCoupon/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+###
+POST {{host}}/cheque/login HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"pin": "12345"
+}
+
+###
+PUT {{host}}/cheque/changePin HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"current_pin": "1234",
+	"new_pin": "12345"
+}

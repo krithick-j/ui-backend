@@ -42,7 +42,7 @@ func main() {
 	}))
 
 	/* Hereafter all the endpoints will be secured */
-	api.Route("/cpa", routes.CpaRouter)
+	api.Route("/cpa", routes.CpaRouter) //this route is no longer used
 	api.Route("/iCoupon", routes.ICouponRouter)//logger added
 	api.Route("/product", routes.ProductRouter)//logger added
 	api.Route("/order", routes.OrdersRouter)//logger added

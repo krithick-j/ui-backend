@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -147,4 +149,44 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 		tx.Rollback()
 		return fiber.Map{"data": "cheque unsuccessfull!"}, 403
 	}
+}
+
+func ChangeChequePin(payload dto.ChequePinIn) (fiber.Map, int) {
+	currentPinHashFromPayload := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.CurrentPin)))
+
+	currentPinHashFromDB, res := repositories.GetChequePinByDistribID(payload.DistribId)
+	if res.Error != nil {
+		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChangeChequePin service fn")
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	if currentPinHashFromDB != currentPinHashFromPayload {
+		configs.Log.Infoln("Invalid CPA pin")
+		return fiber.Map{"error": "Invalid Current Pin"}, fiber.StatusBadRequest
+	}
+
+	res = repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))))
+	if res.Error != nil {
+		configs.Log.Errorln("Error on calling ChangeCpaPin repositories fn from ChangeChequePin service fn")
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "Cpa pin changed Successfully"}, fiber.StatusOK
+}
+
+func ChequeLogin(payload dto.ChequeLogin) (fiber.Map, int) {
+	PinHashFromPayload := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.Pin)))
+
+	currentPinHashFromDB, res := repositories.GetChequePinByDistribID(payload.DistribId)
+	if res.Error != nil {
+		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChequeLogin service fn", res.Error.Error())
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+
+	}
+
+	if currentPinHashFromDB != PinHashFromPayload {
+		configs.Log.Infoln("Invalid CPA pin")
+		return fiber.Map{"error": "Invalid Current Pin"}, fiber.StatusBadRequest
+	}
+
+	return fiber.Map{"data": "Cpa pin login successfull"}, fiber.StatusOK
 }

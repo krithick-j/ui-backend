@@ -44,3 +44,14 @@ type CheckoutFrequency struct {
 	LeftCheckoutFrequency   int `json:"left_checkout_frequency"`
 	RightCheckoutFrequency  int `json:"right_checkout_frequency"`
 }
+
+type ChequePinIn struct {
+	DistribId  string `json:"distrib_id"`
+	CurrentPin string `json:"current_pin"`
+	NewPin     string `json:"new_pin"`
+}
+
+type ChequeLogin struct {
+	DistribId string `json:"distrib_id"`
+	Pin       string `json:"pin"`
+}

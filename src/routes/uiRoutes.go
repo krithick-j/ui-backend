@@ -11,4 +11,5 @@ func UiRouter(router fiber.Router) {
 	router.Get("/allGrVisual", controllers.GetAllGrVisual)
 	router.Get("/allGrVisualByDate", controllers.GetAllGrVisualByDate)
 	router.Get("/carousalImages", controllers.CarousalImages)
+	router.Post("/bvCounter", controllers.GetBvCounterByStartDate)
 }

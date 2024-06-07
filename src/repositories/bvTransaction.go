@@ -49,3 +49,23 @@ func GetBVforTCOneRow(distrib_id string, tc string) (models.TCBvOneRow, *gorm.DB
 		Take(&tcbv)
 	return tcbv, result
 }
+
+// func GetLRCommissionBvByDate(distrib_id string, fromDate time.Time, toDate time.Time, place string) (any, *gorm.DB) {
+// 	var lRCommissionBv any
+// 	query := configs.DB.Model(models.BvTransaction{})
+// 	query = query.Select("SUM(IF(side='left', bv_value, 0)) as left, SUM(IF(side='right', bv_value, 0)) as right")
+// 	query = query.Where("distrib_id=? AND place = ? AND is_active = 1", distrib_id, place)
+// 	query = query.Where("date BETWEEN ? AND ?", fromDate, toDate)
+// 	result := query.Take(&lRCommissionBv)
+// 	return lRCommissionBv, result
+// }
+
+func GetLRCommissionBvByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time) (models.TCBvOneRow, *gorm.DB) {
+	tcbv := models.TCBvOneRow{}
+	result := configs.DB.Table("bv_transactions").
+		Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
+		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).
+		Where("date BETWEEN ? AND ?", fromDate, toDate).
+		Take(&tcbv)
+	return tcbv, result
+}

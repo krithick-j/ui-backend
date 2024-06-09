@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
@@ -40,6 +41,18 @@ func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
 	return tcbv, result
 }
 
+func GetBVforTCByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time) ([]models.TCBv, *gorm.DB) {
+	tcbv := []models.TCBv{}
+	print("hi from tc")
+	result := configs.DB.Table("bv_transactions").
+		Select("side, sum(bv_value) as BValue").
+		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).
+		Where("date BETWEEN ? AND ?", fromDate, toDate).
+		Group("side").
+		Scan(&tcbv)
+	return tcbv, result
+}
+
 func GetBVforTCOneRow(distrib_id string, tc string) (models.TCBvOneRow, *gorm.DB) {
 	tcbv := models.TCBvOneRow{}
 	result := configs.DB.Table("bv_transactions").
@@ -50,18 +63,10 @@ func GetBVforTCOneRow(distrib_id string, tc string) (models.TCBvOneRow, *gorm.DB
 	return tcbv, result
 }
 
-// func GetLRCommissionBvByDate(distrib_id string, fromDate time.Time, toDate time.Time, place string) (any, *gorm.DB) {
-// 	var lRCommissionBv any
-// 	query := configs.DB.Model(models.BvTransaction{})
-// 	query = query.Select("SUM(IF(side='left', bv_value, 0)) as left, SUM(IF(side='right', bv_value, 0)) as right")
-// 	query = query.Where("distrib_id=? AND place = ? AND is_active = 1", distrib_id, place)
-// 	query = query.Where("date BETWEEN ? AND ?", fromDate, toDate)
-// 	result := query.Take(&lRCommissionBv)
-// 	return lRCommissionBv, result
-// }
-
-func GetLRCommissionBvByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time) (models.TCBvOneRow, *gorm.DB) {
+// Get Tracking Center BV by Date
+func GetBVforTCOneRowByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time) (models.TCBvOneRow, *gorm.DB) {
 	tcbv := models.TCBvOneRow{}
+	fmt.Print("hi from row")
 	result := configs.DB.Table("bv_transactions").
 		Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
 		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).

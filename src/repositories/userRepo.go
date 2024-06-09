@@ -34,6 +34,7 @@ func GetLastId() string {
 	return lastNo
 }
 
+//Get next Tracking Center based on side: returns next distribId and place
 func GetNextItem(distrib_id string, place string, side string) (string, string) {
 	next_item := struct {
 		LeftDistribID  string

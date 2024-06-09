@@ -44,6 +44,26 @@ func FindRecursiveTC(ruser *dto.RecursiveUser, dist_id string, place string, sid
 	}
 }
 
+func FindRecursiveTCForRankBv(leftRankBv *float64, rightRankBv *float64, dist_id string, place string, side string) {
+	tc := repositories.GetTrackingCenter(dist_id, place)
+	tcbv, _ := repositories.GetBVforTC(dist_id, place)
+	for _, val := range tcbv {
+		if val.Side == "left" {
+			*leftRankBv += float64(val.BValue)
+		}
+		if val.Side == "right" {
+			*rightRankBv += float64(val.BValue)
+		}
+	}
+
+	if tc.LeftDistribID != "" {
+		FindRecursiveTCForRankBv(leftRankBv, rightRankBv, tc.LeftDistribID, tc.LeftPlace, "left")
+	}
+	if tc.RightDistribID != "" {
+		FindRecursiveTCForRankBv(leftRankBv, rightRankBv, tc.RightDistribID, tc.RightPlace, "right")
+	}
+}
+
 // only return tracking centers with respect to distrib id
 func FindRecursiveTCOnlyDistribId(ruser *dto.RecursiveUser, dist_id string, place string, side string) {
 	tc := repositories.GetTrackingCenter(dist_id, place)

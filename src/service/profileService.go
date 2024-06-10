@@ -194,7 +194,7 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	data.Set("source", "GSENTS")
 	data.Set("dmobile", "91"+phone)
 	data.Set("dlttempid", "1707171500974884924")
-	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification.\r\nGSENTS", otp))
+	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\r\nGSENTS", otp))
 
 	// Create a new POST request
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))

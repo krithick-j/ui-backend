@@ -13,7 +13,7 @@ func GetRankValueByDistribId(distrib_id string) (float64, *gorm.DB) {
 	return rank, result
 }
 
-func SaveRankValue(RankObject models.UserRank) error {
+func SaveUserRank(RankObject models.UserRank) error {
 	err := configs.DB.Model(&models.UserRank{}).Create(&RankObject).Error
 	return err 
 }

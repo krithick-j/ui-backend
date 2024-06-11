@@ -16,6 +16,7 @@ type Product struct {
 	ProductCategoryID uint           `json:"product_category_id"`
 	ProductType       string         `gorm:"default:not null" json:"product_type"`
 	ProductImages     []ProductImage `json:"product_images"` //Multiple Images
+	GstPercentage     float64        `json:"gst_percentage"`
 }
 
 type ProductImage struct {

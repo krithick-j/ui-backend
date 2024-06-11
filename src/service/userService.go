@@ -114,25 +114,83 @@ func FindNextAvailSlot(distrib_id string, place string, side string) (string, st
 }
 
 func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
+
 	//Generate Next Available Distrib Number
 	distrib_id := FindNextAvailUserSeq()
-	user := models.User{
-		Name:            user_in.Name,
-		Pass:            fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
-		RefDistribID:    user_in.RefDistribID,
-		DistribID:       distrib_id,
+
+	//user object
+
+	AddressDetails := models.AddressDetails{
 		Address1:        user_in.Address1,
 		Address2:        user_in.Address2,
 		TownOrCity:      user_in.TownOrCity,
 		District:        user_in.District,
 		StateOrProvince: user_in.StateOrProvince,
-		EmailAddress:    user_in.EmailAddress,
 		PinOrZipCode:    user_in.PinOrZipCode,
 		Country:         user_in.Country,
-		HomePhoneNo:     user_in.HomePhoneNo,
-		MobilePhoneNo:   user_in.MobilePhoneNo,
-		CpaPin:          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
 	}
+
+	BankDetails := models.BankDetails{
+		PanCard:   user_in.PanCard,
+		BankName:  user_in.BankName,
+		BankAccNo: user_in.BankAccNo,
+		IFSCCode:  user_in.IFSCCode,
+	}
+
+	ApplicationInfo := models.ApplicationInformation{
+		Title:                   user_in.Title,
+		Name:                    user_in.Name,
+		ChequeName:              user_in.ChequeName,
+		EmailAddress:            user_in.EmailAddress,
+		HomePhoneNo:             user_in.HomePhoneNo,
+		MobilePhoneNo:           user_in.MobilePhoneNo,
+		ValidIdNo:               user_in.ValidIdNo,
+		DateOfBirth:             user_in.DateOfBirth,
+		MothersMaidenName:       user_in.MothersMaidenName,
+		BenificiaryName:         user_in.BenificiaryName,
+		BeneficiaryRelationship: user_in.BeneficiaryRelationship,
+		AddressDetails:          AddressDetails,
+	}
+
+	PreferredPlacementInformation := models.PreferredPlacementInformation{
+		PreferredDistribId:   user_in.RefPlacementDistribId,
+		PreferredDistribName: user_in.RefPlacementDistribname,
+		PreferredPlace:       user_in.RefPlacementPlace,
+		PreferredSide:        user_in.Side,
+	}
+
+	ReferrerInformation := models.ReferrerInformation{
+		RefDistribID:   user_in.RefDistribID,
+		RefDistribName: user_in.RefDistribName,
+	}
+	
+	user := models.User{
+		DistribID:                     distrib_id,
+		Pass:                          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
+		CpaPin:                        fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
+		ReferrerInformation:           ReferrerInformation,
+		ApplicationInformation:        ApplicationInfo,
+		BankDetails:                   BankDetails,
+		PreferredPlacementInformation: PreferredPlacementInformation,
+	}
+
+	//create tc and handles tc
+	res, err := handleTCRegistration(user_in, distrib_id, user)
+	if err != nil {
+		return res, err
+	}
+
+	//sends plain mail to user
+	msg := fmt.Sprintf(`Dear Distributor, your registration in UI Network is successful. Your Distributor No is %s.`, distrib_id)
+	SendPlainMail(user_in.EmailAddress, "Your Registration Details", msg)
+
+	rspdata := dto.UserOut{DistribID: distrib_id}
+
+	return fiber.Map{"data": rspdata}, nil
+}
+
+func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.User) (fiber.Map, error) {
+
 	//if not empty don't overwrite but find next available free slot
 	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefPlacementDistribId, user_in.RefPlacementPlace, user_in.Side)
 
@@ -189,12 +247,8 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		configs.Log.Errorln("Error on Committing Transaction RegisterUser service fn", err.Error())
 		tx.Rollback()
 		return fiber.Map{"Error": err.Error()}, err
-
 	}
-	rspdata := dto.UserOut{DistribID: distrib_id}
-	msg := fmt.Sprintf(`Dear Distributor, your registration in UI Network is successful. Your Distributor No is %s.`, distrib_id)
-	SendPlainMail(user_in.EmailAddress, "Your Registration Details", msg)
-	return fiber.Map{"data": rspdata}, nil
+	return nil, nil
 }
 
 func EditUserByDistId(DistribId string, userIn models.User) (fiber.Map, int) {

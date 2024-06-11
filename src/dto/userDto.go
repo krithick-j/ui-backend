@@ -1,23 +1,21 @@
 package dto
 
+import "ui-back-end/src/models"
+
 // User Input from Client
 type UserIn struct {
-	Name                  string `json:"name"`
-	Pass                  string `json:"pass"`
-	RefDistribID          string `json:"ref_distrib_id"`
-	Address1              string `json:"address1"`
-	Address2              string `json:"address2"`
-	TownOrCity            string `json:"town_or_city"`
-	District              string `json:"district"`
-	StateOrProvince       string `json:"state_or_province"`
-	EmailAddress          string `json:"email_address"`
-	PinOrZipCode          string `json:"pin_or_zip_code"`
-	Country               string `json:"country"`
-	HomePhoneNo           string `json:"home_phone_no"`
-	MobilePhoneNo         string `json:"mobile_phone_no"`
-	RefPlacementDistribId string `json:"ref_placement_distrib_id"` //the place or tc in which the user sits in the tree
-	RefPlacementPlace     string `json:"ref_placement_place"`
-	Side                  string `json:"side"`
+	Pass string `json:"pass"`
+	models.BankDetails
+	models.ApplicationInformation
+	models.ReferrerInformation
+	PreferredPlacementInformationIn
+}
+
+type PreferredPlacementInformationIn struct {
+	RefPlacementDistribname string `json:"ref_placement_distrib_name"`
+	RefPlacementDistribId   string `json:"ref_placement_distrib_id"` //the place or tc in which the user sits in the tree; (PreferredDistribId in models.User)
+	RefPlacementPlace       string `json:"ref_placement_place"`      //Preferred Place in models.User
+	Side                    string `json:"side"`                     //Preferred Side in models.User
 }
 
 type UserOut struct {

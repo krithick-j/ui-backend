@@ -163,7 +163,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		RefDistribID:   user_in.RefDistribID,
 		RefDistribName: user_in.RefDistribName,
 	}
-	
+
 	user := models.User{
 		DistribID:                     distrib_id,
 		Pass:                          fmt.Sprintf("%x", sha256.Sum256([]byte(user_in.Pass))),
@@ -180,13 +180,33 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		return res, err
 	}
 
+	res, err = handleRegistrationUserRank(distrib_id)
+	if err != nil {
+		return res, err
+	}
+
 	//sends plain mail to user
 	msg := fmt.Sprintf(`Dear Distributor, your registration in UI Network is successful. Your Distributor No is %s.`, distrib_id)
 	SendPlainMail(user_in.EmailAddress, "Your Registration Details", msg)
 
 	rspdata := dto.UserOut{DistribID: distrib_id}
-
+	
 	return fiber.Map{"data": rspdata}, nil
+}
+
+func handleRegistrationUserRank(distribId string) (fiber.Map, error) {
+	userRank := models.UserRank{
+		DistribId: distribId,
+		Year:      uint64(time.Now().Year()),
+		Month:     time.Now().Month(),
+		Rank:      1, //1 means bronze
+	}
+
+	err := repositories.SaveUserRank(userRank)
+	if err != nil {
+		return fiber.Map{"error": "Error saving User Rank"}, err
+	}
+	return nil, nil
 }
 
 func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.User) (fiber.Map, error) {

@@ -120,6 +120,29 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 
 	//user object
 
+	user := handleUserRegistrationObject(user_in, distrib_id)
+
+	//create tc and handles tc
+	res, err := handleTCRegistration(user_in, distrib_id, user)
+	if err != nil {
+		return res, err
+	}
+
+	res, err = handleRegistrationUserRank(distrib_id)
+	if err != nil {
+		return res, err
+	}
+
+	//sends plain mail to user
+	msg := fmt.Sprintf(`Dear Distributor, your registration in UI Network is successful. Your Distributor No is %s.`, distrib_id)
+	SendPlainMail(user_in.EmailAddress, "Your Registration Details", msg)
+
+	rspdata := dto.UserOut{DistribID: distrib_id}
+
+	return fiber.Map{"data": rspdata}, nil
+}
+
+func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.User {
 	AddressDetails := models.AddressDetails{
 		Address1:        user_in.Address1,
 		Address2:        user_in.Address2,
@@ -173,25 +196,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		BankDetails:                   BankDetails,
 		PreferredPlacementInformation: PreferredPlacementInformation,
 	}
-
-	//create tc and handles tc
-	res, err := handleTCRegistration(user_in, distrib_id, user)
-	if err != nil {
-		return res, err
-	}
-
-	res, err = handleRegistrationUserRank(distrib_id)
-	if err != nil {
-		return res, err
-	}
-
-	//sends plain mail to user
-	msg := fmt.Sprintf(`Dear Distributor, your registration in UI Network is successful. Your Distributor No is %s.`, distrib_id)
-	SendPlainMail(user_in.EmailAddress, "Your Registration Details", msg)
-
-	rspdata := dto.UserOut{DistribID: distrib_id}
-	
-	return fiber.Map{"data": rspdata}, nil
+	return user
 }
 
 func handleRegistrationUserRank(distribId string) (fiber.Map, error) {

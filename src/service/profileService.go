@@ -259,7 +259,10 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 }
 
 func ApproveKYC(distrib_id string) error {
-	user := models.User{DistribID: distrib_id, KYCStatus: "verified"}
+	user := models.User{}
+	user.DistribID = distrib_id
+	user.KYCStatus = "verified"
+
 	repositories.UpdateKyc(&user)
 	return nil
 }

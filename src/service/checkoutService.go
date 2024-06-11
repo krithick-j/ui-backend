@@ -19,7 +19,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	var (
 		parentTCCheckoutFrequency, leftTCCheckoutFrequency, rightTCCheckoutFrequency int
-		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue
+		CHEQUE_DRAW_VALUE                                                            = configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 	)
 
 	rank, res := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)

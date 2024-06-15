@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 	"ui-back-end/configs"
@@ -125,6 +126,7 @@ func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDe
 		return fiber.Map{"error": msg}, status
 	}
 	configs.Log.Infoln("Place BV Added")
+	configs.Log.Infoln("Direct Commission transaction")
 
 	Dcmessage, status := SaveDirectCommissionTransaction(OrderIn.DistribId, total.TotalTypeValue, orderId)
 	if status != 200 {
@@ -340,15 +342,19 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 	value := bvValue * 2.4
 
 	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
+	fmt.Println("reference distrib id ", refDistribId)
 	if err.Error != nil {
 		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
-	}
 
+	}
+	activateDayNumber := 21
 	obj := models.DirectCommissionTransaction{
-		DistribId:     distribId,
-		Value:         value,
-		Reference:     reference,
-		FromDistribId: refDistribId,
+		DistribId:    distribId,
+		Value:        value,
+		Reference:    reference,
+		RefDistribId: refDistribId,
+		ActivateDate: time.Now().AddDate(0, 0, activateDayNumber), //21 days
+		ExpiryDate:   time.Now().AddDate(0, 6, activateDayNumber), //6 months
 	}
 
 	if res := repositories.SaveDirectCommissionTransaction(obj); res.Error != nil {

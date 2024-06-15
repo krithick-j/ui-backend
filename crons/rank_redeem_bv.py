@@ -121,6 +121,26 @@ def activate_bv() -> None:
     cursor.close()
     return None
 
+def activate_direct_comission() -> None:
+    cursor = DB.cursor()
+    sql = """
+    update direct_commission_transactions set is_active = true where DATE(activate_date) <= DATE(NOW())
+    """
+    cursor.execute(sql)
+    DB.commit()
+    cursor.close()
+    return None
+
+def deactivate_direct_comission() -> None:
+    cursor = DB.cursor()
+    sql = """
+    update direct_commission_transactions set is_active = false where DATE(expiry_date) <= DATE(NOW())
+    """
+    cursor.execute(sql)
+    DB.commit()
+    cursor.close()
+    return None
+
 def main()->None:
     # Update the rank for all users
     alluser_upsert_rank()
@@ -128,6 +148,8 @@ def main()->None:
     # allusers_update_earning_point()
     # Close the db at the end
     activate_bv()
+    activate_direct_comission()
+    deactivate_direct_comission()
     DB.close()
 
 #Keep the users in global scope to get repetive db hit

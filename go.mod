@@ -35,9 +35,11 @@ require (
 )
 
 require (
+	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.2
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/gofiber/contrib/jwt v1.0.8
 	github.com/google/uuid v1.5.0 // indirect
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

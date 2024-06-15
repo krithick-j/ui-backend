@@ -55,3 +55,11 @@ type ChequeLogin struct {
 	DistribId string `json:"distrib_id"`
 	Pin       string `json:"pin"`
 }
+
+type TcChequeFrequency struct {
+	Place     string
+	LPoint    int
+	RPoint    int
+	BvPoint   int
+	Frequency uint
+}

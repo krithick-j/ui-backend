@@ -56,6 +56,18 @@ func UserRegistration(c *fiber.Ctx) error {
 	}
 }
 
+func GenerateConsentForm(c *fiber.Ctx) error {
+	var payload struct {
+		DistribId string `json:"distrib_id"`
+	}
+	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on Parsing user_in UserRegistration Controller", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	res, status := service.GenerateConsentForm(payload.DistribId)
+	return c.Status(status).JSON(res)
+}
+
 func EditUserByDistId(c *fiber.Ctx) error {
 
 	DistribID := c.Params("distrib_id")
@@ -63,7 +75,7 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	var user_in models.User
 
 	if err := c.BodyParser(&user_in); err != nil {
-		configs.Log.Errorln("Error on parsing user_in from EditUserByDistId controller fn",err.Error())
+		configs.Log.Errorln("Error on parsing user_in from EditUserByDistId controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
@@ -81,7 +93,7 @@ func NewReferrals(c *fiber.Ctx) error {
 func GetTrackingCenters(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 
-	res, status := service.GetTrackingCentersByDistribId(distrib_id)
+	res, status := service.GetTrackingCentersByDistribId(distrib_id, true, "", "")
 	return c.Status(status).JSON(res)
 }
 
@@ -90,7 +102,7 @@ func UpdateUserPass(c *fiber.Ctx) error {
 	var user_in dto.UserPassIn
 
 	if err := c.BodyParser(&user_in); err != nil {
-		configs.Log.Errorln("Error on parsing user_in from UpdateUserPass controller fn",err.Error())
+		configs.Log.Errorln("Error on parsing user_in from UpdateUserPass controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
@@ -192,7 +204,7 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 func KycUpload(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
-		configs.Log.Errorln("Error on calling MultipartForm fn from KycUpload controller fn",err.Error())
+		configs.Log.Errorln("Error on calling MultipartForm fn from KycUpload controller fn", err.Error())
 		fmt.Println(err.Error())
 	}
 	service.KycUpload(c, form)
@@ -206,7 +218,7 @@ func ApproveKYC(c *fiber.Ctx) error {
 	}{}
 	err := c.BodyParser(&data)
 	if err != nil {
-		configs.Log.Errorln("Error on parsing data from ApproveKYC controller function",err.Error())
+		configs.Log.Errorln("Error on parsing data from ApproveKYC controller function", err.Error())
 		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
 	}
 	err = service.ApproveKYC(data.DistribId)

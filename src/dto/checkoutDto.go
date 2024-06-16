@@ -27,6 +27,7 @@ type TakeChequeOut struct {
 	PlacePointsArr                   []PlacePointsArr `json:"place_points"`
 	DirectCommissionBalance          float64          `json:"direct_commission_balance"`
 	DirectCommissionAvailableBalance float64          `json:"direct_commission_available_balance"`
+	OneFrequencyPlacePointsArr       []PlacePointsArr `json:"one_frequency_place_points"`
 }
 
 type PlacePointsArr struct {

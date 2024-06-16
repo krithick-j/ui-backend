@@ -53,11 +53,11 @@ func GetBVforTCByDate(distrib_id string, tc string, fromDate time.Time, toDate t
 	return tcbv, result
 }
 
-func GetBVforTCOneRow(distrib_id string, tc string) (models.TCBvOneRow, *gorm.DB) {
+func GetBVforTCOneRow(distrib_id string, place string) (models.TCBvOneRow, *gorm.DB) {
 	tcbv := models.TCBvOneRow{}
 	result := configs.DB.Table("bv_transactions").
 		Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
-		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).
+		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, place).
 		Take(&tcbv)
 	return tcbv, result
 }

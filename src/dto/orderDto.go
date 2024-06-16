@@ -1,6 +1,8 @@
 package dto
 
-import "ui-back-end/src/models"
+import (
+	"ui-back-end/src/models"
+)
 
 type DeliveryAddress struct {
 	ContactName   string `json:"contact_name"`
@@ -16,15 +18,16 @@ type DeliveryAddress struct {
 }
 
 type OrderProduct struct {
-	ProductID    uint    `json:"product_id"`
-	ProductImage string  `json:"product_image"`
-	Name         string  `json:"name"`
-	Quantity     uint    `json:"quantity"`
-	UnitPrice    float64 `json:"unit_price"`
-	SubTotal     float64 `json:"sub_total"`
-	SandH        float64 `json:"s_and_h"`
-	ProductType  string  `json:"product_type"`
-	TypeValue    float64 `json:"type_value"`
+	ProductID     uint    `json:"product_id"`
+	ProductImage  string  `json:"product_image"`
+	Name          string  `json:"name"`
+	Quantity      uint    `json:"quantity"`
+	UnitPrice     float64 `json:"unit_price"`
+	SubTotal      float64 `json:"sub_total"`
+	SandH         float64 `json:"s_and_h"`
+	ProductType   string  `json:"product_type"`
+	TypeValue     float64 `json:"type_value"`
+	GstPercentage float64 `json:"gst_percentage"`
 }
 
 type OrderDetailsOut struct {
@@ -37,6 +40,8 @@ type OrderDetailsOut struct {
 	ShippingAddress ShippingAddress `json:"shipping_address"`
 	CustomerDetails CustomerDetails `json:"customer_details"`
 	TotalTypeValue  float64         `json:"total_type_value"`
+	CreatedAt       string          `json:"created_at"`
+	OrderId         string          `json:"order_id"`
 }
 
 type PlaceOrderCoupon struct {

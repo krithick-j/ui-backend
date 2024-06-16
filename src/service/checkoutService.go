@@ -19,6 +19,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 	placePointsObj := []dto.PlacePointsArr{}
+	OneplacePointsObj := []dto.PlacePointsArr{}
 	COUNT := 2 //Left and Right inside the tracking center
 	totalAvailableBvPoints := 0.0
 	totalPoints := 0.0
@@ -29,6 +30,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 	if res.Error != nil {
 		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
 	}
+
 	//Active Points start.....
 	directCommissionActiveValue, res := repositories.GetDirectCommissionActiveValueByDistribId(TakeChequeIn.DistribId)
 	if res.Error != nil {
@@ -55,8 +57,18 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 		ChequeFrequency := middleware.NCheckoutPossible(tc.LPoint, tc.RPoint, CHEQUE_DRAW_VALUE)
 		fmt.Println("Cheque frequency: ", ChequeFrequency, "Check draw value: ", CHEQUE_DRAW_VALUE, "count: ", COUNT, "rank: ", rank)
-		bvAvailblePoints := float64(ChequeFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
+		bvAvailblePoints := ChequeFrequency * float64(CHEQUE_DRAW_VALUE) * float64(COUNT) * rank
+		if ChequeFrequency > 0 {
+			OneFrequencyBvAvailablePoints := float64(CHEQUE_DRAW_VALUE) * float64(COUNT) * rank
+			if OneFrequencyBvAvailablePoints != 0 {
+				OneplacePointsObj = append(OneplacePointsObj, dto.PlacePointsArr{
+					Place: tc.Place,
+					Value: OneFrequencyBvAvailablePoints,
+				})
+			}
+		}
 		fmt.Println("Bv Points", bvAvailblePoints, "direct commission", directCommissionActiveValue)
+
 		if bvAvailblePoints != 0 {
 			placePointsObj = append(placePointsObj, dto.PlacePointsArr{
 				Place: tc.Place,
@@ -89,7 +101,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 		ChequeFrequency := middleware.NCheckoutPossible(tc.LPoint, tc.RPoint, CHEQUE_DRAW_VALUE)
 		fmt.Println("Cheque frequency: ", ChequeFrequency, "Check draw value: ", CHEQUE_DRAW_VALUE, "count: ", COUNT, "rank: ", rank)
-		bvAllPoints := float64(ChequeFrequency*CHEQUE_DRAW_VALUE*COUNT) * rank
+		bvAllPoints := ChequeFrequency * float64(CHEQUE_DRAW_VALUE) * float64(COUNT) * rank
 		fmt.Println("Bv Points", bvAllPoints, "direct commission", directCommissionActiveValue)
 		//Adding is_active = 0 values
 		totalbvPoints += bvAllPoints
@@ -118,6 +130,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 		TotalAvailableBalance:            totalAvailablePoints, //available balance is balance which he can take
 		BvBalance:                        totalAvailableBvPoints,
 		PlacePointsArr:                   placePointsObj,
+		OneFrequencyPlacePointsArr:       OneplacePointsObj, //this is the array should be used in ICoupon generation page
 		DirectCommissionBalance:          directComissionAllValue,
 		DirectCommissionAvailableBalance: directCommissionActiveValue,
 	}
@@ -128,23 +141,25 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (fiber.Map, int) {
 
 	checkoutId := GenerateUniqueHexCode(10)
+	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 
-	var checkDrawValue int = configs.GlobalConfig.ChequeDrawValue
-
-	var leftPoint, rightPoint int
-	side := TakeChequeIn.Place
-
-	tcbv, _ := repositories.GetBVforTC(TakeChequeIn.DistribId, side)
-	for _, val := range tcbv {
-		if val.Side == "left" {
-			leftPoint = val.BValue
-		}
-		if val.Side == "right" {
-			rightPoint = val.BValue
-		}
+	//Get Tracking Center with is_active = 1
+	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "")
+	if status != fiber.StatusOK {
+		configs.Log.Errorln("Error on calling GetTrackingCentersByDistribId from TotalChequeValueByDistribId", trackingCentersActiveValue["error"])
+		return fiber.Map{"data": "something went wrong in getting tracking centers", "status": status}, status
 	}
 
-	if leftPoint < checkDrawValue || rightPoint < checkDrawValue {
+	configs.Log.Infoln("Get tracking centers completed")
+
+	//Get specific tracking center
+	tc, err := repositories.GetBVforTCOneRow(TakeChequeIn.DistribId, TakeChequeIn.Place)
+	if err.Error != nil {
+		configs.Log.Errorln("Error on calling GetBVforTCOneRow from TakeChequeByDistribIdAndPlace", err.Error.Error())
+		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	if tc.LValue < CHEQUE_DRAW_VALUE || tc.RValue < CHEQUE_DRAW_VALUE {
 		tx.Rollback()
 		return fiber.Map{"data": "cheque unsuccessfull!"}, fiber.StatusForbidden
 	}
@@ -154,19 +169,18 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 		Place:        TakeChequeIn.Place,
 		OrderId:      checkoutId,
 		Date:         time.Now(),
-		BvValue:      -float64(checkDrawValue),
-		ActivateDate: time.Now().AddDate(0, 0, 22),
+		BvValue:      -float64(CHEQUE_DRAW_VALUE),
+		ActivateDate: time.Now(),
 		Side:         "left",
 		TransType:    "cheque",
 	}
-
 	RightInsidetCObj := models.BvTransaction{
 		DistribId:    TakeChequeIn.DistribId,
 		Place:        TakeChequeIn.Place,
 		OrderId:      checkoutId,
 		Date:         time.Now(),
-		BvValue:      -float64(checkDrawValue),
-		ActivateDate: time.Now().AddDate(0, 0, 22),
+		BvValue:      -float64(CHEQUE_DRAW_VALUE),
+		ActivateDate: time.Now(),
 		Side:         "right",
 		TransType:    "cheque",
 	}
@@ -181,6 +195,21 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 		tx.Rollback()
 		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 	}
+
+	Icoupon := []dto.Coupon{}
+	for _, coupon := range TakeChequeIn.Coupons {
+		dtoCoupon := dto.Coupon{
+			Value:    coupon.Value,
+			Quantity: coupon.Quantity,
+		}
+		Icoupon = append(Icoupon, dtoCoupon)
+	}
+	ICouponIn := dto.ICouponIn{
+		DistribID: TakeChequeIn.DistribId,
+		Coupons:   Icoupon,
+	}
+	AddICoupon(ICouponIn, ICouponIn.DistribID, tx)
+
 	return fiber.Map{"data": "Cheque taken Successful"}, fiber.StatusOK
 }
 

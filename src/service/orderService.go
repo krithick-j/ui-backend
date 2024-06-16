@@ -20,6 +20,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	//sum product value
 	total, status := GetOrderDetails(OrderIn.DistribId)
+	total.OrderId = orderId
 	if status != http.StatusOK {
 		return fiber.Map{"data": "Something gone wrong"}, fiber.StatusInternalServerError
 	}
@@ -488,15 +489,16 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
-			ProductID:    item.Product.ID,
-			ProductImage: "",
-			Name:         item.Product.Name,
-			Quantity:     item.Quantity,
-			UnitPrice:    item.Product.Price,
-			SubTotal:     item.Product.Price * float64(item.Quantity),
-			SandH:        item.Product.SandH,
-			ProductType:  item.Product.ProductType,
-			TypeValue:    item.Product.TypeValue,
+			ProductID:     item.Product.ID,
+			ProductImage:  "",
+			Name:          item.Product.Name,
+			Quantity:      item.Quantity,
+			UnitPrice:     item.Product.Price,
+			SubTotal:      item.Product.Price * float64(item.Quantity),
+			SandH:         item.Product.SandH,
+			ProductType:   item.Product.ProductType,
+			TypeValue:     item.Product.TypeValue,
+			GstPercentage: item.Product.GstPercentage,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)

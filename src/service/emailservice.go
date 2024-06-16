@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"math"
 	"math/big"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/tmplts"
@@ -77,6 +78,11 @@ func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) 
 	}
 }
 
+// Function to increment index
+func incIndex(index int) int {
+	return index + 1
+}
+
 func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
 
 	m := mail.NewMsg()
@@ -84,7 +90,14 @@ func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
 	m.To(order.CustomerDetails.Email)
 	m.Bcc(adminmail)
 	m.Subject("Your order is received")
-	t, err := template.New("email").Parse(tmplts.OrderTemplate)
+	loc, _ := time.LoadLocation("Asia/Kolkata")
+	order.CreatedAt = time.Now().In(loc).Format("02-01-2006")
+
+	funcMap := template.FuncMap{
+		"incIndex": incIndex,
+	}
+
+	t, err := template.New("email").Funcs(funcMap).Parse(tmplts.InvoiceTemplate)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

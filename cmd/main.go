@@ -36,22 +36,23 @@ func main() {
 	api := app.Group("/api")
 	api.Route("/auth", routes.AuthRouter) //Logger Added
 	api.Route("/user", routes.UserRouter) //Logger added
+	api.Route("/test", routes.TestRouter)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
 	}))
 
 	/* Hereafter all the endpoints will be secured */
-	api.Route("/cpa", routes.CpaRouter) //this route is no longer used
-	api.Route("/iCoupon", routes.ICouponRouter)//logger added
-	api.Route("/product", routes.ProductRouter)//logger added
-	api.Route("/order", routes.OrdersRouter)//logger added
-	api.Route("/rsp", routes.RspRouter)//logger added
-	api.Route("/history", routes.HistoryRouter)//logger added
+	api.Route("/cpa", routes.CpaRouter)         //this route is no longer used
+	api.Route("/iCoupon", routes.ICouponRouter) //logger added
+	api.Route("/product", routes.ProductRouter) //logger added
+	api.Route("/order", routes.OrdersRouter)    //logger added
+	api.Route("/rsp", routes.RspRouter)         //logger added
+	api.Route("/history", routes.HistoryRouter) //logger added
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/redeem", routes.RedeemRouter)
-	api.Route("/cheque", routes.CheckoutRouter)//logger added
-	api.Route("/contactCenter", routes.ContactCenter)//logger added
-	api.Route("/admin", routes.AdminRouter)//logger added
+	api.Route("/cheque", routes.CheckoutRouter)       //logger added
+	api.Route("/contactCenter", routes.ContactCenter) //logger added
+	api.Route("/admin", routes.AdminRouter)           //logger added
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

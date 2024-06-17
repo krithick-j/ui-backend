@@ -34,7 +34,7 @@ func GetLastId() string {
 	return lastNo
 }
 
-//Get next Tracking Center based on side: returns next distribId and place
+// Get next Tracking Center based on side: returns next distribId and place
 func GetNextItem(distrib_id string, place string, side string) (string, string) {
 	next_item := struct {
 		LeftDistribID  string
@@ -108,7 +108,7 @@ func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User
 
 func GetRefDistribIdByDistribId(distribId string) (string, *gorm.DB) {
 	var refDistribId string
-	result := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Take(&refDistribId)
+	result := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Where("distrib_id = ?", distribId).Take(&refDistribId)
 	return refDistribId, result
 }
 

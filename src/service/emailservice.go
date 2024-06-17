@@ -6,8 +6,10 @@ import (
 	"html/template"
 	"math"
 	"math/big"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
+	"ui-back-end/src/middleware"
 	"ui-back-end/src/tmplts"
 
 	"github.com/wneessen/go-mail"
@@ -77,13 +79,25 @@ func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) 
 	}
 }
 
-func SendHtmlMailOrder(order dto.OrderDetailsOut) error {
+// // Function to increment index
+// func incIndex(index int) int {
+// 	return index + 1
+// }
+
+func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {
 
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(order.CustomerDetails.Email)
 	m.Bcc(adminmail)
 	m.Subject("Your order is received")
+	order.CreatedAt = middleware.FormatTimeByLocation(time.Now(), "Asia/Kolkata", "02-01-2006")
+
+	// funcMap := template.FuncMap{
+	// 	"incIndex": incIndex,
+	// }
+	m.AttachFile(attachment)
+
 	t, err := template.New("email").Parse(tmplts.OrderTemplate)
 	if err != nil {
 		fmt.Println(err.Error())

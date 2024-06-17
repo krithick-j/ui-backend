@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -126,10 +125,8 @@ func GetTreeUserByDistId(distrib_id string) fiber.Map {
 	return fiber.Map{"data": ruser}
 }
 
-func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
+func GetTrackingCentersByDistribId(distrib_id string, isActive bool, fromDate string, toDate string) (fiber.Map, int) {
 
-	// places := [3]string{"001", "002", "003"}
-	// var trackingCenters [][]models.TCBv
 	tcArr := []dto.TCBv{}
 	res, err := repositories.GetAllTrackingCenters(distrib_id)
 	if err != nil {
@@ -140,7 +137,11 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 	tcOut := dto.TrackingCenterOut{}
 	tcOut.DistribId = distrib_id
 	for _, place := range res {
-		bvres, _ := repositories.GetBVforTCOneRow(distrib_id, place.Place)
+		bvres, res := repositories.GetBVforTCOneRowByDateGeneric(distrib_id, place.Place, isActive, fromDate, toDate)
+		if res.Error != nil {
+			configs.Log.Errorln("Error on calling GetBVforTCOneRow repositories fn from GetTrackingCentersByDistribId", res.Error.Error())
+			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		}
 		obj := dto.TCBv{
 			Place:   place.Place,
 			LPoint:  bvres.LValue,
@@ -152,7 +153,7 @@ func GetTrackingCentersByDistribId(distrib_id string) (fiber.Map, int) {
 
 	tcOut.Tc = tcArr
 
-	return fiber.Map{"data": tcOut}, http.StatusOK
+	return fiber.Map{"data": tcOut}, fiber.StatusOK
 }
 
 func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB, totalBv float64) (fiber.Map, int) {

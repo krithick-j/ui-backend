@@ -42,6 +42,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	if commitRes := tx.Commit(); commitRes.Error != nil {
 		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
 	}
+
 	//SendHtmlMailOrder(dto.OrderDetailsOut{})
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }
@@ -85,7 +86,13 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	err := SendHtmlMailOrder(total)
+	invoicePdfPath, err := GenerateInvoice(orderId)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+
+	}
+
+	err = SendHtmlMailOrder(total, invoicePdfPath)
 	if err != nil {
 		configs.Log.Errorf("Error sending email : %s", err.Error())
 	}
@@ -165,9 +172,9 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		tx.Rollback()
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-
+	configs.Log.Infoln("Products", total.Products)
 	for _, product := range total.Products {
-
+		configs.Log.Infoln("Product Line: ", product)
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
 			ProductID:      product.ProductID,
@@ -178,6 +185,7 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			TypeValue:      product.TypeValue,
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
+			GstPercentage:  product.GstPercentage,
 		}
 
 		err = repositories.SaveOrderLiner(OrderLinerObj)

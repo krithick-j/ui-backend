@@ -39,3 +39,9 @@ func GetAllOrders() ([]models.OrdersHeader, *gorm.DB) {
 	result := configs.DB.Order("created_at DESC").Preload("OrdersLiner").Find(&order)
 	return order, result
 }
+
+func GetOrderDetailsByOrderId(orderId string) (models.OrdersHeader, error) {
+	order := models.OrdersHeader{}
+	err := configs.DB.Preload("OrdersLiner").Where("order_id = ?", orderId).Find(&order).Error
+	return order, err
+}

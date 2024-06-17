@@ -2,6 +2,9 @@ package service
 
 import (
 	"fmt"
+	"ui-back-end/src/middleware"
+	"ui-back-end/src/models"
+	"ui-back-end/src/repositories"
 
 	"math"
 
@@ -123,20 +126,20 @@ func convert(number int, useAnd bool) string {
 	return combined
 }
 
-func InvoiceFactory() *fpdf.Fpdf {
+func InvoiceFactory(orderDetails models.OrdersHeader) *fpdf.Fpdf {
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	var (
 		currX float64 = 60
 		currY float64 = 8
 	)
-	pdf.Image("uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
 
 	pdf.SetFont("Arial", "B", 12)
 	currX += 8
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Universe Network")
+	pdf.Cell(0, 0, "Universe International")
 	pdf.SetFont("Arial", "", 8)
 	currX -= 30
 	currY += 5
@@ -168,28 +171,35 @@ func InvoiceFactory() *fpdf.Fpdf {
 	currX += 3
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Jon Doe")
+	pdf.Cell(0, 0, orderDetails.ContactName)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Ist Avenue Street")
+	pdf.Cell(0, 0, orderDetails.Address)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "MarkTown, Near Jessica Park")
+	pdf.Cell(0, 0, orderDetails.City)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "New York City")
+	pdf.Cell(0, 0, orderDetails.State)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "New York, US East")
+	pdf.Cell(0, 0, orderDetails.ZipCode)
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, orderDetails.Country)
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, orderDetails.MobilePhoneNo)
 
 	//Set Invoice Details
 	currX += 120
 	currY -= 16
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, fmt.Sprintf("Invoice No: %s", "INV-001/06/24"))
+	pdf.Cell(0, 0, fmt.Sprintf("Invoice No: %s", orderDetails.OrderId))
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, fmt.Sprintf("Invoice Date: %s", "10-06-2024"))
+	formattedItcTime := fmt.Sprintf("Invoice Date: %s", middleware.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006"))
+	pdf.Cell(0, 0, formattedItcTime)
 
 	//Set Invoice Header
 	pdf.SetFillColor(200, 200, 200)
@@ -218,31 +228,32 @@ func InvoiceFactory() *fpdf.Fpdf {
 
 	//Set Invoice Items
 	pdf.SetFillColor(255, 255, 255)
-	for { //Use Rang. Now I am breaking on an infinite loop
+	fmt.Println("order Details", orderDetails)
+	for i, product := range orderDetails.OrdersLiner {
+		fmt.Print("index:", i, "product details: ", product)
 		//Set Invoice Header
 		currX = 10
 		currY += 8
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(10, 8, "1", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(10, 8, fmt.Sprintf("%v", i+1), "1", 0, "C", true, 0, "") //sl no
 		currX += 10
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(100, 8, "Nutrious Flavored Honey Dipped Biscuit", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(100, 8, product.Name, "1", 0, "C", true, 0, "")
 		currX += 100
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(10, 8, "1", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(10, 8, fmt.Sprintf("%v", product.Quantity), "1", 0, "C", true, 0, "")
 		currX += 10
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(20, 8, "10,000.00", "1", 0, "R", true, 0, "")
+		pdf.CellFormat(20, 8, fmt.Sprintf("%v", product.UnitPrice), "1", 0, "R", true, 0, "")
 		currX += 20
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(16, 8, "18 %", "1", 0, "C", true, 0, "")
+		pdf.CellFormat(16, 8, fmt.Sprintf("%v", product.GstPercentage), "1", 0, "C", true, 0, "")
 		currX += 16
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(16, 8, "1,800.00", "1", 0, "R", true, 0, "")
+		pdf.CellFormat(16, 8, fmt.Sprintf("%v", product.SandH), "1", 0, "R", true, 0, "")
 		currX += 16
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(20, 8, "10,000.00", "1", 0, "R", true, 0, "")
-		break
+		pdf.CellFormat(20, 8, fmt.Sprintf("%v", product.SubTotal), "1", 0, "R", true, 0, "")
 	}
 	//Total Invoice Details
 	currX = 10
@@ -251,22 +262,22 @@ func InvoiceFactory() *fpdf.Fpdf {
 	pdf.CellFormat(156, 8, "Total", "1", 0, "C", true, 0, "")
 	currX += 156
 	pdf.SetXY(currX, currY)
-	pdf.CellFormat(16, 8, "1,800.00", "1", 0, "R", true, 0, "")
+	pdf.CellFormat(16, 8, fmt.Sprintf("%v", orderDetails.TotalSandH), "1", 0, "R", true, 0, "")
 	currX += 16
 	pdf.SetXY(currX, currY)
-	pdf.CellFormat(20, 8, "10,000.00", "1", 0, "R", true, 0, "")
+	pdf.CellFormat(20, 8, fmt.Sprintf("%v", orderDetails.SubTotal), "1", 0, "R", true, 0, "")
 	currX = 10
 	currY += 8
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(172, 8, "Grand Total", "1", 0, "C", true, 0, "")
 	currX += 172
 	pdf.SetXY(currX, currY)
-	pdf.CellFormat(20, 8, "99,18,653.00", "1", 0, "R", true, 0, "")
-	inwords := convert(9918653, true)
+	pdf.CellFormat(20, 8, fmt.Sprintf("%v", orderDetails.TotalAmount), "1", 0, "R", true, 0, "")
+	inwords := convert(int(orderDetails.TotalAmount), true)
 	currX = 10
 	currY += 15
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, fmt.Sprintf("Amount In Words: %s Only", inwords))
+	pdf.Cell(0, 0, fmt.Sprintf("Amount In Words: %v Only", inwords))
 	currY += 15
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "For GS Enterprises")
@@ -279,14 +290,19 @@ func InvoiceFactory() *fpdf.Fpdf {
 	return pdf
 }
 
-func GenerateInvoice() error {
-	// Create ID Card Layout
-	pdf := InvoiceFactory()
-	//pdf = IDCardAddContent(pdf)
-	filename := fmt.Sprintf("./tmp/invoice-%s.pdf", "xxx-yyy")
-	err := pdf.OutputFileAndClose(filename)
+func GenerateInvoice(orderId string) (string, error) {
+
+	orderDetails, err := repositories.GetOrderDetailsByOrderId(orderId)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	// Create ID Card Layout
+	pdf := InvoiceFactory(orderDetails)
+	//pdf = IDCardAddContent(pdf)
+	filename := fmt.Sprintf("./tmp/invoice-%s.pdf", orderId)
+	err = pdf.OutputFileAndClose(filename)
+	if err != nil {
+		return "", err
+	}
+	return filename, err
 }

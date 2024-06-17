@@ -42,4 +42,5 @@ type OrdersLiner struct {
 	TypeValue      float64
 	SubTotal       float64
 	SandH          float64
+	GstPercentage  float64
 }

@@ -119,7 +119,6 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	distrib_id := FindNextAvailUserSeq()
 
 	//user object
-
 	user := handleUserRegistrationObject(user_in, distrib_id)
 
 	//create tc and handles tc
@@ -128,6 +127,12 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 		return res, err
 	}
 
+	//create distributor Application Form Link
+	res, err = CreateDistribApplicationForm(user)
+	if err != nil {
+		return res, err
+	}
+	
 	res, err = handleRegistrationUserRank(distrib_id)
 	if err != nil {
 		return res, err
@@ -140,6 +145,13 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	rspdata := dto.UserOut{DistribID: distrib_id}
 
 	return fiber.Map{"data": rspdata}, nil
+}
+
+func CreateDistribApplicationForm(user models.User) (fiber.Map, error) {
+	//parse html template with values
+	//convert html to pdf
+	//save path in DistribApplicationFormLink
+	return fiber.Map{"data": ""}, nil
 }
 
 func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.User {

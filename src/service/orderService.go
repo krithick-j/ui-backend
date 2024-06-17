@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 	"ui-back-end/configs"
@@ -19,6 +20,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 
 	//sum product value
 	total, status := GetOrderDetails(OrderIn.DistribId)
+	total.OrderId = orderId
 	if status != http.StatusOK {
 		return fiber.Map{"data": "Something gone wrong"}, fiber.StatusInternalServerError
 	}
@@ -40,6 +42,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	if commitRes := tx.Commit(); commitRes.Error != nil {
 		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
 	}
+
 	//SendHtmlMailOrder(dto.OrderDetailsOut{})
 	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
 }
@@ -83,7 +86,13 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	err := SendHtmlMailOrder(total)
+	invoicePdfPath, err := GenerateInvoice(orderId)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+
+	}
+
+	err = SendHtmlMailOrder(total, invoicePdfPath)
 	if err != nil {
 		configs.Log.Errorf("Error sending email : %s", err.Error())
 	}
@@ -125,6 +134,7 @@ func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDe
 		return fiber.Map{"error": msg}, status
 	}
 	configs.Log.Infoln("Place BV Added")
+	configs.Log.Infoln("Direct Commission transaction")
 
 	Dcmessage, status := SaveDirectCommissionTransaction(OrderIn.DistribId, total.TotalTypeValue, orderId)
 	if status != 200 {
@@ -162,9 +172,9 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		tx.Rollback()
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-
+	configs.Log.Infoln("Products", total.Products)
 	for _, product := range total.Products {
-
+		configs.Log.Infoln("Product Line: ", product)
 		OrderLinerObj := &models.OrdersLiner{
 			OrdersHeaderID: OrderHeaderObj.ID,
 			ProductID:      product.ProductID,
@@ -175,6 +185,7 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			TypeValue:      product.TypeValue,
 			SubTotal:       product.SubTotal,
 			SandH:          product.SandH,
+			GstPercentage:  product.GstPercentage,
 		}
 
 		err = repositories.SaveOrderLiner(OrderLinerObj)
@@ -340,15 +351,19 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 	value := bvValue * 2.4
 
 	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
+	fmt.Println("reference distrib id ", refDistribId)
 	if err.Error != nil {
 		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
-	}
 
+	}
+	activateDayNumber := 21
 	obj := models.DirectCommissionTransaction{
-		DistribId:     distribId,
-		Value:         value,
-		Reference:     reference,
-		FromDistribId: refDistribId,
+		DistribId:    distribId,
+		Value:        value,
+		Reference:    reference,
+		RefDistribId: refDistribId,
+		ActivateDate: time.Now().AddDate(0, 0, activateDayNumber), //21 days
+		ExpiryDate:   time.Now().AddDate(0, 6, activateDayNumber), //6 months
 	}
 
 	if res := repositories.SaveDirectCommissionTransaction(obj); res.Error != nil {
@@ -482,15 +497,16 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
-			ProductID:    item.Product.ID,
-			ProductImage: "",
-			Name:         item.Product.Name,
-			Quantity:     item.Quantity,
-			UnitPrice:    item.Product.Price,
-			SubTotal:     item.Product.Price * float64(item.Quantity),
-			SandH:        item.Product.SandH,
-			ProductType:  item.Product.ProductType,
-			TypeValue:    item.Product.TypeValue,
+			ProductID:     item.Product.ID,
+			ProductImage:  "",
+			Name:          item.Product.Name,
+			Quantity:      item.Quantity,
+			UnitPrice:     item.Product.Price,
+			SubTotal:      item.Product.Price * float64(item.Quantity),
+			SandH:         item.Product.SandH,
+			ProductType:   item.Product.ProductType,
+			TypeValue:     item.Product.TypeValue,
+			GstPercentage: item.Product.GstPercentage,
 		}
 
 		orderProductArray = append(orderProductArray, orderProduct)

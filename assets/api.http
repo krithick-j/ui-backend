@@ -482,3 +482,31 @@ Content-Type: application/json
 	"current_pin": "1234",
 	"new_pin": "12345"
 }
+
+###
+POST {{host}}/cheque/totalChequeValue HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001"
+}
+
+###
+POST {{host}}/user/distribApplicationForm HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001"
+}
+
+###
+GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+GET {{host}}/test/6086758CDA HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

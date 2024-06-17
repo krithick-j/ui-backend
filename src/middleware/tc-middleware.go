@@ -1,5 +1,7 @@
 package middleware
 
+import "math"
+
 func MinInt(leftInt, rightInt int) int {
 	if leftInt < rightInt {
 		return leftInt
@@ -14,12 +16,12 @@ number of possible times to checkout
 
 NCheckoutPossible --> Number of Times checkout is possible
 */
-func NCheckoutPossible(leftPoint int, rightPoint int, checkoutValue int) int {
+func NCheckoutPossible(leftPoint int, rightPoint int, checkoutValue int) float64 {
 
 	leftInt := leftPoint / checkoutValue
 	rightInt := rightPoint / checkoutValue
 
-	min := MinInt(leftInt, rightInt)
+	min := math.Abs(float64(MinInt(leftInt, rightInt)))
 
 	return min
 }

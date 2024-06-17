@@ -6,10 +6,11 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 
-	DistribID      string `json:"distrib_id"`
-	Pass           string `json:"pass"`
-	CpaPin         string `json:"cpa_pin"`
-	MailingAddress string `json:"mailing_address"` //aadhar card mail address
+	DistribID                  string `json:"distrib_id"`
+	Pass                       string `json:"pass"`
+	CpaPin                     string `json:"cpa_pin"`
+	MailingAddress             string `json:"mailing_address"` //aadhar card mail address
+	DistribApplicationFormLink string `json:"distrib_application_form_link"`
 
 	ReferrerInformation
 	ApplicationInformation
@@ -27,7 +28,7 @@ type KycDetails struct {
 }
 
 type ApplicationInformation struct {
-	Title                   string `json:"title" gorm:"default:'N/A'"` //mr. | mrs. | ms default is N/A
+	Title                   string `json:"title" gorm:"default:'N/A'"` //mr. | mrs. | ms. default is N/A
 	Name                    string `json:"name"`
 	ChequeName              string `json:"cheque_name"`
 	EmailAddress            string `json:"email_address"`

@@ -8,6 +8,6 @@ import (
 
 func TestController(c *fiber.Ctx) error {
 	orderId := c.Params("orderId") //string
-	res, status := service.Test(orderId)
+	res, status, _ := service.GenerateInvoice(orderId)
 	return c.Status(status).JSON(res)
 }

@@ -26,3 +26,15 @@ func GetICouponHistory(distribId string) ([]models.ICouponTransaction, error) {
 	result := configs.DB.Model(&models.ICouponTransaction{}).Where("distrib_id=?", distribId).Limit(20).Take(&iCouponHistory)
 	return iCouponHistory, result.Error
 }
+
+func GetICouponValueByReferenceNo(referenceNo string, distribId string) ([]models.ICouponTransaction, error) {
+	iCoupons := []models.ICouponTransaction{}
+	err := configs.DB.Model(&models.ICouponTransaction{}).Where("distrib_id=? AND reference=?", distribId, referenceNo).Take(&iCoupons).Error
+	return iCoupons, err
+}
+
+func GetICouponsVIDByReference(referenceNo string, distribId string) ([]string, error) {
+	V_IDArr := []string{}
+	err := configs.DB.Model(&models.ICouponTransaction{}).Distinct("v_id").Where("distrib_id=? AND reference=?", distribId, referenceNo).Pluck("v_id", &V_IDArr).Error
+	return V_IDArr, err
+}

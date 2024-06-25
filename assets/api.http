@@ -505,8 +505,61 @@ Content-Type: application/json
 GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
-
+	
 ###
-GET {{host}}/test/6086758CDA HTTP/1.1
+GET {{host}}/test/1087DD44E4 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+
+###
+POST {{host}}/order HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id":"IN-00001",
+	"applied_coupons":
+	[
+		{
+			"v_id":"F9C8C4ECE8",
+			"pin":"8606F8799G",
+			"amount_detected":50000
+		},
+		{
+			"v_id":"F9C8C4ECE9",
+			"pin":"8606F8799V",
+			"amount_detected":60000
+		},
+		{
+			"v_id":"F9C8C4EVD8",
+			"pin":"8606F8799S",
+			"amount_detected":70000
+		},
+		{
+			"v_id":"F9C8C4EVE8",
+			"pin":"8606F8799C",
+			"amount_detected":55500
+		},
+		{
+			"v_id":"F9C8C4ESE8",
+			"pin":"8606F8749C",
+			"amount_detected":165000
+		}
+	],
+	"place_bvs":
+	[
+		{
+			"place":"001",
+			"add_bv":500
+		},
+		{
+			"place":"002",
+			"add_bv":5000
+		},
+		{
+			"place":"003",
+			"add_bv":3500
+		}
+	]
+}

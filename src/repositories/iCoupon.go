@@ -57,6 +57,17 @@ func GetICouponValue(VID string, Pin string) float64 {
 	return couponValue
 }
 
+// value means initial or Total value when coupon generated
+func GetICouponValueByVID(VID string) float64 {
+	var couponValue float64
+	result := configs.DB.Table("i_coupons").Select("value").Where("v_id=?", VID).Take(&couponValue)
+	if result.Error != nil {
+		fmt.Printf("Error %v\n", result.Error.Error())
+	}
+
+	return couponValue
+}
+
 // updating iCoupon Balance in Icoupons table
 func SoftDeleteCoupon(coupon models.ICoupon) (models.ICoupon, *gorm.DB) {
 	result := configs.DB.Where("v_id=?", coupon.VID).Delete(&coupon)

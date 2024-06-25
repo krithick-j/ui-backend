@@ -59,3 +59,9 @@ type GetICouponOut struct {
 	UpdatedAt      string  `json:"updated_at"`
 	ID             uint    `json:"id"`
 }
+
+type OrderedICouponOut struct {
+	VID       string
+	Value     float64
+	UsedValue float64
+}

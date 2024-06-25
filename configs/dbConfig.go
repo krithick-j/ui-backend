@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"ui-back-end/src/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -27,6 +26,6 @@ func DbConnect(config *Config) {
 	}
 
 	Log.Infoln(context.Background(), "\x1b[32m🚀Successfully connected to Database\b[0m")
-	db.AutoMigrate(&models.OrdersLiner{}, &models.DirectCommissionTransaction{})
+	// db.AutoMigrate(&models.AddedBv{})
 	DB = db
 }

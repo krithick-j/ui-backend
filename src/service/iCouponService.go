@@ -272,3 +272,36 @@ func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
 	}
 	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
 }
+
+func GetICouponArrayByOrderId(orderId string, distribId string) ([]dto.OrderedICouponOut, error) {
+
+	//Creating Output dto obj
+	ObjOut := []dto.OrderedICouponOut{}
+	//Getting ICoupon Number
+	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId)
+	if err != nil {
+		return ObjOut, err
+	}
+
+	//Rotating all the VID and mapping total balance and remaining value
+	for _, vid := range getICouponsVID {
+		totalValue := repositories.GetICouponValueByVID(vid)
+
+		//get ICoupon balance
+		balance, result := repositories.GetICouponBalance(vid)
+		if result.Error != nil {
+			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
+			return ObjOut, err
+		}
+
+		icoupon := dto.OrderedICouponOut{
+			VID:       vid,
+			Value:     totalValue,
+			UsedValue: totalValue - balance,
+		}
+
+		ObjOut = append(ObjOut, icoupon)
+		//Getting Total Balance By ICoupon Number
+	}
+	return ObjOut, nil
+}

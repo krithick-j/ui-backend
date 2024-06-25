@@ -28,3 +28,13 @@ func GetBvHistory(payload dto.BvHistoryIn) (fiber.Map, int) {
 
 	return fiber.Map{"data": BvHistory}, fiber.StatusOK
 }
+
+func GetBvDistributionTableByOrdeId(orderId string, distribId string) ([]dto.PlaceBv, error) {
+
+	addedBv, err := repositories.GetAddedBvByOrderIdAndDistribId(orderId, distribId)
+	if err != nil {
+		return addedBv, err
+	}
+
+	return addedBv, nil
+}

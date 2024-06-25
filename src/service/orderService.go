@@ -86,10 +86,9 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	invoicePdfPath, err := GenerateInvoice(orderId)
+	invoicePdfPath, status, err := GenerateInvoice(orderId)
 	if err != nil {
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-
+		return fiber.Map{"error": err.Error()}, status
 	}
 
 	err = SendHtmlMailOrder(total, invoicePdfPath)
@@ -167,11 +166,21 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		MobilePhoneNo:  total.CustomerDetails.MobilePhoneNo,
 	}
 	err := repositories.SaveOrderHeader(OrderHeaderObj)
-
 	if err != nil {
 		tx.Rollback()
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
+	for _, placeBv := range OrderIn.PlaceBvs {
+		addBv := models.AddedBv{
+			OrderHeaderID: OrderHeaderObj.ID,
+			ReferenceNo:   orderId,
+			DistribId:     OrderIn.DistribId,
+			Place:         placeBv.Place,
+			Value:         placeBv.AddBv,
+		}
+		repositories.SaveAddedbv(&addBv)
+	}
+
 	configs.Log.Infoln("Products", total.Products)
 	for _, product := range total.Products {
 		configs.Log.Infoln("Product Line: ", product)
@@ -442,6 +451,7 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 				DistribId: distribId,
 				VID:       orderCoupon.VID,
 				Value:     -totalOrderAmount, //The order amount is less than Icoupon Balance, so icoupon have remaining balance
+				Reference: reference,
 			}
 			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
 				tx.Rollback()

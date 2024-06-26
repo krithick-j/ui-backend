@@ -507,7 +507,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
 ###
-GET {{host}}/test/1087DD44E4 HTTP/1.1
+GET {{host}}/test/518315AC4F HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

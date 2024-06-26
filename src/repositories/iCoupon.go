@@ -33,6 +33,13 @@ func GetICouponBalance(VID string) (float64, *gorm.DB) {
 	return balance, result
 }
 
+// Retrieves all the values using Order ID
+func GetICouponRowsByOrderID(reference string) (float64, *gorm.DB) {
+	var balance float64
+	result := configs.DB.Table("i_coupon_transactions").Select("sum(value)").Where("reference=?", reference).Find(&balance)
+	return balance, result
+}
+
 func GetICouponExpiryDate(VID string) (time.Time, *gorm.DB) {
 	var expiresOn time.Time
 	result := configs.DB.Table("i_coupons").Select("expires_on").Where("v_id=?", VID).Find(&expiresOn)

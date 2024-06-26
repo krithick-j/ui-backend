@@ -121,12 +121,12 @@ func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOr
 func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDetailsOut, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Infoln("Preparing BV product handling...")
 
-	res := repositories.AddDirectBvTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
-	if res.Error != nil {
-		tx.Rollback()
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-	}
-	configs.Log.Infoln("Direct BV Added")
+	// res := repositories.AddDirectBvTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
+	// if res.Error != nil {
+	// 	tx.Rollback()
+	// 	return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	// }
+	// configs.Log.Infoln("Direct BV Added")
 
 	msg, status := UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId, tx, total.TotalTypeValue)
 	if status == fiber.StatusInternalServerError {

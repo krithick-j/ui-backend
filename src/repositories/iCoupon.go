@@ -34,9 +34,9 @@ func GetICouponBalance(VID string) (float64, *gorm.DB) {
 }
 
 // Retrieves all the values using Order ID
-func GetICouponRowsByOrderID(reference string) (float64, *gorm.DB) {
+func GetICouponRowsByOrderID(reference string, vid string) (float64, *gorm.DB) {
 	var balance float64
-	result := configs.DB.Table("i_coupon_transactions").Select("sum(value)").Where("reference=?", reference).Find(&balance)
+	result := configs.DB.Table("i_coupon_transactions").Select("sum(value)").Where("reference=? AND v_id=?", reference, vid).Find(&balance)
 	return balance, result
 }
 

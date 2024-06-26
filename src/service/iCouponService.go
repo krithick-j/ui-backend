@@ -324,7 +324,7 @@ func GetICouponArrayTotalValueByOrderId(orderId string, distribId string) ([]dto
 		totalValue := repositories.GetICouponValueByVID(vid)
 
 		//get ICoupon balance By Order
-		UsedValue, result := repositories.GetICouponRowsByOrderID(orderId)
+		UsedValue, result := repositories.GetICouponRowsByOrderID(orderId, vid)
 		if result.Error != nil {
 			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
 			return ObjOut, err

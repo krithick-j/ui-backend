@@ -15,7 +15,7 @@ import (
 	"github.com/wneessen/go-mail"
 )
 
-var adminmail string = "selangodson@gmail.com"
+var adminmail string = "j.krithick@gmail.com"
 
 func GenOPT() string {
 	bi, err := rand.Int(
@@ -78,11 +78,6 @@ func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) 
 		fmt.Println(err.Error())
 	}
 }
-
-// // Function to increment index
-// func incIndex(index int) int {
-// 	return index + 1
-// }
 
 func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {
 

@@ -150,7 +150,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 		}
 	}
 
-	pdf.Image("./assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
+	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
 	//Universe International and Address
 	pdf.SetFont("Arial", "B", 12)
 	currX += 8
@@ -408,6 +408,8 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 
 	fmt.Println("order Details", orderDetails)
 	for i, product := range orderDetails.OrdersLiner {
+		checkSpaceForTable(pdf, len(bvDistributionTable), rowHeight, lineHeight, headerHeight)
+
 		fmt.Print("index:", i, "product details: ", product)
 		//Set Invoice Header
 		currX = 10
@@ -440,6 +442,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 		pdf.SetXY(currX, currY)
 		pdf.CellFormat(24, rowHeight, fmt.Sprintf("%v", product.SubTotal), "1", 0, "R", true, 0, "")
 	}
+
 	//Total Invoice Details
 	currX = 10
 	currY += rowHeight
@@ -486,7 +489,6 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	//Line
 	currX = 0
 	currY += lineHeight
-	pdf.Line(currX, currY, currX+600, currY)
 
 	//BV DISTRIBUTION DETAILS START
 	currX += 10
@@ -507,7 +509,9 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	pdf.CellFormat(90, rowHeight, "Added BV", "1", 0, "C", true, 0, "")
 	pdf.SetFillColor(236, 253, 235)
 
+	totalBv := 0.0
 	for _, placeBvs := range bvDistributionTable {
+		checkSpaceForTable(pdf, len(bvDistributionTable), rowHeight, lineHeight, headerHeight)
 		//Set TC items
 		currX = 10
 		currY += rowHeight
@@ -515,12 +519,24 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 		pdf.CellFormat(8, rowHeight, fmt.Sprintf("%v", placeBvs.Place), "1", 0, "C", true, 0, "") //sl no
 		currX += rowHeight
 		pdf.SetXY(currX, currY)
-		pdf.CellFormat(90, rowHeight, fmt.Sprintf("%v", placeBvs.AddBv), "1", 0, "C", true, 0, "")
+		pdf.CellFormat(90, rowHeight, fmt.Sprintf("%.2f", placeBvs.AddBv), "1", 0, "R", true, 0, "")
 		currX += 30
 		currX += 20
 		pdf.SetXY(currX, currY)
 		currX += 20
+		totalBv += placeBvs.AddBv
 	}
+
+	currX = 10
+	currY += 10
+	pdf.SetXY(currX, currY)
+	pdf.SetFillColor(200, 200, 200)
+	pdf.SetFont("Arial", "B", 7.5)
+	pdf.CellFormat(54, rowHeight, "Total Distribution Points", "1", 0, "C", true, 0, "")
+	pdf.SetFont("Arial", "", 7.5)
+	currX += 54
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(44, rowHeight, fmt.Sprintf("%.2f", totalBv), "1", 0, "R", true, 0, "")
 
 	rowHeight = 8.0
 	lineHeight = 10.0
@@ -539,7 +555,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	currY += 6
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "BU", 11)
-	pdf.Cell(0, 0, "ICOUPONS DETAILS")
+	pdf.Cell(0, 0, "ICOUPON PAYMENT DETAILS")
 	pdf.SetFont("Arial", "", 7)
 
 	// Set Invoice Header
@@ -564,9 +580,11 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	// Set Invoice Items
 	pdf.SetFillColor(236, 253, 235)
 
+	totalUsedValue := 0.0
 	for i, icoupon := range iCouponsArr {
+		checkSpaceForTable(pdf, len(bvDistributionTable), rowHeight, lineHeight, headerHeight)
 
-		// Set Invoice Header
+		// Set Invoice Items
 		currX = 10
 		currY += rowHeight //8
 		pdf.SetXY(currX, currY)
@@ -584,17 +602,118 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 		pdf.SetXY(currX, currY)
 		pdf.CellFormat(20, rowHeight, fmt.Sprintf("%.2f", icoupon.UsedValue), "1", 0, "R", true, 0, "")
 		currX += 20
+		totalUsedValue += icoupon.UsedValue
 	}
 
-	//Line
-	currX = 0
-	currY += lineHeight //10
+	currX = 10
+	currY += 10
+	pdf.SetXY(currX, currY)
+	pdf.SetFillColor(200, 200, 200)
+	pdf.SetFont("Arial", "B", 7.5)
+	pdf.CellFormat(54, rowHeight, "Total ICoupon Used Value", "1", 0, "C", true, 0, "")
+	pdf.SetFont("Arial", "", 7.5)
+	currX += 54
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(44, rowHeight, fmt.Sprintf("%.2f", totalUsedValue), "1", 0, "R", true, 0, "")
+	pdf.SetFillColor(255, 255, 255)
 
-	currX += 10
-	currY += 15
+	pdf.AddPage()
+	currY = 10.0
+	currX = 10.0
+	pdf.SetFont("Arial", "BU", 11)
+	pdf.Cell(0, 0, "TERMS AND CONDITIONS")
+	pdf.SetFont("Arial", "", 7)
+	pdf.SetTextColor(128, 128, 128)
+
+	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Universe International Direct Selling (India) Pvt Ltd regarding this transaction."
+	currY += 10.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "    I have also read and agreed to comply with the Policies and Procedures as stated."
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "2. Refund Policy : "
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "B", 7)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+	pdf.SetFont("Arial", "", 7)
+
+	txt = "Distributors are hereby notified that Products are subject to the Company's Buy-Back Policy."
+	currX += 25
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "3. The Company shall be obliged to buy-back any marketable product sold to a Customer/Distributor within fifteen (15) days from the date of invoice of the product after "
+	currY += 6.0
+	currX = 10
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "    withholding Tax Deducted at Source (TDS), Sales Incentive utilised, and other taxes if applicable, in accordance with its policies."
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "4. The Customer/Distributor should raise a written request to the Company for the product refund within 15 days from the date of invoice. No refund requests will be entertained after"
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "     15 days."
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "5. Upon receipt and examination of the physical products, the final decision for a product refund rests with the Company."
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "6. The Buy-Back Policy is only applicable for the cancellation of the full purchase order and upon the return of physical products to the company."
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "    In case of Combo products purchase or purchase order with multiple products, the distributor/customer must apply for refund conforming to all products of the said Combo set or "
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "    purchase order."
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "7. The company will not entertain a partial refund of selective products thereof. Subject to such products being in an unused state, accordingly the Company will process the refund "
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "    of the payment made by the distributor/customer."
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "Please send an email to godsonselvan@gmail.com in case of further queries."
+	currY += 6.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	txt = "Please PRINT this receipt for your future reference. For questions and comments, please eMail: godsonselvan@gmail.com"
+	currY += 3.0
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+
+	pdf.SetTextColor(0, 0, 0)
+	currX = 10
+	currY += 30
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "For GS Enterprises")
-	currY += 20
+	currY += 5
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "Godwin Selvan")
 	currY += 8
@@ -610,25 +729,11 @@ func GenerateInvoice(orderId string) (string, int, error) {
 		return "Record not Found", fiber.StatusNotFound, err
 	}
 
-	iCouponsArr, err := GetICouponArrayByOrderId(orderId, orderDetails.DistribId)
+	iCouponsArr, err := GetICouponArrayTotalValueByOrderId(orderId, orderDetails.DistribId)
 	if err != nil {
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	// bvDistributionTable := []dto.PlaceBv{
-	// 	{
-	// 		Place: "001",
-	// 		AddBv: 250,
-	// 	},
-	// 	{
-	// 		Place: "002",
-	// 		AddBv: 250,
-	// 	},
-	// 	{
-	// 		Place: "003",
-	// 		AddBv: 300,
-	// 	},
-	// }
 	bvDistributionTable, err := GetBvDistributionTableByOrdeId(orderId, orderDetails.DistribId)
 	if err != nil {
 		return err.Error(), fiber.StatusInternalServerError, err

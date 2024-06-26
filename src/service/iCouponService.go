@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 	"ui-back-end/configs"
@@ -273,6 +274,7 @@ func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
 	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
 }
 
+// This function is used to get total ICoupon and Total Used value
 func GetICouponArrayByOrderId(orderId string, distribId string) ([]dto.OrderedICouponOut, error) {
 
 	//Creating Output dto obj
@@ -298,6 +300,40 @@ func GetICouponArrayByOrderId(orderId string, distribId string) ([]dto.OrderedIC
 			VID:       vid,
 			Value:     totalValue,
 			UsedValue: totalValue - balance,
+		}
+
+		ObjOut = append(ObjOut, icoupon)
+		//Getting Total Balance By ICoupon Number
+	}
+	return ObjOut, nil
+}
+
+// This function is used to get total ICoupon and Total Used value
+func GetICouponArrayTotalValueByOrderId(orderId string, distribId string) ([]dto.OrderedICouponOut, error) {
+
+	//Creating Output dto obj
+	ObjOut := []dto.OrderedICouponOut{}
+	//Getting ICoupon Number
+	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId)
+	if err != nil {
+		return ObjOut, err
+	}
+
+	//Rotating all the VID and mapping total balance and remaining value
+	for _, vid := range getICouponsVID {
+		totalValue := repositories.GetICouponValueByVID(vid)
+
+		//get ICoupon balance By Order
+		UsedValue, result := repositories.GetICouponRowsByOrderID(orderId)
+		if result.Error != nil {
+			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
+			return ObjOut, err
+		}
+
+		icoupon := dto.OrderedICouponOut{
+			VID:       vid,
+			Value:     totalValue,
+			UsedValue: math.Abs(UsedValue),
 		}
 
 		ObjOut = append(ObjOut, icoupon)

@@ -227,7 +227,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	currX += 40
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
-	formattedItcTime := middleware.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006")
+	formattedItcTime := middleware.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05")
 	pdf.Cell(0, 0, formattedItcTime)
 	pdf.SetFont("Arial", "", 8)
 	//ORDER DETAILS END
@@ -351,6 +351,16 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
 	pdf.Cell(0, 0, orderDetails.HomePhoneNo)
+	pdf.SetFont("Arial", "", 8)
+
+	currX = 10
+	currY += 4
+	pdf.SetXY(currX, currY)
+	pdf.Cell(0, 0, "Email Address:")
+	currX += 35
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "B", 9)
+	pdf.Cell(0, 0, orderDetails.ContactEmail)
 	pdf.SetFont("Arial", "", 8)
 
 	rowHeight := 8.0
@@ -698,27 +708,37 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "Please send an email to godsonselvan@gmail.com in case of further queries."
+	txt = "Please send an email to "
+	mail := `admin@ui-network.com`
+	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
+	rest := " in case of further queries."
 	currY += 6.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+	currX += 27.8
+	pdf.SetXY(currX, currY)
+	pdf.SetTextColor(0, 0, 255) // Set text color to blue
+	pdf.SetFont("Arial", "U", 7)
+	pdf.WriteLinkString(0, mail, link)
+	pdf.SetFont("Arial", "", 7)
+	pdf.SetTextColor(128, 128, 128)
+	currX += 25.8
+	pdf.SetXY(currX, currY)
+	pdf.CellFormat(0, 0, rest, "", 0, "L", true, 0, "")
 
-	txt = "Please PRINT this receipt for your future reference. For questions and comments, please eMail: godsonselvan@gmail.com"
+	txt = "Please PRINT this receipt for your future reference. For questions and comments, please eMail: "
+	currX = 10
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
+	mailtxt := "admin@ui-network.com"
+	currX += 105
+	pdf.SetXY(currX, currY)
+	pdf.SetTextColor(0, 0, 255) // Set text color to blue
+	pdf.SetFont("Arial", "U", 7)
+	pdf.WriteLinkString(0, mailtxt, link)
+	pdf.SetFont("Arial", "", 7)
 
-	pdf.SetTextColor(0, 0, 0)
-	currX = 10
-	currY += 30
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "For GS Enterprises")
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Godwin Selvan")
-	currY += 8
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Digitally Generated Invoice. No Sign Required")
 	return pdf
 }
 

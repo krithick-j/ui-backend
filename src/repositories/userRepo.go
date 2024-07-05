@@ -18,7 +18,8 @@ func AuthUser(distrib_id, password string) (models.User, error) {
 	return user, nil
 }
 
-func GetUserByID(DistID string, user models.User) (models.User, *gorm.DB) {
+func GetUserByID(DistID string) (models.User, *gorm.DB) {
+	user := models.User{}
 	result := configs.DB.First(&user, "distrib_id = ?", DistID)
 	return user, result
 }

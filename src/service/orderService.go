@@ -487,7 +487,6 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var orderProductArray []dto.OrderProduct
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
-	var userData models.User
 	var TotalTypeValue float64
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
@@ -526,7 +525,7 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
-	userData, result = repositories.GetUserByID(distrib_id, userData)
+	userData, result := repositories.GetUserByID(distrib_id)
 	if result.Error != nil {
 		configs.Log.Warnf("%v", orderDetails)
 		return orderDetails, fiber.StatusBadRequest

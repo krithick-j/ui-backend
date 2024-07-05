@@ -506,8 +506,8 @@ GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
-###
-GET {{host}}/test/8A4D601734 HTTP/1.1
+###				
+GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

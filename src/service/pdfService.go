@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 	"ui-back-end/src/tmplts"
 
@@ -14,11 +13,9 @@ import (
 )
 
 func GenerateConsentForm(distrib_id string) (fiber.Map, int) {
-	// Initialize a new User struct
-	user := models.User{}
 
 	// Retrieve the user data from the database
-	user, err := repositories.GetUserByID(distrib_id, user)
+	user, err := repositories.GetUserByID(distrib_id)
 	if err.Error != nil {
 		return fiber.Map{"error": "Error in getting distrib ID", "err": err.Error.Error()}, fiber.StatusInternalServerError
 	}

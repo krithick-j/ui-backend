@@ -7,5 +7,5 @@ import (
 )
 
 func TestRouter(router fiber.Router) {
-	router.Get("/:orderId", controllers.TestController)
+	router.Get("/:distribId", controllers.TestController)
 }

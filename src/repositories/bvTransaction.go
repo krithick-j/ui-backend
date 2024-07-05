@@ -41,13 +41,14 @@ func GetBVforTC(distrib_id string, tc string) ([]models.TCBv, *gorm.DB) {
 	return tcbv, result
 }
 
+// is_active both 0 and 1 will be added for bv counter
 func GetBVforTCByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time) ([]models.TCBv, *gorm.DB) {
 	tcbv := []models.TCBv{}
 	print("hi from tc")
 	result := configs.DB.Table("bv_transactions").
 		Select("side, sum(bv_value) as BValue").
-		Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).
-		Where("activate_date BETWEEN ? AND ?", fromDate, toDate).
+		Where("distrib_id = ? AND place = ?", distrib_id, tc).
+		Where("date BETWEEN ? AND ?", fromDate, toDate).
 		Group("side").
 		Scan(&tcbv)
 	return tcbv, result

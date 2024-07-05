@@ -52,6 +52,7 @@ func RankBvSumByDate(distrib_id string, place string, fromDate time.Time, toDate
 	var rightRankBv = 0.0
 
 	tc := repositories.GetTrackingCenter(distrib_id, place)
+	fmt.Println("from date-->", fromDate, "to date-->", toDate)
 	tcbv, _ := repositories.GetBVforTCByDate(distrib_id, place, fromDate, toDate)
 	for _, val := range tcbv {
 		if val.Side == "left" {

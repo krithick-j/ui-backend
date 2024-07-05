@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Test(orderId string) (fiber.Map, int) {
+func Test(distribId string) (fiber.Map, int) {
 
-	invoicePdfPath, status, err := GenerateInvoice(orderId)
+	invoicePdfPath, status, err := GenerateDistributorForm(distribId)
 	if err != nil {
 		return fiber.Map{"error": err.Error()}, status
 

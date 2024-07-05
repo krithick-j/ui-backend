@@ -56,10 +56,9 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
-	var user models.User
 	var result *gorm.DB
 
-	user, result = repositories.GetUserByID(dist_id, user)
+	user, result := repositories.GetUserByID(dist_id)
 
 	if result.Error == gorm.ErrRecordNotFound {
 		configs.Log.Infoln("RecordNotFound")
@@ -132,7 +131,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	if err != nil {
 		return res, err
 	}
-	
+
 	res, err = handleRegistrationUserRank(distrib_id)
 	if err != nil {
 		return res, err

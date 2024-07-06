@@ -140,7 +140,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY += 5
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 8)
-	pdf.CellFormat(50, 4, referrerDistribInformation.DistribID, "1", 0, "R", false, 0, "")
+	pdf.CellFormat(50, 4, referrerDistribInformation.Title, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
 	currX += 95
@@ -227,9 +227,11 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 
 	currY = pdf.GetY() + 8
 
+	currX = 10
+
 	//Valid ID No
 	currX = 10
-	currY += 5
+	currY += 8
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 8)
 	pdf.Cell(5, 0, "Valid ID No:")
@@ -240,23 +242,23 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.CellFormat(50, 4, distribInformation.ValidIdNo, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
-	currX += 95
+	currX += 55
 	currY -= 5
 
-	//email address
+	//Email Address
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 8)
 	pdf.Cell(5, 0, "Email Address:")
-	currX += 2
+	currX += 1
 	currY += 5
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 8)
 	pdf.CellFormat(50, 4, distribInformation.EmailAddress, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
-	//Nationality & DOB
-	currX = 10
-	currY += 8
+	currX += 55
+	currY -= 5
+	//Nationality & DoB
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 8)
 	pdf.Cell(5, 0, "Nationality & Date Of Birth:")
@@ -268,10 +270,11 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.CellFormat(50, 4, content, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
-	currX += 95
-	currY -= 5
+	currY += 5
 
-	//Relationship to the Benificiary
+	// Valid ID No
+	currX = 10
+	currY += 8
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 8)
 	pdf.Cell(5, 0, "Relationship to the Benificiary/Nominee:")
@@ -282,6 +285,20 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.CellFormat(50, 4, distribInformation.BeneficiaryRelationship, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
+	currX += 95
+	currY -= 5
+
+	// Email Address
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "", 8)
+	pdf.Cell(5, 0, "Benificiary Name:")
+	currX += 1
+	currY += 5
+	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "B", 8)
+	pdf.CellFormat(50, 4, distribInformation.BenificiaryName, "1", 0, "R", false, 0, "")
+	pdf.SetFont("Arial", "", 8)
+	
 	currY += 8
 	currX = 10
 	//Pan Card
@@ -325,6 +342,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY += 8
 	currX = 10
 	//IFS Code
+	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 8)
 	pdf.Cell(5, 0, "IFS Code:")
 	currX += 20
@@ -354,11 +372,11 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currX += 2
 	currY += 5
 	pdf.SetXY(currX, currY)
+
 	pdf.SetFont("Arial", "B", 8)
 	pdf.CellFormat(50, 4, distribInformation.PreferredDistribId, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
-
-	currX += 51
+	currX += 55
 	currY -= 5
 
 	//Full Name
@@ -780,7 +798,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 
 	pdf.SetFont("Arial", "", 7)
 	pdf.SetTextColor(128, 128, 128)
-	
+
 	txt = "Please send an email to "
 	mail := `admin@ui-network.com`
 	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail

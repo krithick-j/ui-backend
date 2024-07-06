@@ -147,8 +147,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 
 func GenerateIDCard(distrib_id string) error {
 	configs.Log.Info("Started Generating ID Card")
-	user := models.User{}
-	userdata, _ := repositories.GetUserByID(distrib_id, user)
+	userdata, _ := repositories.GetUserByID(distrib_id)
 	// Create ID Card Layout
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)

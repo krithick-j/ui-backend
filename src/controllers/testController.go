@@ -6,6 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// func TestController(c *fiber.Ctx) error {
+
+// 	var payload dto.AddTc
+
 func TestController(c *fiber.Ctx) error {
 	distridId := c.Params("distribId") //string
 	res, status := service.Test(distridId)

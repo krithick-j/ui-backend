@@ -75,16 +75,16 @@ func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
 	return nil
 }
 
-func UpdateTC(tx *gorm.DB, distrib_id string, parent_distrib_id string, place string, side string) error {
+func UpdateTC(tx *gorm.DB, distrib_id string, place string, parent_distrib_id string, parent_ref_place string, side string) error {
 	var updatecols models.TrackingCenter
 	if side == "left" {
-		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: "001"}
+		updatecols = models.TrackingCenter{LeftDistribID: distrib_id, LeftPlace: place}
 	} else if side == "right" {
-		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: "001"}
+		updatecols = models.TrackingCenter{RightDistribID: distrib_id, RightPlace: place}
 	} else {
 		return fmt.Errorf("ERROR IN UPDATE TC, SIDE VALUE IS %v", side)
 	}
-	res := tx.Table("tracking_centers").Where("distrib_id=? AND place =?", parent_distrib_id, place).Updates(updatecols)
+	res := tx.Table("tracking_centers").Where("distrib_id=? AND place =?", parent_distrib_id, parent_ref_place).Updates(updatecols)
 	if res.Error != nil {
 		return res.Error
 	}

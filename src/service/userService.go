@@ -56,7 +56,6 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
-	var result *gorm.DB
 
 	user, result := repositories.GetUserByID(dist_id)
 
@@ -229,33 +228,36 @@ func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.Use
 
 	//if not empty don't overwrite but find next available free slot
 	parent_distrib_id, parent_ref_place := FindNextAvailSlot(user_in.RefPlacementDistribId, user_in.RefPlacementPlace, user_in.Side)
-
+	//Initial values
+	place := "001"
+	leftPlace := "002"
+	rightPlace := "003"
 	tc1 := models.TrackingCenter{
 		Name:           user_in.Name,
 		DistribID:      distrib_id,
-		Place:          "001",
+		Place:          place,
 		PDistribId:     parent_distrib_id,
 		PPlace:         parent_ref_place,
 		LeftDistribID:  distrib_id,
-		LeftPlace:      "002",
+		LeftPlace:      leftPlace,
 		RightDistribID: distrib_id,
-		RightPlace:     "003",
+		RightPlace:     rightPlace,
 		IsActive:       false,
 	}
 	tc2 := models.TrackingCenter{
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
-		Place:      "002",
+		Place:      leftPlace,
 		PDistribId: distrib_id,
-		PPlace:     "001",
+		PPlace:     place,
 		IsActive:   false,
 	}
 	tc3 := models.TrackingCenter{
 		Name:       user_in.Name,
 		DistribID:  distrib_id,
-		Place:      "003",
+		Place:      rightPlace,
 		PDistribId: distrib_id,
-		PPlace:     "001",
+		PPlace:     place,
 		IsActive:   false,
 	}
 
@@ -273,12 +275,15 @@ func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.Use
 		configs.Log.Errorln("Error on calling CreateTCs repositories fn from Register User service", res.Error())
 		return fiber.Map{"error": res.Error()}, res
 	}
-	res = repositories.UpdateTC(tx, distrib_id, parent_distrib_id, parent_ref_place, user_in.Side)
+
+	//Updating Parent Tc after creating new TC
+	res = repositories.UpdateTC(tx, distrib_id, place, parent_distrib_id, parent_ref_place, user_in.Side)
 	if res != nil {
 		configs.Log.Errorln("Error on calling UpdateTC repositories fn from Register User service", res.Error())
 		tx.Rollback()
 		return fiber.Map{"error": res.Error()}, res
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		configs.Log.Errorln("Error on Committing Transaction RegisterUser service fn", err.Error())
 		tx.Rollback()

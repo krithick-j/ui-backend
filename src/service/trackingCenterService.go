@@ -252,3 +252,66 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 	configs.Log.Errorln("total value and Total Bv in distribution table does not match!!Check the input values")
 	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
 }
+
+func AddTc(payload dto.AddTc) (fiber.Map, int) {
+
+	//get current tc maximum number
+	place := FindNextTcNumber(payload.DistribId)
+
+	userData, res := repositories.GetUserByID(payload.DistribId)
+	if res.Error != nil {
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", res.Error.Error())
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+
+	//if not empty don't overwrite but find next available free slot
+	parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.RefDistribId, payload.RefPlace, payload.RefSide)
+
+	newTc := models.TrackingCenter{
+		Name:       userData.Name,
+		DistribID:  payload.DistribId,
+		Place:      place,
+		PDistribId: parent_distrib_id,
+		PPlace:     parent_ref_place,
+		// LeftDistribID:  "", // "" or NULL
+		// LeftPlace:      "002", // "" or NULL
+		// RightDistribID: distrib_id, // "" or NULL
+		// RightPlace:     "003", // "" or NULL
+		IsActive: false,
+	}
+	tx := configs.DB.Begin()
+
+	err := repositories.CreateTCs(tx, []models.TrackingCenter{newTc})
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling CreateTCs repositories fn from AddTc service", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+
+	err = repositories.UpdateTC(tx, payload.DistribId, place, parent_distrib_id, parent_ref_place, payload.RefSide)
+	if err != nil {
+		configs.Log.Errorln("Error on calling UpdateTC repositories fn from AddTc service", err.Error())
+		tx.Rollback()
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		configs.Log.Errorln("Error on Committing Transaction AddTc service fn", err.Error())
+		tx.Rollback()
+		return fiber.Map{"Error": err.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "New Tracking Center created"}, fiber.StatusCreated
+}
+
+func FindNextTcNumber(distribId string) string {
+	tcArr, err := repositories.GetAllTrackingCenters(distribId)
+	if err != nil {
+		return ""
+	}
+
+	// Get the next tracking center number
+	nextTcNumber := len(tcArr) + 1 // 1 for next tc number
+
+	// Format the number to a 3-digit string with leading zeros
+	return fmt.Sprintf("%03d", nextTcNumber)
+}

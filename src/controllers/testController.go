@@ -1,13 +1,14 @@
 package controllers
 
-import (
-	"ui-back-end/src/service"
+// func TestController(c *fiber.Ctx) error {
 
-	"github.com/gofiber/fiber/v2"
-)
+// 	var payload dto.AddTc
 
-func TestController(c *fiber.Ctx) error {
-	orderId := c.Params("orderId") //string
-	res, status, _ := service.GenerateInvoice(orderId)
-	return c.Status(status).JSON(res)
-}
+// 	if err := c.BodyParser(&payload); err != nil {
+// 		configs.Log.Errorln("Error on parsing payload from GetBvCounterByStartDate controllers fn", err.Error())
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+// 	}
+
+// 	status, _ := service.AddTc(payload)
+// 	return c.Status(status).JSON(res)
+// }

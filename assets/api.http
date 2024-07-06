@@ -563,3 +563,16 @@ Content-Type: application/json
 		}
 	]
 }
+
+
+
+###
+POST {{host}}/tc/addTc HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "001",
+	"side": "left"
+}

@@ -37,6 +37,7 @@ func main() {
 	api.Route("/auth", routes.AuthRouter) //Logger Added
 	api.Route("/user", routes.UserRouter) //Logger added
 	api.Route("/test", routes.TestRouter)
+	api.Route("/tc", routes.TcRouter)
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
@@ -51,6 +52,7 @@ func main() {
 	api.Route("/history", routes.HistoryRouter) //logger added
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/redeem", routes.RedeemRouter)
+	api.Route("/tc", routes.TcRouter)
 	api.Route("/cheque", routes.CheckoutRouter)       //logger added
 	api.Route("/contactCenter", routes.ContactCenter) //logger added
 	api.Route("/admin", routes.AdminRouter)           //logger added

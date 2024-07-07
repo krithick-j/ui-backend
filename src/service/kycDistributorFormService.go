@@ -19,18 +19,6 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 		currY float64 = 8
 	)
 
-	// // Function to check if there is enough space for the table
-	// checkSpaceForTable := func(pdf *fpdf.Fpdf, rowCount int, rowHeight float64, lineHeight float64, headerHeight float64) {
-	// 	_, pageHeight := pdf.GetPageSize()
-	// 	_, _, _, bottomMargin := pdf.GetMargins()
-	// 	availableHeight := pageHeight - pdf.GetY() - bottomMargin - 10
-	// 	requiredHeight := lineHeight + headerHeight + float64(int(rowHeight)*rowCount)
-	// 	if requiredHeight > availableHeight {
-	// 		pdf.AddPage()
-	// 		currY = 10.0
-	// 	}
-	// }
-
 	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
 	//Universe International and Address
 	pdf.SetFont("Arial", "B", 12)
@@ -202,12 +190,12 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY += 5
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 8)
-	shippingAddress := distribInformation.Address1 + distribInformation.Address2 + distribInformation.TownOrCity + distribInformation.StateOrProvince + distribInformation.Country + distribInformation.District + distribInformation.PinOrZipCode
+	shippingAddress := distribInformation.Address1 + ", " + distribInformation.Address2 + ", " + distribInformation.TownOrCity + ", " + distribInformation.StateOrProvince + ", " + distribInformation.Country + ", " + distribInformation.District + ", " + distribInformation.PinOrZipCode
 	if len(shippingAddress) > 100 {
-		shippingAddress = distribInformation.Address1 + distribInformation.District + distribInformation.PinOrZipCode
+		shippingAddress = distribInformation.Address1 + ", " + distribInformation.District + ", " + distribInformation.PinOrZipCode
 	}
 	if len(shippingAddress) > 100 {
-		shippingAddress = distribInformation.Address1 + distribInformation.District + distribInformation.PinOrZipCode
+		shippingAddress = distribInformation.Address1 + ", " + distribInformation.District + ", " + distribInformation.PinOrZipCode
 	}
 	pdf.MultiCell(90, 4, shippingAddress, "1", "L", false)
 	pdf.SetFont("Arial", "", 8)
@@ -298,7 +286,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetFont("Arial", "B", 8)
 	pdf.CellFormat(50, 4, distribInformation.BenificiaryName, "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
-	
+
 	currY += 8
 	currX = 10
 	//Pan Card

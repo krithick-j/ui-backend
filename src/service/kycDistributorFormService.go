@@ -691,7 +691,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "      and understood the latest available information on the company’s official website before signing the application form. I also understand that in case of any clarification"
+	txt = "      and understood the latest available information on the company's official website before signing the application form. I also understand that in case of any clarification"
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -706,7 +706,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "22. I undertake to confirm the accuracy of the information by referring to the company’s official website before propagating the same."
+	txt = "22. I undertake to confirm the accuracy of the information by referring to the company's official website before propagating the same."
 	currY += 6.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -736,7 +736,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "      Conduct, Policies & Procedures, and Compensation Plan defined herein as “Materials” which are incorporated herewith, and that I agree to be bound by all of them."
+	txt = "      Conduct, Policies & Procedures, and Compensation Plan defined herein as \"Materials\" which are incorporated herewith, and that I agree to be bound by all of them."
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")

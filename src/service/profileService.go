@@ -243,13 +243,15 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 			switch fs {
 			case "aadhar":
 				user.KYCAdhaar = mediapath
-			case "consent":
-				user.KYCConsentDoc = mediapath
+			case "distrib-form":
+				user.KYCDistribApplicationForm = mediapath
 			case "pan":
 				user.KYCPAN = mediapath
 			case "user-image":
 				user.KYCPhoto = mediapath
-			}
+			case "ack-letter":
+				user.KYCAcknowledgementForm = mediapath
+			}	
 		}
 	}
 	user.KYCStatus = "pending"

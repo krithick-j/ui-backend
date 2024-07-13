@@ -361,8 +361,8 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 
 	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
 	fmt.Println("reference distrib id ", refDistribId)
-	if err.Error != nil {
-		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 
 	}
 	activateDayNumber := 21
@@ -525,8 +525,8 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
-	userData, result := repositories.GetUserByID(distrib_id)
-	if result.Error != nil {
+	userData, err := repositories.GetUserByID(distrib_id)
+	if err != nil {
 		configs.Log.Warnf("%v", orderDetails)
 		return orderDetails, fiber.StatusBadRequest
 	}

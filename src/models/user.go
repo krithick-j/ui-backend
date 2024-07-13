@@ -20,11 +20,12 @@ type User struct {
 }
 
 type KycDetails struct {
-	KYCPhoto      string `json:"kyc_photo"`
-	KYCAdhaar     string `json:"kyc_adhaar"`
-	KYCPAN        string `json:"kyc_pan"`
-	KYCConsentDoc string `json:"kyc_concesnt_doc"`
-	KYCStatus     string `json:"kyc_status" gorm:"default:not_submitted"` //not_submitted | pending | verified
+	KYCPhoto                  string `json:"kyc_photo"`
+	KYCAdhaar                 string `json:"kyc_adhaar"`
+	KYCPAN                    string `json:"kyc_pan"`
+	KYCDistribApplicationForm string `json:"kyc_distrib_application_form"`
+	KYCAcknowledgementForm    string `json:"kyc_acknowledgement_form"`
+	KYCStatus                 string `json:"kyc_status" gorm:"default:not_submitted"` //not_submitted | pending | verified
 }
 
 type ApplicationInformation struct {

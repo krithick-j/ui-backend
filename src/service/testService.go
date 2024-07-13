@@ -6,15 +6,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// func Test(payload dto.AddTc) (fiber.Map, int) {
+func Test(distribId string) (fiber.Map, int) {
 
-// 	status, err := AddTc(payload)
-// 	if err != nil {
-// 		return fiber.Map{"error": err.Error()}, status
-// 	}
-// 	configs.Log.Infof("Test service completed")
-// 	return fiber.Map{"data": "successfully completed"}, status
-// }
+	invoicePdfPath, status, err := GenerateInvoice(distribId)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, status
+
+	}
+	configs.Log.Infof("Test service completed")
+	return fiber.Map{"data": invoicePdfPath}, status
+}
 
 func TestGetICouponArrayByOrderId(orderId string, distribId string) (fiber.Map, int) {
 

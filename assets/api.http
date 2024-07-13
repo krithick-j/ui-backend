@@ -506,11 +506,11 @@ GET {{host}}/user/getTrackingCenters/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
-###
-GET {{host}}/test/8A4D601734 HTTP/1.1
+###				
+GET {{host}}/test/8 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
-
 
 ###
 POST {{host}}/order HTTP/1.1
@@ -572,7 +572,16 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
+	"applied_coupons":
+	[
+		{
+			"v_id":"7198DF26C6",
+			"pin":"6EE8FE55ED",
+			"amount_detected":1000
+		}
+	],
 	"distrib_id": "IN-00001",
-	"place": "001",
-	"side": "left"
+	"ref_distrib_id": "IN-00001",
+	"ref_place": "003",
+	"ref_side": "right"
 }

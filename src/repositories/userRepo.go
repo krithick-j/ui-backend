@@ -18,9 +18,9 @@ func AuthUser(distrib_id, password string) (models.User, error) {
 	return user, nil
 }
 
-func GetUserByID(DistID string) (models.User, *gorm.DB) {
+func GetUserByID(DistID string) (models.User, error) {
 	user := models.User{}
-	result := configs.DB.First(&user, "distrib_id = ?", DistID)
+	result := configs.DB.First(&user, "distrib_id = ?", DistID).Error
 	return user, result
 }
 
@@ -107,10 +107,10 @@ func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User
 	return user, result
 }
 
-func GetRefDistribIdByDistribId(distribId string) (string, *gorm.DB) {
+func GetRefDistribIdByDistribId(distribId string) (string, error) {
 	var refDistribId string
-	result := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Where("distrib_id = ?", distribId).Take(&refDistribId)
-	return refDistribId, result
+	err := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Where("distrib_id = ?", distribId).Take(&refDistribId).Error
+	return refDistribId, err
 }
 
 func GetUserPassByDistribId(distribId string) (string, *gorm.DB) {

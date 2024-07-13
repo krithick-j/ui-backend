@@ -56,16 +56,15 @@ func LoginUser(username string, password string) (fiber.Map, int) {
 
 func GetUserByDistId(dist_id string) (fiber.Map, int) {
 
+	user, err := repositories.GetUserByID(dist_id)
 
-	user, result := repositories.GetUserByID(dist_id)
-
-	if result.Error == gorm.ErrRecordNotFound {
+	if user.DistribID == "" {
 		configs.Log.Infoln("RecordNotFound")
 		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GetUserByDistId fn", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GetUserByDistId fn", err.Error())
+		return fiber.Map{"error": err}, fiber.StatusInternalServerError
 	}
 	return fiber.Map{"data": user}, fiber.StatusOK
 }
@@ -130,7 +129,7 @@ func RegisterUser(user_in dto.UserIn) (fiber.Map, error) {
 	if err != nil {
 		return res, err
 	}
-	
+
 	res, err = handleRegistrationUserRank(distrib_id)
 	if err != nil {
 		return res, err

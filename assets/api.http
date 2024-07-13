@@ -1,4 +1,4 @@
-@host = http://localhost:8000/api 
+@host = http://localhost:8000/api
 # @host = https://ui-network.com/api 
 
 
@@ -579,9 +579,19 @@ Content-Type: application/json
 			"pin":"6EE8FE55ED",
 			"amount_detected":1000
 		}
-	],
+	],	
 	"distrib_id": "IN-00001",
 	"ref_distrib_id": "IN-00001",
 	"ref_place": "003",
 	"ref_side": "right"
 }
+
+###
+GET {{host}}/user/kycdistribform/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+GET {{host}}/media/IN-00001-distrib-form.pdf HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

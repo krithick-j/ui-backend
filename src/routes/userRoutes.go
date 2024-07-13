@@ -17,10 +17,13 @@ func UserRouter(router fiber.Router) {
 	router.Put("/changePass", controllers.UpdateUserPass)
 	router.Get("/acknowledgementLetter/:distribId", controllers.GetMediaFile)
 	//User Chain
-	router.Post("/kyc-upload", controllers.KycUpload)
 	router.Get("/tree/:distrib_id", controllers.GetUserTreeByDistId)
 	router.Get("/newReferral/:distrib_id", controllers.NewReferrals)
 	router.Get("/allReferrals", controllers.AllReferrals)
 	router.Get("/getTrackingCenters/:distrib_id", controllers.GetTrackingCenters)
+
+	//KYC routes
+	router.Get("/kycdistribform/:distrib_id", controllers.GenerateKYCDistribForm)
+	router.Post("/kyc-upload", controllers.KycUpload)
 	router.Post("/kycapprove", controllers.ApproveKYC)
 }

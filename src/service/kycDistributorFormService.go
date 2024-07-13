@@ -840,7 +840,7 @@ func GenerateDistributorForm(distribId string) (string, int, error) {
 
 	pdf := DistributorFormFactory(distributorInformation, referrerDistribInformation)
 
-	filename := fmt.Sprintf("./assets/distributorApplicationForm/distribApplicationForm-%s.pdf", distribId)
+	filename := fmt.Sprintf("./assets/%s-distrib-form.pdf", distribId)
 	err = pdf.OutputFileAndClose(filename)
 	if err != nil {
 		return err.Error(), fiber.StatusInternalServerError, err

@@ -68,6 +68,17 @@ func GenerateConsentForm(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func GenerateKYCDistribForm(c *fiber.Ctx) error {
+	distribId := c.Params("distrib_id")
+
+	filename, status, err := service.GenerateDistributorForm(distribId)
+	if err != nil {
+		configs.Log.Errorln("Error on GenerateDistributorForm service from GenerateKYCDistribForm Controller", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	return c.Status(status).JSON(fiber.Map{"filename": filename})
+}
+
 func EditUserByDistId(c *fiber.Ctx) error {
 
 	DistribID := c.Params("distrib_id")

@@ -8,7 +8,7 @@ import (
 
 func Test(distribId string) (fiber.Map, int) {
 
-	invoicePdfPath, status, err := GenerateDistributorForm(distribId)
+	invoicePdfPath, status, err := GenerateInvoice(distribId)
 	if err != nil {
 		return fiber.Map{"error": err.Error()}, status
 

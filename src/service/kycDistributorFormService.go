@@ -823,25 +823,25 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 
 func GenerateDistributorForm(distribId string) (string, int, error) {
 
-	distributorInformation, res := repositories.GetUserByID(distribId)
-	if res.Error != nil {
-		return res.Error.Error(), fiber.StatusInternalServerError, res.Error
+	distributorInformation, err := repositories.GetUserByID(distribId)
+	if err != nil {
+		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	referrerDistribId, res := repositories.GetRefDistribIdByDistribId(distribId)
-	if res.Error != nil {
-		return res.Error.Error(), fiber.StatusInternalServerError, res.Error
+	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
+	if err != nil {
+		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	referrerDistribInformation, res := repositories.GetUserByID(referrerDistribId)
-	if res.Error != nil {
-		return res.Error.Error(), fiber.StatusInternalServerError, res.Error
+	referrerDistribInformation, err := repositories.GetUserByID(referrerDistribId)
+	if err != nil {
+		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
 	pdf := DistributorFormFactory(distributorInformation, referrerDistribInformation)
 
-	filename := fmt.Sprintf("./distribApplicationForm/distribApplicationForm-%s.pdf", distribId)
-	err := pdf.OutputFileAndClose(filename)
+	filename := fmt.Sprintf("./assets/distributorApplicationForm/distribApplicationForm-%s.pdf", distribId)
+	err = pdf.OutputFileAndClose(filename)
 	if err != nil {
 		return err.Error(), fiber.StatusInternalServerError, err
 	}

@@ -16,8 +16,8 @@ func GenerateConsentForm(distrib_id string) (fiber.Map, int) {
 
 	// Retrieve the user data from the database
 	user, err := repositories.GetUserByID(distrib_id)
-	if err.Error != nil {
-		return fiber.Map{"error": "Error in getting distrib ID", "err": err.Error.Error()}, fiber.StatusInternalServerError
+	if err != nil {
+		return fiber.Map{"error": "Error in getting distrib ID", "err": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	// Parse the HTML template from the string

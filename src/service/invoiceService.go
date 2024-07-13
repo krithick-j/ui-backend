@@ -335,7 +335,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	currX = 10
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "City:")
+	pdf.Cell(0, 0, "Mobile Phone No:")
 	currX += 35
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
@@ -346,7 +346,7 @@ func InvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.OrderedI
 	currX = 10
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "State:")
+	pdf.Cell(0, 0, "Home Phone No:")
 	currX += 35
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
@@ -759,9 +759,9 @@ func GenerateInvoice(orderId string) (string, int, error) {
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	referrerDistribId, res := repositories.GetRefDistribIdByDistribId(orderDetails.DistribId)
-	if res.Error != nil {
-		return res.Error.Error(), fiber.StatusInternalServerError, res.Error
+	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(orderDetails.DistribId)
+	if err != nil {
+		return err.Error(), fiber.StatusInternalServerError, err
 	}
 	pdf := InvoiceFactory(orderDetails, iCouponsArr, bvDistributionTable, referrerDistribId)
 	filename := fmt.Sprintf("./tmp/invoice-%s.pdf", orderId)

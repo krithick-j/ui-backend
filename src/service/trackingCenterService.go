@@ -180,17 +180,21 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				tx.Rollback()
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
+			trackingCenter := repositories.GetTrackingCenter(distrib_id, placeBv.Place)
+			parentTrackingCenter := repositories.GetTrackingCenter(trackingCenter.PDistribId, trackingCenter.PPlace)
+
 			var side string
+			if parentTrackingCenter.LeftDistribID == trackingCenter.DistribID && parentTrackingCenter.LeftPlace == trackingCenter.Place {
+				side = "left"
+			} else {
+				side = "right"
+			}
+
+			//hardcoded for 001
 			if placeBv.Place == "001" {
 				side = "bv"
-			} else if placeBv.Place == "002" {
-				side = "left"
-			} else if placeBv.Place == "003" {
-				side = "right"
-			} else {
-				configs.Log.Errorln("Error in updating values of Place")
-				return fiber.Map{"error": "Error in updating values of Place"}, fiber.StatusInternalServerError
 			}
+
 			BvObj := models.BvTransaction{
 				DistribId:    distrib_id,
 				Place:        placeBv.Place,
@@ -255,13 +259,21 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 
 func AddTc(payload dto.AddTc) (fiber.Map, int) {
 
+	tcAmount := 1000.0 //Summa for now
+	referenceNo := GenerateUniqueHexCode(10)
 	//get current tc maximum number
-	place := FindNextTcNumber(payload.DistribId)
+	place := FindNextTcNumber(payload.DistribID)
 
-	userData, res := repositories.GetUserByID(payload.DistribId)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", res.Error.Error())
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	userData, err := repositories.GetUserByID(payload.DistribID)
+	if err != nil {
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+
+	tx := configs.DB.Begin()
+	res, status := handlePlaceOrderICoupons(payload.AppliedCoupons, payload.DistribID, referenceNo, tcAmount, tx)
+	if status != fiber.StatusOK {
+		return res, status
 	}
 
 	//if not empty don't overwrite but find next available free slot
@@ -269,26 +281,21 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 
 	newTc := models.TrackingCenter{
 		Name:       userData.Name,
-		DistribID:  payload.DistribId,
+		DistribID:  payload.DistribID,
 		Place:      place,
 		PDistribId: parent_distrib_id,
 		PPlace:     parent_ref_place,
-		// LeftDistribID:  "", // "" or NULL
-		// LeftPlace:      "002", // "" or NULL
-		// RightDistribID: distrib_id, // "" or NULL
-		// RightPlace:     "003", // "" or NULL
-		IsActive: false,
+		IsActive:   false,
 	}
-	tx := configs.DB.Begin()
 
-	err := repositories.CreateTCs(tx, []models.TrackingCenter{newTc})
+	err = repositories.CreateTCs(tx, []models.TrackingCenter{newTc})
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on calling CreateTCs repositories fn from AddTc service", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	err = repositories.UpdateTC(tx, payload.DistribId, place, parent_distrib_id, parent_ref_place, payload.RefSide)
+	err = repositories.UpdateTC(tx, payload.DistribID, place, parent_distrib_id, parent_ref_place, payload.RefSide)
 	if err != nil {
 		configs.Log.Errorln("Error on calling UpdateTC repositories fn from AddTc service", err.Error())
 		tx.Rollback()

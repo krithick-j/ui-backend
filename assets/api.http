@@ -571,6 +571,21 @@ POST {{host}}/tc/addTc HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
+# {
+# 	"applied_coupons":
+# 	[
+# 		{
+# 			"v_id":"7198DF26C6",
+# 			"pin":"6EE8FE55ED",
+# 			"amount_detected":1000
+# 		}
+# 	],	
+# 	"distrib_id": "IN-00001",
+# 	"ref_distrib_id": "IN-00001",
+# 	"ref_place": "003",
+# 	"ref_side": "right"
+# }
+
 {
 	"applied_coupons":
 	[
@@ -579,11 +594,11 @@ Content-Type: application/json
 			"pin":"6EE8FE55ED",
 			"amount_detected":1000
 		}
-	],	
-	"distrib_id": "IN-00001",
-	"ref_distrib_id": "IN-00001",
-	"ref_place": "003",
-	"ref_side": "right"
+	],
+	"distrib_id":"IN-00001",
+	"placement_distrib_id":"IN-00002",
+	"placement_place":"001",
+	"placement_side":"left"
 }
 
 ###
@@ -595,3 +610,4 @@ Content-Type: application/json
 GET {{host}}/media/IN-00001-distrib-form.pdf HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+

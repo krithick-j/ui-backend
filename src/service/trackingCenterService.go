@@ -307,7 +307,7 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 		tx.Rollback()
 		return fiber.Map{"Error": err.Error()}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": "New Tracking Center created"}, fiber.StatusCreated
+	return fiber.Map{"data": place}, fiber.StatusCreated
 }
 
 func FindNextTcNumber(distribId string) string {

@@ -277,7 +277,7 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 	}
 
 	//if not empty don't overwrite but find next available free slot
-	parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.RefDistribId, payload.RefPlace, payload.RefSide)
+	parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.PlacementDistribId, payload.PlacementPlace, payload.PlacementSide)
 
 	newTc := models.TrackingCenter{
 		Name:       userData.Name,
@@ -295,7 +295,7 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	err = repositories.UpdateTC(tx, payload.DistribID, place, parent_distrib_id, parent_ref_place, payload.RefSide)
+	err = repositories.UpdateTC(tx, payload.DistribID, place, parent_distrib_id, parent_ref_place, payload.PlacementSide)
 	if err != nil {
 		configs.Log.Errorln("Error on calling UpdateTC repositories fn from AddTc service", err.Error())
 		tx.Rollback()

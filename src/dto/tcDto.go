@@ -1,9 +1,9 @@
 package dto
 
 type AddTc struct {
-	AppliedCoupons []PlaceOrderCoupon `json:"applied_coupons"`
-	DistribID      string             `json:"distrib_id"`
-	RefDistribId   string             `json:"ref_distrib_id"`
-	RefPlace       string             `json:"ref_place"`
-	RefSide        string             `json:"ref_side"`
+	AppliedCoupons     []PlaceOrderCoupon `json:"applied_coupons"`
+	DistribID          string             `json:"distrib_id"`
+	PlacementDistribId string             `json:"placement_distrib_id"`
+	PlacementPlace     string             `json:"placement_place"`
+	PlacementSide      string             `json:"placement_side"`
 }

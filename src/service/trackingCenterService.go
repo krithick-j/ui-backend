@@ -259,53 +259,95 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 
 func AddTc(payload dto.AddTc) (fiber.Map, int) {
 
-	tcAmount := 1000.0 //Summa for now
-	referenceNo := GenerateUniqueHexCode(10)
+	// get bv sum both active and not active
+	bvSum, err := repositories.GetBvSumByDistribId(payload.DistribID, "product")
+	if err != nil {
+		configs.Log.Errorln("Error on calling GetBvSumByDistribId repositories fn from AddTc fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+
+	//get tc active and not active length
+	tcArr, err := repositories.GetAllTrackingCenters(payload.DistribID)
+	if err != nil {
+		configs.Log.Errorln("Error on calling GetAllTrackingCenters repositories fn from AddTc fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+
+	//bvSum must be greater than tracking center length to add tracking center. Writing inversely
+	reduceNumber := func(num int) int {
+		str := fmt.Sprintf("%d", num)
+
+		if num < 1000 {
+			return 0
+		} else if num > 1000 && num < 10000 {
+			return int(str[0] - '0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
+		} else if num > 10000 && num < 100000 {
+			return int(str[0]-'0')*10 + int(str[1]-'0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
+		} else {
+			return 0
+		}
+	}
+
+	bvSumFinal := reduceNumber(int(bvSum))
+
 	//get current tc maximum number
 	place := FindNextTcNumber(payload.DistribID)
 
-	userData, err := repositories.GetUserByID(payload.DistribID)
-	if err != nil {
-		configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-	}
+	// Get the next tracking center number
+	tcLen := len(tcArr)
 
-	tx := configs.DB.Begin()
-	res, status := handlePlaceOrderICoupons(payload.AppliedCoupons, payload.DistribID, referenceNo, tcAmount, tx)
-	if status != fiber.StatusOK {
-		return res, status
-	}
+	if tcLen >= bvSumFinal {
 
-	//if not empty don't overwrite but find next available free slot
-	parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.PlacementDistribId, payload.PlacementPlace, payload.PlacementSide)
+		configs.Log.Errorln("Error on checking tcLend and bvSumFinal from AddTc service")
+		return fiber.Map{"data": "Tracking Center cannot be created"}, fiber.StatusForbidden
+	} else if tcLen < bvSumFinal {
 
-	newTc := models.TrackingCenter{
-		Name:       userData.Name,
-		DistribID:  payload.DistribID,
-		Place:      place,
-		PDistribId: parent_distrib_id,
-		PPlace:     parent_ref_place,
-		IsActive:   false,
-	}
+		tcAmount := 1000.0 //Summa for now
+		referenceNo := GenerateUniqueHexCode(10)
 
-	err = repositories.CreateTCs(tx, []models.TrackingCenter{newTc})
-	if err != nil {
-		tx.Rollback()
-		configs.Log.Errorln("Error on calling CreateTCs repositories fn from AddTc service", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-	}
+		userData, err := repositories.GetUserByID(payload.DistribID)
+		if err != nil {
+			configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
 
-	err = repositories.UpdateTC(tx, payload.DistribID, place, parent_distrib_id, parent_ref_place, payload.PlacementSide)
-	if err != nil {
-		configs.Log.Errorln("Error on calling UpdateTC repositories fn from AddTc service", err.Error())
-		tx.Rollback()
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-	}
+		tx := configs.DB.Begin()
+		res, status := handlePlaceOrderICoupons(payload.AppliedCoupons, payload.DistribID, referenceNo, tcAmount, tx)
+		if status != fiber.StatusOK {
+			return res, status
+		}
 
-	if err := tx.Commit().Error; err != nil {
-		configs.Log.Errorln("Error on Committing Transaction AddTc service fn", err.Error())
-		tx.Rollback()
-		return fiber.Map{"Error": err.Error()}, fiber.StatusInternalServerError
+		//if not empty don't overwrite but find next available free slot
+		parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.PlacementDistribId, payload.PlacementPlace, payload.PlacementSide)
+
+		newTc := models.TrackingCenter{
+			Name:       userData.Name,
+			DistribID:  payload.DistribID,
+			Place:      place,
+			PDistribId: parent_distrib_id,
+			PPlace:     parent_ref_place,
+			IsActive:   false,
+		}
+
+		err = repositories.CreateTCs(tx, []models.TrackingCenter{newTc})
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling CreateTCs repositories fn from AddTc service", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+
+		err = repositories.UpdateTC(tx, payload.DistribID, place, parent_distrib_id, parent_ref_place, payload.PlacementSide)
+		if err != nil {
+			configs.Log.Errorln("Error on calling UpdateTC repositories fn from AddTc service", err.Error())
+			tx.Rollback()
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			configs.Log.Errorln("Error on Committing Transaction AddTc service fn", err.Error())
+			tx.Rollback()
+			return fiber.Map{"Error": err.Error()}, fiber.StatusInternalServerError
+		}
 	}
 	return fiber.Map{"data": place}, fiber.StatusCreated
 }

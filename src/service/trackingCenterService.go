@@ -257,14 +257,29 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
 }
 
-func AddTc(payload dto.AddTc) (fiber.Map, int) {
-
+// available tc to buy is found using this function
+func GetAvailableAddTc(distribId string) (int, int) {
 	// get bv sum both active and not active
-	bvSum, err := repositories.GetBvSumByDistribId(payload.DistribID, "product")
+	bvSum, err := repositories.GetBvSumByDistribId(distribId, "product")
 	if err != nil {
 		configs.Log.Errorln("Error on calling GetBvSumByDistribId repositories fn from AddTc fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		return 0, fiber.StatusInternalServerError
 	}
+
+	str := fmt.Sprintf("%v", bvSum)
+
+	if bvSum < 1000 {
+		return 0, fiber.StatusForbidden
+	} else if bvSum > 1000 && bvSum < 10000 {
+		return int(str[0] - '0'), fiber.StatusOK // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
+	} else if bvSum > 10000 && bvSum < 100000 {
+		return int(str[0]-'0')*10 + int(str[1]-'0'), fiber.StatusOK // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
+	} else {
+		return 0, fiber.StatusInternalServerError
+	}
+}
+
+func AddTc(payload dto.AddTc) (fiber.Map, int) {
 
 	//get tc active and not active length
 	tcArr, err := repositories.GetAllTrackingCenters(payload.DistribID)
@@ -273,22 +288,7 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	//bvSum must be greater than tracking center length to add tracking center. Writing inversely
-	reduceNumber := func(num int) int {
-		str := fmt.Sprintf("%d", num)
-
-		if num < 1000 {
-			return 0
-		} else if num > 1000 && num < 10000 {
-			return int(str[0] - '0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
-		} else if num > 10000 && num < 100000 {
-			return int(str[0]-'0')*10 + int(str[1]-'0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
-		} else {
-			return 0
-		}
-	}
-
-	bvSumFinal := reduceNumber(int(bvSum))
+	bvSumFinal, _ := GetAvailableAddTc(payload.DistribID)
 
 	//get current tc maximum number
 	place := FindNextTcNumber(payload.DistribID)

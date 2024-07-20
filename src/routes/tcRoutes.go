@@ -7,5 +7,6 @@ import (
 )
 
 func TcRouter(router fiber.Router) {
-	router.Post("/addTc", controllers.TcController)
+	router.Post("/addTc", controllers.AddTc)
+	router.Get("/availableTc", controllers.AvailableTc)
 }

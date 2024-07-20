@@ -95,8 +95,8 @@ func GetBVforTCOneRowByDateGeneric(distrib_id string, tc string, is_active bool,
 }
 
 // Get Sum of Bv transactions of an individual distributor with trans type product
-func GetBvSumByDistribId(distribId, transType string) (float64, error) {
-	var bvSum float64
+func GetBvSumByDistribId(distribId, transType string) (int, error) {
+	var bvSum int
 
 	err := configs.DB.Table("bv_transactions").Select("COALESCE(SUM(bv_value), 0)").Where("distrib_id=? AND trans_type=?", distribId, transType).Scan(&bvSum).Error
 	return bvSum, err

@@ -8,5 +8,5 @@ import (
 
 func TcRouter(router fiber.Router) {
 	router.Post("/addTc", controllers.AddTc)
-	router.Get("/availableTc", controllers.AvailableTc)
+	router.Get("/availableTc/:distrib_id", controllers.AvailableTc)
 }

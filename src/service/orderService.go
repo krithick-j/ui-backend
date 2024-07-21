@@ -276,6 +276,7 @@ func GetAllOrders() (fiber.Map, int) {
 
 		OrdersOut = append(OrdersOut, OrderArr)
 	}
+
 	return fiber.Map{"data": OrdersOut}, http.StatusOK
 }
 
@@ -288,12 +289,12 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 
 	if result.Error == gorm.ErrRecordNotFound {
 		configs.Log.Infoln("No Orders Found")
-		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 
 	if result.Error != nil {
 		configs.Log.Errorf("%v", result.Error.Error())
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
 	}
 	configs.Log.Infoln("Retrieving All Orders DONE")
 	for _, order := range orders {

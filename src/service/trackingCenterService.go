@@ -302,9 +302,6 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 		return fiber.Map{"data": "Tracking Center cannot be created"}, fiber.StatusForbidden
 	} else if tcLen < bvSumFinal {
 
-		tcAmount := 1000.0 //Summa for now
-		referenceNo := GenerateUniqueHexCode(10)
-
 		userData, err := repositories.GetUserByID(payload.DistribID)
 		if err != nil {
 			configs.Log.Errorln("Error on calling GetUserByID repositories fn from AddTc fn", err.Error())
@@ -312,10 +309,6 @@ func AddTc(payload dto.AddTc) (fiber.Map, int) {
 		}
 
 		tx := configs.DB.Begin()
-		res, status := handlePlaceOrderICoupons(payload.AppliedCoupons, payload.DistribID, referenceNo, tcAmount, tx)
-		if status != fiber.StatusOK {
-			return res, status
-		}
 
 		//if not empty don't overwrite but find next available free slot
 		parent_distrib_id, parent_ref_place := FindNextAvailSlot(payload.PlacementDistribId, payload.PlacementPlace, payload.PlacementSide)

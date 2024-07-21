@@ -43,8 +43,17 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
 	}
 
-	//SendHtmlMailOrder(dto.OrderDetailsOut{})
-	return fiber.Map{"success": "Ordered Placed Successfully"}, http.StatusOK
+	invoicePdfPath, status, err := GenerateInvoice(orderId)
+	if err != nil {
+		return fiber.Map{"error": err.Error()}, status
+	}
+
+	err = SendHtmlMailOrder(total, invoicePdfPath)
+	if err != nil {
+		configs.Log.Errorf("Error sending email : %s", err.Error())
+	}
+	configs.Log.Infoln("Mail Sent!")
+	return fiber.Map{"success": "Ordered Placed Successfully", "link": invoicePdfPath}, http.StatusOK
 }
 
 func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId string, totalOrderAmount float64, tx *gorm.DB, total dto.OrderDetailsOut) (fiber.Map, int) {
@@ -86,16 +95,7 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		tx.Rollback()
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
-	invoicePdfPath, status, err := GenerateInvoice(orderId)
-	if err != nil {
-		return fiber.Map{"error": err.Error()}, status
-	}
 
-	err = SendHtmlMailOrder(total, invoicePdfPath)
-	if err != nil {
-		configs.Log.Errorf("Error sending email : %s", err.Error())
-	}
-	configs.Log.Infoln("Mail Sent!")
 	return nil, fiber.StatusOK
 }
 

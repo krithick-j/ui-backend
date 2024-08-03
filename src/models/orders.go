@@ -28,7 +28,7 @@ type OrdersHeader struct {
 	Country            string
 	HomePhoneNo        string
 	MobilePhoneNo      string
-	OrdersLiner        []OrdersLiner
+	OrdersLiners       []OrdersLiner `gorm:"foreignKey:OrdersHeaderID"`
 }
 
 type OrdersLiner struct {

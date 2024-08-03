@@ -6,60 +6,55 @@ import (
 	"ui-back-end/src/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
+// func Test(distribId string) (fiber.Map, int) {
+
+// 	configs.Log.Infof("Test service completed")
+// 	return fiber.Map{"data": ""}, 200
+// }
+
 func Test(distribId string) (fiber.Map, int) {
-
-	// get bv sum both active and not active
-	bvSum, err := repositories.GetBvSumByDistribId(distribId, "product")
-	if err != nil {
-		configs.Log.Errorln("Error on calling GetBvSumByDistribId repositories fn from AddTc fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	tx := configs.DB.Begin()
+	//group rsp pananum
+	var rspSum float64
+	// first avan referral distrib id eduthu avanoda rsp edukanum
+	referredDistribIds, err := repositories.GetReferredUsersByDistribId(distribId, tx)
+	if err == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": rspSum}, fiber.StatusOK
 	}
 
-	//get tc active and not active length
-	tcArr, err := repositories.GetAllTrackingCenters(distribId)
 	if err != nil {
-		configs.Log.Errorln("Error on calling GetAllTrackingCenters repositories fn from AddTc fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId from test service fn", err.Error())
 	}
 
-	//bvSum must be greater than tracking center length to add tracking center. Writing inversely
-	reduceNumber := func(num int) int {
-		str := fmt.Sprintf("%d", num)
-
-		if num < 1000 {
-			return 0
-		} else if num > 1000 && num < 10000 {
-			return int(str[0] - '0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
-		} else if num > 10000 && num < 100000 {
-			return int(str[0]-'0')*10 + int(str[1]-'0') // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
-		} else {
-			return 0
+	for _, referredDistribId := range referredDistribIds {
+		fmt.Println("referred distrib id", distribId)
+		totalRspForOneDistrib, err := repositories.GetPersonalRspSumByDistribId(referredDistribId, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling GetPersonalRspSumByDistribIdt from test service fn", err.Error())
 		}
+
+		rspSum += totalRspForOneDistrib
+		//suppose IN-00001 is distrib id and referrerid is also IN-00001 then, it will loop continuously right ? So I am continuing to next distrib id
+		if distribId == referredDistribId {
+			continue
+		}
+
+		recursiveRspSum, status := Test(referredDistribId)
+		if status != fiber.StatusOK {
+			tx.Rollback()
+			return recursiveRspSum, status
+		}
+		rspSum += recursiveRspSum["data"].(float64)
 	}
 
-	bvSumFinal := reduceNumber(int(bvSum))
-
-	// Get the next tracking center number
-	tcLen := len(tcArr)
-
-	if tcLen >= bvSumFinal {
-		return fiber.Map{"data": "Tracking Center cannot be created"}, fiber.StatusForbidden
-	} else if tcLen < bvSumFinal {
-
-	}
-	configs.Log.Infof("Test service completed")
-	return fiber.Map{"data": bvSumFinal}, 200
-}
-
-func TestGetICouponArrayByOrderId(orderId string, distribId string) (fiber.Map, int) {
-
-	ICouponArray, err := GetICouponArrayByOrderId(orderId, distribId)
-	if err != nil {
+	if err := tx.Commit().Error; err != nil {
+		configs.Log.Errorln("Error committing transaction:", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-
-	configs.Log.Infof("Test service completed")
-	return fiber.Map{"data": ICouponArray}, fiber.StatusOK
+	return fiber.Map{"data": rspSum}, fiber.StatusOK
 }

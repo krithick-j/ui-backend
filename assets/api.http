@@ -1,5 +1,5 @@
-# @host = http://localhost:8000/api
-@host = https://ui-network.com/api 
+@host = http://localhost:8000/api
+# @host = https://ui-network.com/api 
 
 
 ###
@@ -9,8 +9,11 @@ content-type: application/json
 
 {
 	"username": "IN-00001",
-	"password": "G0ds0nS3lvan#"
+	"password": "12345"
 }
+
+#  "password": "G0ds0nS3lvan#"
+
 
 ###
 
@@ -164,7 +167,7 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 ###
-GET {{host}}/rsp/IN-00013 HTTP/1.1
+GET {{host}}/rsp/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 
@@ -507,7 +510,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
 ###				
-GET {{host}}/test/IN-00001 HTTP/1.1
+GET {{host}}/test/IN-00002 HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

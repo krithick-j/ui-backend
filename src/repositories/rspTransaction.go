@@ -7,24 +7,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func AddRspTx(distrib_id string, order_id string, total_rsp float64) *gorm.DB {
-	tx := models.RspTransaction{
+func AddRsp(distrib_id string, order_id string, total_rsp float64) error {
+	obj := models.RspTransaction{
 		DistribId: distrib_id,
 		OrderId:   order_id,
 		Rsp:       total_rsp,
 	}
-	result := configs.DB.Create(&tx)
-	return result
+	err := configs.DB.Create(&obj).Error
+	return err
 }
 
-func GetAllRspByDistribId(distrib_id string) ([]int, *gorm.DB) {
-	var rsp []int
-	result := configs.DB.Model(models.RspTransaction{}).Select("rsp").Where("distrib_id= ?", distrib_id).Find(&rsp)
-	return rsp, result
+// Total Personal RSP sum of distributor id
+func GetPersonalRspSumByDistribId(distrib_id string, tx *gorm.DB) (float64, error) {
+	var totalRsp float64
+	err := tx.Model(models.RspTransaction{}).Select("SUM(rsp)").Where("distrib_id= ?", distrib_id).Find(&totalRsp).Error
+	return totalRsp, err
 }
-func AddDirectBvTx(distrib_id string, order_id string, total_bv float64) *gorm.DB {
+func AddDirectBvTx(referral_distrib_id string, order_id string, total_bv float64) *gorm.DB {
 	tx := models.RspTransaction{
-		DistribId: distrib_id,
+		DistribId: referral_distrib_id,
 		OrderId:   order_id,
 		DirectBv:  total_bv,
 	}

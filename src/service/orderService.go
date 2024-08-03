@@ -22,6 +22,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	total, status := GetOrderDetails(OrderIn.DistribId)
 	total.OrderId = orderId
 	if status != http.StatusOK {
+		configs.Log.Errorln("Error on GetOrderDetails, Result---->", total)
 		return fiber.Map{"data": "Something gone wrong"}, fiber.StatusInternalServerError
 	}
 
@@ -32,6 +33,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	productType := total.Products[0].ProductType
 	configs.Log.Infof("Product type %v", productType)
 	if res, status := handleProductHeaderAndLines(OrderIn, orderId, total, productType, tx); status != fiber.StatusOK {
+		configs.Log.Errorln("Error on GetOrderDetails, Result---->", total)
 		return fiber.Map{"error": res["error"]}, status
 	}
 
@@ -40,11 +42,13 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
 	}
 
 	if commitRes := tx.Commit(); commitRes.Error != nil {
+		configs.Log.Errorln("Error on Committing ")
 		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
 	}
 
-	invoicePdfPath, status, err := GenerateInvoice(orderId)
+	invoicePdfPath, status, err := GenerateInvoice(orderId, productType)
 	if err != nil {
+		configs.Log.Errorln("Error on GenerateInvoice fn from Place Order fn", err.Error())
 		return fiber.Map{"error": err.Error()}, status
 	}
 
@@ -61,6 +65,7 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 	if OrderIn.AppliedCoupons != nil && productType != "ep" {
 
 		if res, status := handlePlaceOrderICoupons(OrderIn.AppliedCoupons, OrderIn.DistribId, orderId, totalOrderAmount, tx); status != fiber.StatusOK {
+			configs.Log.Errorln("Error on handlePlaceOrderICoupons from handleProductType fn")
 			return fiber.Map{"error": res["error"]}, status
 		}
 
@@ -69,23 +74,28 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		if productType == "bv" {
 			configs.Log.Infoln("The product is of bv type")
 			if res, status := handleBvProduct(OrderIn, orderId, total, tx); status != fiber.StatusOK {
+				configs.Log.Errorln("Error on handleBvProduct from handleProductType fn")
 				return fiber.Map{"error": res["error"]}, fiber.StatusInternalServerError
 			}
 
 		} else if productType == "rsp" {
-
-			if res := repositories.AddRspTx(OrderIn.DistribId, orderId, total.TotalTypeValue); res.Error != nil {
+			configs.Log.Infoln("Handling RSP value-->")
+			configs.Log.Infoln("rsp value-->", total.TotalTypeValue)
+			if err := repositories.AddRsp(OrderIn.DistribId, orderId, total.TotalTypeValue); err != nil {
 				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+				configs.Log.Errorln("Error on AddRspTx from handleProductType fn")
+				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
 		} else {
 			tx.Rollback()
+			configs.Log.Errorln("Error on product Type from handleProductType fn")
 			return fiber.Map{"error": "Product type does not match"}, fiber.StatusInternalServerError
 		}
 
 	} else if productType == "ep" {
 
 		if res, status := handleEpProduct(total, tx, OrderIn, orderId); status != fiber.StatusOK {
+			configs.Log.Errorln("Error on handleEpProduct from handleProductType fn")
 			return fiber.Map{"error": res["error"]}, fiber.StatusInternalServerError
 		}
 	}
@@ -93,6 +103,7 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 	_, cartRes := repositories.DeleteAllCartProduct(OrderIn.DistribId)
 	if cartRes.Error != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Error on DeleteAllCartProduct from handleProductType fn")
 		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
 	}
 
@@ -103,6 +114,7 @@ func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOr
 	totalEp, res := repositories.GetEpBalance(total.DistribId)
 	if res.Error != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Error on GetEpBalance from handleEpProduct fn")
 		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 	}
 
@@ -110,6 +122,7 @@ func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOr
 		res = repositories.SaveEpTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
 		if res.Error != nil {
 			tx.Rollback()
+			configs.Log.Errorln("Error on SaveEpTx from handleEpProduct fn")
 			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
 		}
 	} else {
@@ -121,12 +134,18 @@ func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOr
 func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDetailsOut, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Infoln("Preparing BV product handling...")
 
-	// res := repositories.AddDirectBvTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
-	// if res.Error != nil {
-	// 	tx.Rollback()
-	// 	return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-	// }
-	// configs.Log.Infoln("Direct BV Added")
+	//Referral distrib id is taken
+	referralDistribId, err := repositories.GetRefDistribIdByDistribId(OrderIn.DistribId)
+	if err != nil {
+		tx.Rollback()
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+	res := repositories.AddDirectBvTx(referralDistribId, orderId, total.TotalTypeValue)
+	if res.Error != nil {
+		tx.Rollback()
+		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	}
+	configs.Log.Infoln("Direct BV Added")
 
 	msg, status := UpdateCurrentPlaceValues(OrderIn.DistribId, OrderIn.PlaceBvs, orderId, tx, total.TotalTypeValue)
 	if status == fiber.StatusInternalServerError {
@@ -165,11 +184,15 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		HomePhoneNo:    total.CustomerDetails.HomePhoneNo,
 		MobilePhoneNo:  total.CustomerDetails.MobilePhoneNo,
 	}
-	err := repositories.SaveOrderHeader(OrderHeaderObj)
+	err := repositories.SaveOrderHeader(OrderHeaderObj, tx)
+	configs.Log.Infoln("OrdersHeaders: ", OrderHeaderObj.ID)
 	if err != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Rollbacking orders headers: ", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
+	configs.Log.Infoln("Committing transaction of order headers")
+
 	for _, placeBv := range OrderIn.PlaceBvs {
 		addBv := models.AddedBv{
 			OrderHeaderID: OrderHeaderObj.ID,
@@ -178,7 +201,10 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			Place:         placeBv.Place,
 			Value:         placeBv.AddBv,
 		}
-		repositories.SaveAddedbv(&addBv)
+		err = repositories.SaveAddedbv(&addBv)
+		if err != nil {
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
 	}
 
 	configs.Log.Infoln("Products", total.Products)
@@ -197,12 +223,14 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			GstPercentage:  product.GstPercentage,
 		}
 
+		configs.Log.Infoln("Orders Liner Obj: \n", OrderLinerObj)
 		err = repositories.SaveOrderLiner(OrderLinerObj)
 		if err != nil {
 			tx.Rollback()
 			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 	}
+
 	return fiber.Map{"data": "Product Header and Lines handled Successfully"}, fiber.StatusOK
 }
 
@@ -242,7 +270,7 @@ func GetAllOrders() (fiber.Map, int) {
 			HomePhoneNo:   order.HomePhoneNo,
 		}
 
-		for _, productLine := range order.OrdersLiner {
+		for _, productLine := range order.OrdersLiners {
 			productArrObj := dto.ProductDetails{
 				Id:           productLine.ID,
 				Name:         productLine.Name,
@@ -285,18 +313,20 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 	var OrdersOut []dto.AllOrdersOut
 
 	configs.Log.Infoln("Retrieving AllOrdersByDistribId INIT")
-	orders, result := repositories.GetOrderByDistribId(distribId)
+	orders, err := repositories.GetOrderByDistribId(distribId)
 
-	if result.Error == gorm.ErrRecordNotFound {
+	if len(orders) == 0 {
 		configs.Log.Infoln("No Orders Found")
 		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
 
-	if result.Error != nil {
-		configs.Log.Errorf("%v", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		configs.Log.Errorf("%v", err.Error())
+		return fiber.Map{"error": err}, fiber.StatusInternalServerError
 	}
 	configs.Log.Infoln("Retrieving All Orders DONE")
+	configs.Log.Infoln("Retrieving Orders: \n", orders)
+
 	for _, order := range orders {
 		var productArr []dto.ProductDetails
 
@@ -317,7 +347,7 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 			HomePhoneNo:   order.HomePhoneNo,
 		}
 
-		for _, productLine := range order.OrdersLiner {
+		for _, productLine := range order.OrdersLiners {
 			productArrObj := dto.ProductDetails{
 				Id:           productLine.ID,
 				Name:         productLine.Name,
@@ -489,16 +519,16 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var orderDetails dto.OrderDetailsOut
 	var cartItems []dto.ProductsOut
 	var TotalTypeValue float64
+
 	//1. Retrieving All Products in Cart
 	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
-
 	if result.Error != nil {
 		configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID repositories fn from GetOrderDetails fn ", result.Error.Error())
 		return orderDetails, fiber.StatusInternalServerError
 	}
-	configs.Log.Infof("%v", orderDetails.Products)
+	configs.Log.Infof("Cart items --> %v", cartItems)
 	if len(cartItems) < 1 {
-		configs.Log.Warnln("No Items found on the card")
+		configs.Log.Warnln("No Items found on the cart")
 		return orderDetails, fiber.StatusNotFound
 	}
 

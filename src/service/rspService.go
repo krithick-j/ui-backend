@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetTotalRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
+func GetPersonalRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 
 	rspTotal, err := repositories.GetPersonalRspSumByDistribId(DistribID, tx)
 	if err != nil {
@@ -50,7 +50,7 @@ func GetGroupRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 			continue
 		}
 
-		recursiveRspSum, status := Test(referredDistribId)
+		recursiveRspSum, status := GetGroupRspByDistribId(referredDistribId, tx)
 		if status != fiber.StatusOK {
 			tx.Rollback()
 			return recursiveRspSum, status
@@ -59,4 +59,18 @@ func GetGroupRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	}
 
 	return fiber.Map{"data": rspSum}, fiber.StatusOK
+}
+
+func GetDirectBvByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
+
+	directBv, err := repositories.GetDirectBvByDistribID(DistribID, tx)
+	if err == gorm.ErrRecordNotFound {
+		return fiber.Map{"data": directBv}, fiber.StatusOK
+	}
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetDirectBvByDistribID from test service fn", err.Error())
+	}
+
+	return fiber.Map{"data": directBv}, fiber.StatusOK
 }

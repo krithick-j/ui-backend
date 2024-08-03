@@ -32,3 +32,9 @@ func AddDirectBvTx(referral_distrib_id string, order_id string, total_bv float64
 	result := configs.DB.Create(&tx) //insert into rspTransaction
 	return result
 }
+
+func GetDirectBvByDistribID(distrib_id string, tx *gorm.DB) (float64, error) {
+	var totalRsp float64
+	err := tx.Model(models.RspTransaction{}).Select("SUM(direct_bv)").Where("distrib_id= ?", distrib_id).Find(&totalRsp).Error
+	return totalRsp, err
+}

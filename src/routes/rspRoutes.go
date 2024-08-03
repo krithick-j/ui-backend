@@ -7,6 +7,7 @@ import (
 )
 
 func RspRouter(router fiber.Router) {
-	router.Get("/:distrib_id", controllers.GetTotalRspByDistribID)
+	router.Get("personalRsp/:distrib_id", controllers.GetPersonalRspByDistribID)
 	router.Get("/groupRsp/:distrib_id", controllers.GetGroupRspByDistribID)
+	router.Get("/directBv/:distrib_id", controllers.GetDirectBvByDistribID)
 }

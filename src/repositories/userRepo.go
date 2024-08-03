@@ -107,10 +107,19 @@ func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User
 	return user, result
 }
 
+// This function will return who referred you
 func GetRefDistribIdByDistribId(distribId string) (string, error) {
 	var refDistribId string
 	err := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Where("distrib_id = ?", distribId).Take(&refDistribId).Error
 	return refDistribId, err
+}
+
+// This function will return who I am referred
+// Suppose IN-00001 referred two persons, then the two person will come as a list
+func GetReferredUsersByDistribId(distribId string, tx *gorm.DB) ([]string, error) {
+	var referredDistributors []string
+	err := tx.Model(&models.User{}).Select("distrib_id").Where("ref_distrib_id = ?", distribId).Take(&referredDistributors).Error
+	return referredDistributors, err
 }
 
 func GetUserPassByDistribId(distribId string) (string, *gorm.DB) {

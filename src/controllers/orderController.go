@@ -18,6 +18,7 @@ func PlaceOrder(c *fiber.Ctx) error {
 	}
 
 	res, status := service.PlaceOrder(OrderIn)
+
 	return c.Status(status).JSON(res)
 }
 

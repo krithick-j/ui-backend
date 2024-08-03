@@ -510,10 +510,30 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
 ###				
-GET {{host}}/test/IN-00002 HTTP/1.1
+GET {{host}}/test/IN-00001 HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+	
+###				
+GET {{host}}/rsp/directBv/IN-00001 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###				
+GET {{host}}/rsp/groupRsp/IN-00001 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###				
+GET {{host}}/rsp/personalRsp/IN-00001 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
 
 ###
 POST {{host}}/order HTTP/1.1

@@ -74,3 +74,31 @@ func GetDirectBvByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 
 	return fiber.Map{"data": directBv}, fiber.StatusOK
 }
+
+func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
+	directBvResult, status := GetDirectBvByDistribId(DistribID, tx)
+	if status != fiber.StatusOK {
+		return directBvResult, status
+	}
+	directBv := directBvResult["data"]
+
+	personalRspResult, status := GetPersonalRspByDistribId(DistribID, tx)
+	if status != fiber.StatusOK {
+		return personalRspResult, status
+	}
+	personalRsp := personalRspResult["data"]
+
+	groupRspResult, status := GetGroupRspByDistribId(DistribID, tx)
+	if status != fiber.StatusOK {
+		return groupRspResult, status
+	}
+	groupRsp := groupRspResult["data"]
+
+	response := fiber.Map{
+		"direct_bv":    directBv,
+		"personal_rsp": personalRsp,
+		"group_rsp":    groupRsp,
+	}
+
+	return fiber.Map{"data": response}, fiber.StatusOK
+}

@@ -30,14 +30,21 @@ func GetGroupRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	if err == gorm.ErrRecordNotFound {
 		return fiber.Map{"data": rspSum}, fiber.StatusOK
 	}
-
+	//avan rsp mattum add aaga koodathu
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId from test service fn", err.Error())
 	}
+	fmt.Println("referred distrib ids", referredDistribIds)
 
 	for _, referredDistribId := range referredDistribIds {
-		fmt.Println("referred distrib id", DistribID)
+		//suppose IN-00001 is distrib id and referrerid is also IN-00001 then, it will loop continuously right ? So I am continuing to next distrib id
+
+		if DistribID == referredDistribId {
+			continue
+		}
+		fmt.Println("referred distrib id is--->", referredDistribId, "distrib id is --->", DistribID)
+
 		totalRspForOneDistrib, err := repositories.GetPersonalRspSumByDistribId(referredDistribId, tx)
 		if err != nil {
 			tx.Rollback()
@@ -45,10 +52,6 @@ func GetGroupRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 		}
 
 		rspSum += totalRspForOneDistrib
-		//suppose IN-00001 is distrib id and referrerid is also IN-00001 then, it will loop continuously right ? So I am continuing to next distrib id
-		if DistribID == referredDistribId {
-			continue
-		}
 
 		recursiveRspSum, status := GetGroupRspByDistribId(referredDistribId, tx)
 		if status != fiber.StatusOK {

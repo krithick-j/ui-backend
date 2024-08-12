@@ -118,7 +118,7 @@ func GetRefDistribIdByDistribId(distribId string) (string, error) {
 // Suppose IN-00001 referred two persons, then the two person will come as a list
 func GetReferredUsersByDistribId(distribId string, tx *gorm.DB) ([]string, error) {
 	var referredDistributors []string
-	err := tx.Model(&models.User{}).Select("distrib_id").Where("ref_distrib_id = ?", distribId).Take(&referredDistributors).Error
+	err := tx.Model(&models.User{}).Select("distrib_id").Where("ref_distrib_id = ?", distribId).Find(&referredDistributors).Error
 	return referredDistributors, err
 }
 

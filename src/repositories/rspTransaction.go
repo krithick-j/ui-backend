@@ -20,7 +20,7 @@ func AddRsp(distrib_id string, order_id string, total_rsp float64) error {
 // Total Personal RSP sum of distributor id
 func GetPersonalRspSumByDistribId(distrib_id string, tx *gorm.DB) (float64, error) {
 	var totalRsp float64
-	err := tx.Model(models.RspTransaction{}).Select("SUM(rsp)").Where("distrib_id= ?", distrib_id).Find(&totalRsp).Error
+	err := tx.Model(models.RspTransaction{}).Select("COALESCE(SUM(rsp),0)").Where("distrib_id= ?", distrib_id).Find(&totalRsp).Error
 	return totalRsp, err
 }
 func AddDirectBvTx(referral_distrib_id string, order_id string, total_bv float64) *gorm.DB {

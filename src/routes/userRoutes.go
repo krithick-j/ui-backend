@@ -12,7 +12,7 @@ func UserRouter(router fiber.Router) {
 	router.Post("/idCard", controllers.GetIDCard)
 	router.Post("/distribApplicationForm", controllers.GenerateConsentForm)
 	router.Get("/", controllers.GetAllUsers)
-	router.Get("/:dist_id", controllers.GetUserByDistId)
+	router.Get("/:dist_id", controllers.GetUserByDistribId)
 	router.Put("/updateUser/:distrib_id", controllers.EditUserByDistId)
 	router.Put("/changePass", controllers.UpdateUserPass)
 	router.Get("/acknowledgementLetter/:distribId", controllers.GetMediaFile)

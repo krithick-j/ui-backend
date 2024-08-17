@@ -89,16 +89,15 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 	var iCoupons []dto.SendCoupon
 	reference := GenerateUniqueHexCode(10)
 
-	email, result := repositories.GetUserEmailByDistribID(iCouponIn.DistribID)
-
-	if result.Error != nil {
+	email, err := repositories.GetUserEmailByDistribID(iCouponIn.DistribID, tx)
+	if err != nil {
 		tx.Rollback()
-		configs.Log.Errorln("Error on calling  GetUserEmailByDistribID repositories fn from AddICoupon service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		configs.Log.Errorln("Error on calling  GetUserEmailByDistribID repositories fn from AddICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	if result.RowsAffected == 0 {
-		configs.Log.Errorln("RecordNotFound on calling  GetUserEmailByDistribID repositories fn from AddICoupon service fn", result.Error.Error())
+	if email == "" {
+		configs.Log.Errorln("RecordNotFound on calling  GetUserEmailByDistribID repositories fn from AddICoupon service fn")
 		tx.Rollback()
 		return fiber.Map{"data": "No emailID Found"}, fiber.StatusNotFound
 	}
@@ -128,10 +127,10 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 				Active:    iCoupon.Active,
 			}
 			iCoupons = append(iCoupons, SendCoupon)
-			err := repositories.SaveICoupon(iCoupon)
+			err := repositories.SaveICoupon(iCoupon, tx)
 			if err != nil {
-				configs.Log.Errorln("Error on calling SaveICoupon repositories fn from AddICoupon service fn", result.Error.Error())
 				tx.Rollback()
+				configs.Log.Errorln("Error on calling SaveICoupon repositories fn from AddICoupon service fn", err.Error())
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
 
@@ -141,43 +140,52 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string, tx *gorm.DB) (fiber.M
 				Value:     iCoupon.Value,
 				Reference: reference,
 			}
-			res := repositories.SaveICouponTx(ICouponTxObj)
-			if res.Error != nil {
+			err = repositories.SaveICouponTx(ICouponTxObj, tx)
+			if err != nil {
 				tx.Rollback()
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+				configs.Log.Errorln("Error on calling SaveICouponTx repositories fn from AddICoupon service fn", err.Error())
+				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 			}
 		}
 	}
-	fmt.Println("email--->", email)
-	SendHtmlMailICouopon(email, "Your new iCoupon", iCoupons)
-
+	err = SendHtmlMailICoupon(email, "Your new iCoupon", iCoupons)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SendHtmlMailICoupon service fn from AddICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
 	return fiber.Map{"data": "ICoupons added successfully and sent to your mail"}, fiber.StatusCreated
 }
 
-func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
+func GetAllICouponsByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	allICouponsOut := make([]dto.GetICouponOut, 0)
-	fmt.Println("all icoupons", allICouponsOut)
-	result, iCoupons := repositories.GetAllICouponsByDistribID(DistribID)
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Errorln("RecordNotFound on calling  GetAllICouponsByDistribID repositories fn from GetAllICouponsByDistribId service fn", result.Error.Error())
+	iCoupons, err := repositories.GetAllICouponsByDistribID(DistribID, tx)
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.
+			Errorln("RecordNotFound on calling  GetAllICouponsByDistribID repositories fn from GetAllICouponsByDistribId service fn", err.Error())
 		return fiber.Map{"data": "No ICoupon exists"}, fiber.StatusNotFound
 	}
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling  GetAllICouponsByDistribID repositories fn from GetAllICouponsByDistribId service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling  GetAllICouponsByDistribID repositories fn from GetAllICouponsByDistribId service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	for _, iCoupon := range iCoupons {
 
-		iCouponBalance, res := repositories.GetICouponBalance(iCoupon.VID)
-		if res.Error == gorm.ErrRecordNotFound {
-			configs.Log.Errorln("RecordNotFound on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId service fn", res.Error.Error())
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusNotFound
+		iCouponBalance, err := repositories.GetICouponBalance(iCoupon.VID, tx)
+		if err == gorm.ErrRecordNotFound {
+			tx.Rollback()
+			configs.Log.Errorln("RecordNotFound on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusNotFound
 		}
-
-		if res.Error != nil {
-			configs.Log.Errorln("Error on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId service fn", res.Error.Error())
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		if err != nil {
+			tx.Rollback()
+			configs.Log.
+				Errorln("Error on calling  ICouponBalance repositories fn from GetAllICouponsByDistribId service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 
 		iCouponDto := dto.GetICouponOut{
@@ -200,34 +208,41 @@ func GetAllICouponsByDistribId(DistribID string) (fiber.Map, int) {
 	return fiber.Map{"data": allICouponsOut}, fiber.StatusOK
 }
 
-func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map, int) {
-	var iCoupon models.ICoupon
-	iCoupon = repositories.ValidateICoupon(payload.VID, payload.Pin, iCoupon)
-	fmt.Println("icouponn------>>", iCoupon)
+func ValidateICoupon(payload dto.ValidateICouponIn, distribID string, tx *gorm.DB) (fiber.Map, int) {
+	iCoupon, err := repositories.ValidateICoupon(payload.VID, payload.Pin, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling  ValidateICoupon repositories fn from ValidateICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, fiber.StatusBadRequest
 	}
 	//date expiry condition
-	expiresOn, result := repositories.GetICouponExpiryDate(payload.VID)
-	if result.Error != nil {
-		configs.Log.Errorln("Error Retrieving the ICoupon Expiry Date")
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+	expiresOn, err := repositories.GetICouponExpiryDate(payload.VID, tx)
+	if err != nil {
+		configs.Log.Errorln("Error on calling GetICouponExpiryDate fn from ValidateICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusBadRequest
 	}
-
 	if expiresOn.Before(time.Now()) || expiresOn.Equal(time.Now()) {
-		repositories.CloseCoupon(payload.VID)
+		repositories.CloseCoupon(payload.VID, tx)
 		configs.Log.Errorln("ICoupon Expired on ", expiresOn.String())
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+		return fiber.Map{"error": fmt.Sprintf("ICoupon expired on %s", expiresOn.String())}, fiber.StatusBadRequest
 	}
 
-	balance, result := repositories.GetICouponBalance(payload.VID)
+	balance, err := repositories.GetICouponBalance(payload.VID, tx)
 
-	if result.Error == gorm.ErrRecordNotFound {
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.
+			Errorln("RecordNotFound on calling  GetICouponBalance repositories fn from ValidateICoupon service fn", err.Error())
 		return fiber.Map{"data": "No ICoupon exists"}, fiber.StatusNotFound
 	}
-
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetICouponBalance fn from ValidateICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusBadRequest
 	}
 
 	iCouponsOut := dto.ValidateICouponOut{
@@ -235,65 +250,88 @@ func ValidateICoupon(payload dto.ValidateICouponIn, distribID string) (fiber.Map
 		TotalValue: iCoupon.Value,
 	}
 
-	fmt.Println("data", iCouponsOut)
-
 	return fiber.Map{"data": iCouponsOut}, fiber.StatusOK
 }
 
-func GetICouponHistory(payload dto.ICouponHistoryIn) (fiber.Map, int) {
+func GetICouponHistory(payload dto.ICouponHistoryIn, tx *gorm.DB) (fiber.Map, int) {
 	var fromDate, toDate time.Time
 
 	if payload.FromDate == "" || payload.ToDate == "" {
-		iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId)
-
+		iCouponHistory, err := repositories.GetICouponHistory(payload.DistribId, tx)
 		if err == gorm.ErrRecordNotFound {
+			tx.Rollback()
+			configs.Log.
+				Errorln("No ICoupon Transaction History on calling GetICouponHistory repositories fn from GetICouponHistory service fn ", err.Error())
 			return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+		}
+		if err != nil {
+			tx.Rollback()
+			configs.Log.
+				Errorln("Error on calling GetICouponHistory repositories fn from GetICouponHistory service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 		return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
 	}
 
 	fromDate, err := time.Parse("2006-01-02", payload.FromDate)
 	if err != nil {
-		return fiber.Map{"error": err.Error()}, fiber.StatusNotFound
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling Parse fn from GetICouponHistory service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	toDate, err = time.Parse("2006-01-02", payload.ToDate)
 	if err != nil {
-		return fiber.Map{"error": err.Error()}, fiber.StatusNotFound
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling Parse fn from GetICouponHistory service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	// Adjust time to start of the day (00:00:00) for fromDate and end of the day (23:59:59) for toDate
 	fromDateStart := fromDate.Format("2006-01-02 15:04:05")
 	toDateEnd := toDate.Add(24*time.Hour - time.Second).Format("2006-01-02 15:04:05")
 
-	iCouponHistory, err := repositories.GetICouponHistoryByDate(payload.DistribId, fromDateStart, toDateEnd)
-
+	iCouponHistory, err := repositories.GetICouponHistoryByDate(payload.DistribId, fromDateStart, toDateEnd, tx)
 	if err == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "No ICoupon Transaction History"}, fiber.StatusNotFound
+		tx.Rollback()
+		configs.Log.Infoln("No record Found on calling GetICouponHistoryByDate repositories fn from GetICouponHistory service fn", err.Error())
+		return fiber.Map{"data": "Record Not Found on calling GetICouponHistoryByDate repostories fn from GetICouponHistory service fn"}, fiber.StatusNotFound
+	}
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetICouponHistoryByDate repositories fn from GetICouponHistory service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 	return fiber.Map{"data": iCouponHistory}, fiber.StatusOK
 }
 
 // This function is used to get total ICoupon and Total Used value
-func GetICouponArrayByOrderId(orderId string, distribId string) ([]dto.OrderedICouponOut, error) {
+func GetICouponArrayByOrderId(orderId string, distribId string, tx *gorm.DB) (fiber.Map, int) {
 
 	//Creating Output dto obj
 	ObjOut := []dto.OrderedICouponOut{}
 	//Getting ICoupon Number
-	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId)
+	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId, tx)
 	if err != nil {
-		return ObjOut, err
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveICoupon repositories fn from AddICoupon service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	//Rotating all the VID and mapping total balance and remaining value
 	for _, vid := range getICouponsVID {
-		totalValue := repositories.GetICouponValueByVID(vid)
-
+		totalValue, err := repositories.GetICouponValueByVID(vid, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling GetICouponValueByVID repositories fn from GetICouponArrayByOrderId service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
 		//get ICoupon balance
-		balance, result := repositories.GetICouponBalance(vid)
-		if result.Error != nil {
-			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
-			return ObjOut, err
+		balance, err := repositories.GetICouponBalance(vid, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling GetICouponBalance repositories fn from GetICouponArrayByOrderId service fn")
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 
 		icoupon := dto.OrderedICouponOut{
@@ -305,29 +343,37 @@ func GetICouponArrayByOrderId(orderId string, distribId string) ([]dto.OrderedIC
 		ObjOut = append(ObjOut, icoupon)
 		//Getting Total Balance By ICoupon Number
 	}
-	return ObjOut, nil
+	return fiber.Map{"data": ObjOut}, fiber.StatusOK
 }
 
 // This function is used to get total ICoupon and Total Used value
-func GetICouponArrayTotalValueByOrderId(orderId string, distribId string) ([]dto.OrderedICouponOut, error) {
+func GetICouponArrayTotalValueByOrderId(orderId string, distribId string, tx *gorm.DB) (fiber.Map, int) {
 
 	//Creating Output dto obj
 	ObjOut := []dto.OrderedICouponOut{}
 	//Getting ICoupon Number
-	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId)
+	getICouponsVID, err := repositories.GetICouponsVIDByReference(orderId, distribId, tx)
 	if err != nil {
-		return ObjOut, err
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveICoupon repositories fn from GetICouponArrayTotalValueByOrderId service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	//Rotating all the VID and mapping total balance and remaining value
 	for _, vid := range getICouponsVID {
-		totalValue := repositories.GetICouponValueByVID(vid)
+		totalValue, err := repositories.GetICouponValueByVID(vid, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling GetICouponValueByVID repositories fn from GetICouponArrayTotalValueByOrderId service fn", err.Error())
+			return fiber.Map{"error": err.Error(), "err": err}, fiber.StatusInternalServerError
+		}
 
 		//get ICoupon balance By Order
-		UsedValue, result := repositories.GetICouponRowsByOrderID(orderId, vid)
-		if result.Error != nil {
-			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
-			return ObjOut, err
+		UsedValue, err := repositories.GetICouponRowsByOrderID(orderId, vid, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling GetICouponRowsByOrderID fn from GetICouponArrayTotalValueByOrderId service fn")
+			return fiber.Map{"data": ObjOut}, fiber.StatusInternalServerError
 		}
 
 		icoupon := dto.OrderedICouponOut{
@@ -339,5 +385,5 @@ func GetICouponArrayTotalValueByOrderId(orderId string, distribId string) ([]dto
 		ObjOut = append(ObjOut, icoupon)
 		//Getting Total Balance By ICoupon Number
 	}
-	return ObjOut, nil
+	return fiber.Map{"data": ObjOut}, fiber.StatusOK
 }

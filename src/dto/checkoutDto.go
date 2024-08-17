@@ -15,9 +15,9 @@ type ChequeAvailableIn struct {
 }
 
 type TakeChequeIn struct {
-	DistribId string   `json:"distrib_id"`
-	Place     string   `json:"place"`
-	Coupons   []Coupon `json:"coupons"`
+	DistribId   string `json:"distrib_id"`
+	Place       string `json:"place"`
+	ChequeCount int    `json:"cheque_count"`
 }
 
 type TakeChequeOut struct {

@@ -4,34 +4,33 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"log"
 	"ui-back-end/src/repositories"
 	"ui-back-end/src/tmplts"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jung-kurt/gofpdf"
+	"gorm.io/gorm"
 )
 
-func GenerateConsentForm(distrib_id string) (fiber.Map, int) {
+func GenerateConsentForm(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 
 	// Retrieve the user data from the database
-	user, err := repositories.GetUserByID(distrib_id)
+	user, err := repositories.GetUserByID(distrib_id, tx)
 	if err != nil {
-		return fiber.Map{"error": "Error in getting distrib ID", "err": err.Error()}, fiber.StatusInternalServerError
+		return utils.NotNilErrorMessage(err, "GetUserByID", "GenerateConsentForm", fiber.StatusInternalServerError, tx)
 	}
 
 	// Parse the HTML template from the string
-	tmpl, res := template.New("DistribApplicationForm").Parse(tmplts.DistribApplicationFormTemplate)
-	if res != nil {
-		log.Println("Failed to parse template:", err)
-		return fiber.Map{"error": "Failed to parse template"}, fiber.StatusInternalServerError
+	tmpl, err := template.New("DistribApplicationForm").Parse(tmplts.DistribApplicationFormTemplate)
+	if err != nil {
+		return utils.CommonErrorMessage(err, "Failed to parse template", fiber.StatusInternalServerError, tx)
 	}
 
 	// Populate the template with user data
 	var htmlContent bytes.Buffer
 	if err := tmpl.Execute(&htmlContent, user); err != nil {
-		log.Println("Failed to execute template:", err)
-		return fiber.Map{"error": "Failed to execute template"}, fiber.StatusInternalServerError
+		return utils.CommonErrorMessage(err, "Failed to execute template", fiber.StatusInternalServerError, tx)
 	}
 
 	// Generate PDF from HTML content
@@ -43,10 +42,9 @@ func GenerateConsentForm(distrib_id string) (fiber.Map, int) {
 
 	// Save the PDF file to the specified path
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
-	res = pdf.OutputFileAndClose(filename)
-	if res != nil {
-		log.Println("Failed to save PDF:", res.Error())
-		return fiber.Map{"error": "Failed to save PDF"}, fiber.StatusInternalServerError
+	err = pdf.OutputFileAndClose(filename)
+	if err != nil {
+		return utils.CommonErrorMessage(err, "Failed to save PDF", fiber.StatusInternalServerError, tx)
 	}
 
 	// Return success response with file location

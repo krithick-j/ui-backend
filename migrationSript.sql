@@ -1,0 +1,38 @@
+-- CREATE TABLE rank_details (
+--     id int primary key auto_increment,
+--     rank_id decimal(4,2) not null,
+--     type varchar(20) not null,
+--     target int not null
+-- 
+-- )
+
+ 
+-- INSERT INTO rank_details (rank_id, type, target) VALUES
+-- (2.0, 'PRSP', 0), -- BRNZ
+-- (2.0, 'GRSP', 0),
+-- (2.0, 'DRBV', 0),
+-- (2.0, 'STEP', 0),
+-- (2.0, 'GPRF', 0),
+-- (2.5, 'PRSP', 0), -- SLVR
+-- (2.5, 'GRSP', 0),
+-- (2.5, 'DRBV', 6000),
+-- (2.5, 'STEP', 0),
+-- (2.5, 'GPRF', 0),
+-- (3, 'PRSP', 50), -- GOLD
+-- (3, 'GRSP', 600),
+-- (3, 'DRBV', 500),
+-- (3, 'STEP', 2),
+-- (3, 'GPRF', 0),
+-- (3.5, 'PRSP', 50), -- SFFR
+-- (3.5, 'GRSP', 2000),
+-- (3.5, 'DRBV', 1000),
+-- (3.5, 'STEP', 30),
+-- (3.5, 'GPRF', 5),
+-- (4.0, 'PRSP', 100), -- PTNM
+-- (4.0, 'GRSP', 6000),
+-- (4.0, 'DRBV', 2000),
+-- (4.0, 'STEP', 80),
+-- (4.0, 'GPRF', 4);
+
+-- select * from rank_details
+-- drop table rank_details;

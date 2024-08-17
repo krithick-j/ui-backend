@@ -9,13 +9,14 @@ import (
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 // Get Total Cheque Value By Distrib ID
-func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
+func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn, tx *gorm.DB) (fiber.Map, int) {
 
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 	placePointsObj := []dto.PlacePointsArr{}
@@ -26,29 +27,34 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 	totalbvPoints := 0.0
 
 	//Get Rank value
-	rank, res := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId)
-	if res.Error != nil {
-		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
+	rank, err := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling GetRankValueByDistribId from TotalChequeValueByDistribId", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	//Active Points start.....
-	directCommissionActiveValue, res := repositories.GetDirectCommissionActiveValueByDistribId(TakeChequeIn.DistribId)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on calling GetDirectCommissionValueByDistribId from TotalChequeValueByDistribId", res.Error.Error())
-		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
+	directCommissionActiveValue, err := repositories.GetDirectCommissionActiveValueByDistribId(TakeChequeIn.DistribId, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling GetDirectCommissionValueByDistribId from TotalChequeValueByDistribId", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	//Get Tracking Center with is_active = 1
-	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "")
+	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "", tx)
 	if status != fiber.StatusOK {
-		configs.Log.Errorln("Error on calling GetTrackingCentersByDistribId from TotalChequeValueByDistribId", trackingCentersActiveValue["error"])
-		return fiber.Map{"data": "something went wrong in getting tracking centers", "status": status}, status
+		return trackingCentersActiveValue, status
 	}
 	configs.Log.Infoln("Get tracking centers completed")
 
 	//use type assertion to map the variables
 	trackingCentersActiveArray, ok := trackingCentersActiveValue["data"].(dto.TrackingCenterOut)
 	if !ok {
+		tx.Rollback()
 		return fiber.Map{"data": "something went wrong in type assertion tracking centers", "status": ok}, fiber.StatusInternalServerError
 	}
 
@@ -83,10 +89,9 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 
 	//Get Tracking Center with is_active = 0
 	//I already have the is_active total points in placePointsObj. I just need to add it with is_active = 0
-	trackingCentersAllValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, false, "", "")
+	trackingCentersAllValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, false, "", "", tx)
 	if status != fiber.StatusOK {
-		configs.Log.Errorln("Error on calling GetTrackingCentersByDistribId from TotalChequeValueByDistribId", trackingCentersActiveValue["error"])
-		return fiber.Map{"data": "something went wrong in getting tracking centers", "status": status}, status
+		return trackingCentersActiveValue, status
 	}
 	configs.Log.Infoln("Get tracking centers completed")
 
@@ -112,10 +117,9 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn) (fiber.Map, int) {
 		totalbvPoints += tc.Value
 	}
 
-	directComissionAllValue, res := repositories.GetDirectCommissionAllValueByDistribId(TakeChequeIn.DistribId)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on calling GetDirectCommissionValueByDistribId from TotalChequeValueByDistribId", res.Error.Error())
-		return fiber.Map{"data": res.Error.Error()}, fiber.StatusInternalServerError
+	directComissionAllValue, err := repositories.GetDirectCommissionAllValueByDistribId(TakeChequeIn.DistribId, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetDirectCommissionValueByDistribId", "TotalChequeValueByDistribId", fiber.StatusInternalServerError, tx)
 	}
 
 	//Total points is the points without is_active filter
@@ -142,110 +146,171 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 
 	checkoutId := GenerateUniqueHexCode(10)
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
+	COUNT := 2                                                //Left and Right inside the tracking center
 
 	//Get Tracking Center with is_active = 1
-	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "")
+	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "", tx)
 	if status != fiber.StatusOK {
-		configs.Log.Errorln("Error on calling GetTrackingCentersByDistribId from TotalChequeValueByDistribId", trackingCentersActiveValue["error"])
-		return fiber.Map{"data": "something went wrong in getting tracking centers", "status": status}, status
+		return trackingCentersActiveValue, status
 	}
-
 	configs.Log.Infoln("Get tracking centers completed")
 
-	//Get specific tracking center
-	tc, err := repositories.GetBVforTCOneRow(TakeChequeIn.DistribId, TakeChequeIn.Place)
-	if err.Error != nil {
-		configs.Log.Errorln("Error on calling GetBVforTCOneRow from TakeChequeByDistribIdAndPlace", err.Error.Error())
-		return fiber.Map{"error": err.Error.Error()}, fiber.StatusInternalServerError
-	}
+	for i := 1; i <= TakeChequeIn.ChequeCount; i++ {
 
-	if tc.LValue < CHEQUE_DRAW_VALUE || tc.RValue < CHEQUE_DRAW_VALUE {
-		tx.Rollback()
-		return fiber.Map{"data": "cheque unsuccessfull!"}, fiber.StatusForbidden
-	}
-
-	LeftInsideTcObj := models.BvTransaction{
-		DistribId:    TakeChequeIn.DistribId,
-		Place:        TakeChequeIn.Place,
-		OrderId:      checkoutId,
-		Date:         time.Now(),
-		BvValue:      -float64(CHEQUE_DRAW_VALUE),
-		ActivateDate: time.Now(),
-		Side:         "left",
-		TransType:    "cheque",
-	}
-	RightInsidetCObj := models.BvTransaction{
-		DistribId:    TakeChequeIn.DistribId,
-		Place:        TakeChequeIn.Place,
-		OrderId:      checkoutId,
-		Date:         time.Now(),
-		BvValue:      -float64(CHEQUE_DRAW_VALUE),
-		ActivateDate: time.Now(),
-		Side:         "right",
-		TransType:    "cheque",
-	}
-
-	res := repositories.SaveBvTransaction(LeftInsideTcObj)
-	if res.Error != nil {
-		tx.Rollback()
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-	}
-	res = repositories.SaveBvTransaction(RightInsidetCObj)
-	if res.Error != nil {
-		tx.Rollback()
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
-	}
-
-	Icoupon := []dto.Coupon{}
-	for _, coupon := range TakeChequeIn.Coupons {
-		dtoCoupon := dto.Coupon{
-			Value:    coupon.Value,
-			Quantity: coupon.Quantity,
+		tcBv, err := repositories.GetBVforTCOneRow(TakeChequeIn.DistribId, TakeChequeIn.Place, tx)
+		if err != nil {
+			configs.Log.Errorln("Error on calling GetBVforTCOneRow from TakeChequeByDistribIdAndPlace", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
-		Icoupon = append(Icoupon, dtoCoupon)
-	}
-	ICouponIn := dto.ICouponIn{
-		DistribID: TakeChequeIn.DistribId,
-		Coupons:   Icoupon,
-	}
-	AddICoupon(ICouponIn, ICouponIn.DistribID, tx)
 
-	return fiber.Map{"data": "Cheque taken Successful"}, fiber.StatusOK
+		totalChequeCount := middleware.NCheckoutPossible(tcBv.LValue, tcBv.RValue, CHEQUE_DRAW_VALUE)
+		if totalChequeCount < float64(TakeChequeIn.ChequeCount) {
+			tx.Rollback()
+			configs.Log.Errorln("Error from totalChequeCount validation. Cheque cannot be taken because of insufficient BV values")
+			return fiber.Map{"data": "cheque unsuccessfull!"}, fiber.StatusForbidden
+		}
+
+		count, err := repositories.GetCheckoutFrequency(TakeChequeIn.DistribId, tx)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling CreateCheckoutFrequency from TakeChequeByDistribIdAndPlace", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+		//This validation mostly won't be needed here because this is already done in get total cheque count frequency. Anyway it is used for extra validation
+		if count%4 == 0 && err != gorm.ErrRecordNotFound && count != 0 {
+			tx.Rollback()
+			//take this cheque, this will not add in the cpa balance
+		}
+
+		if err == gorm.ErrRecordNotFound {
+			if err = repositories.CreateCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, tx); err != nil {
+				tx.Rollback()
+				configs.Log.Errorln("Error on calling CreateCheckoutFrequency from TakeChequeByDistribIdAndPlace", err.Error())
+				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+			}
+		}
+
+		if tcBv.LValue < CHEQUE_DRAW_VALUE || tcBv.RValue < CHEQUE_DRAW_VALUE {
+			tx.Rollback()
+			configs.Log.Errorln("Error from chequeDrawValue validation. Cheque cannot be taken because of insufficient BV values", err.Error())
+			return fiber.Map{"data": "cheque unsuccessfull!"}, fiber.StatusForbidden
+		}
+
+		LeftInsideTcObj := models.BvTransaction{
+			DistribId:    TakeChequeIn.DistribId,
+			Place:        TakeChequeIn.Place,
+			OrderId:      checkoutId,
+			Date:         time.Now(),
+			BvValue:      -float64(CHEQUE_DRAW_VALUE),
+			ActivateDate: time.Now(),
+			Side:         "left",
+			TransType:    "cheque",
+		}
+		RightInsidetCObj := models.BvTransaction{
+			DistribId:    TakeChequeIn.DistribId,
+			Place:        TakeChequeIn.Place,
+			OrderId:      checkoutId,
+			Date:         time.Now(),
+			BvValue:      -float64(CHEQUE_DRAW_VALUE),
+			ActivateDate: time.Now(),
+			Side:         "right",
+			TransType:    "cheque",
+		}
+
+		err = repositories.SaveBvTransaction(LeftInsideTcObj, tx)
+		if err != nil {
+			tx.Rollback()
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+		err = repositories.SaveBvTransaction(RightInsidetCObj, tx)
+		if err != nil {
+			tx.Rollback()
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+
+		err = repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling IncrementCheckoutFrequency from TakeChequeByDistribIdAndPlace service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+
+		err = handleCpaTransaction(TakeChequeIn, CHEQUE_DRAW_VALUE, COUNT, checkoutId, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling handleCpaTransaction from TakeChequeByDistribIdAndPlace service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+
+	}
+	return fiber.Map{"data": "Cheque taken Successful and added to CPA Balance"}, fiber.StatusOK
 }
 
-func ChangeChequePin(payload dto.ChequePinIn) (fiber.Map, int) {
+func handleCpaTransaction(TakeChequeIn dto.TakeChequeIn, CHEQUE_DRAW_VALUE int, COUNT int, checkoutId string, tx *gorm.DB) error {
+	rank, err := repositories.GetRankValueByDistribId(TakeChequeIn.DistribId, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRankValueByDistribId from handleCpaTransaction service fn", err.Error())
+		return err
+	}
+
+	CpaAmount := float64(TakeChequeIn.ChequeCount) * float64(CHEQUE_DRAW_VALUE) * float64(COUNT) * rank
+
+	cpaTransactionObj := models.CpaTransaction{
+		DistribId:    TakeChequeIn.DistribId,
+		Reference:    checkoutId,
+		ActivateDate: time.Now(),
+		IsActive:     true,
+		Amount:       CpaAmount,
+	}
+	err = repositories.SaveCpaTransaction(cpaTransactionObj, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling SaveCpaTransaction repositories fn from TakeChequeByDistribIdAndPlace service fn", err.Error())
+		return err
+	}
+	return nil
+}
+
+func ChangeChequePin(payload dto.ChequePinIn, tx *gorm.DB) (fiber.Map, int) {
 	currentPinHashFromPayload := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.CurrentPin)))
 
-	currentPinHashFromDB, res := repositories.GetChequePinByDistribID(payload.DistribId)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChangeChequePin service fn")
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	currentPinHashFromDB, err := repositories.GetChequePinByDistribID(payload.DistribId, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChangeChequePin service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	if currentPinHashFromDB != currentPinHashFromPayload {
+		tx.Rollback()
 		configs.Log.Infoln("Invalid CPA pin")
 		return fiber.Map{"error": "Invalid Current Pin"}, fiber.StatusBadRequest
 	}
 
-	res = repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))))
-	if res.Error != nil {
+	err = repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))), tx)
+	if err != nil {
+		tx.Rollback()
 		configs.Log.Errorln("Error on calling ChangeCpaPin repositories fn from ChangeChequePin service fn")
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 	return fiber.Map{"data": "Cpa pin changed Successfully"}, fiber.StatusOK
 }
 
-func ChequeLogin(payload dto.ChequeLogin) (fiber.Map, int) {
+func ChequeLogin(payload dto.ChequeLogin, tx *gorm.DB) (fiber.Map, int) {
 	PinHashFromPayload := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.Pin)))
 
-	currentPinHashFromDB, res := repositories.GetChequePinByDistribID(payload.DistribId)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChequeLogin service fn", res.Error.Error())
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	currentPinHashFromDB, err := repositories.GetChequePinByDistribID(payload.DistribId, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetChequePinByDistribID repositories fn from ChequeLogin service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 
 	}
 
 	if currentPinHashFromDB != PinHashFromPayload {
+		tx.Rollback()
 		configs.Log.Infoln("Invalid CPA pin")
 		return fiber.Map{"error": "Invalid Current Pin"}, fiber.StatusBadRequest
 	}

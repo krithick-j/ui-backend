@@ -2,22 +2,8 @@ from datetime import datetime
 from typing import List
 
 from utils.config import DB, BV_VALUE
+from utils.common import get_all_users_with_frequency
 
-def get_all_users_with_frequency() -> List[str]:
-    '''
-    '''
-    users = []
-    with DB.cursor() as cursor:
-        sql = """
-        SELECT u.distrib_id, cf.frequency FROM users u
-        LEFT JOIN cheque_frequencies cf ON u.distrib_id = cf.distrib_id
-        """
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        for row in rows:
-            users.append({"id":row[0], "frequency":row[1]})
-    
-    return users
 
 def get_rank(user_id:str) -> str:
     ''' Calculate rank here

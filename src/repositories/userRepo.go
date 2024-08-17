@@ -1,42 +1,52 @@
 package repositories
 
 import (
-	"errors"
 	"fmt"
-	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
 )
 
-func AuthUser(distrib_id, password string) (models.User, error) {
+func AuthUser(distrib_id, password string, tx *gorm.DB) (models.User, error) {
 	user := models.User{}
-	res := configs.DB.Where("distrib_id = ? AND pass =?", distrib_id, password).First(&user)
-	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return models.User{}, res.Error
-	}
-	return user, nil
+	err :=
+		tx.
+			Where("distrib_id = ? AND pass =?", distrib_id, password).
+			First(&user).
+			Error
+	return user, err
 }
 
-func GetUserByID(DistID string) (models.User, error) {
+func GetUserByID(DistID string, tx *gorm.DB) (models.User, error) {
 	user := models.User{}
-	result := configs.DB.First(&user, "distrib_id = ?", DistID).Error
-	return user, result
+	err := tx.First(&user, "distrib_id = ?", DistID).Error
+	return user, err
 }
 
-func GetAllUsers(user []models.User) ([]models.User, *gorm.DB) {
-	result := configs.DB.Find(&user)
-	return user, result
+func GetAllUsers(tx *gorm.DB) ([]models.User, error) {
+	var user []models.User
+	err := tx.Find(&user).Error
+	return user, err
 }
 
-func GetLastId() string {
+func GetLastId(tx *gorm.DB) (string, error) {
 	var lastNo string
-	configs.DB.Table("users").Select("max(distrib_id)").Row().Scan(&lastNo)
-	return lastNo
+	err :=
+		tx.
+			Table("users").
+			Select("max(distrib_id)").
+			Row().
+			Scan(&lastNo)
+	return lastNo, err
 }
 
 // Get next Tracking Center based on side: returns next distribId and place
-func GetNextItem(distrib_id string, place string, side string) (string, string) {
+func GetNextItem(distrib_id string, place string, side string, tx *gorm.DB) (struct {
+	LeftDistribID  string
+	LeftPlace      string
+	RightDistribID string
+	RightPlace     string
+}, error) {
 	next_item := struct {
 		LeftDistribID  string
 		LeftPlace      string
@@ -44,35 +54,28 @@ func GetNextItem(distrib_id string, place string, side string) (string, string) 
 		RightPlace     string
 	}{}
 
-	configs.DB.Table("tracking_centers").Where("distrib_id=? AND place=?", distrib_id, place).First(&next_item)
-	if side == "left" {
-		return next_item.LeftDistribID, next_item.LeftPlace
-	} else if side == "right" {
-		return next_item.RightDistribID, next_item.RightPlace
-	} else {
-		configs.Log.Errorf("SIDE NOT PROPERLY GIVEN %v", side)
-		return fmt.Sprintf("SIDE NOT PROPERLY GIVEN %v", side), "error"
-	}
+	//Needs to be improvised
+	err :=
+		tx.
+			Table("tracking_centers").
+			Where("distrib_id=? AND place=?", distrib_id, place).
+			First(&next_item).
+			Error
+	return next_item, err
+
 }
 
-func CreateUser(tx *gorm.DB, user models.User) error {
-	res := tx.Create(&user)
-	if res.Error != nil {
-		configs.Log.Errorln("Error on Create User Repositories", res.Error.Error())
-		return res.Error
-	}
-	return nil
+func CreateUser(user models.User, tx *gorm.DB) error {
+	err := tx.Create(&user).Error
+	return err
 }
 
-func CreateTCs(tx *gorm.DB, tcs []models.TrackingCenter) error {
-	for _, tc := range tcs {
-		res := tx.Create(&tc)
-		if res.Error != nil {
-			configs.Log.Errorln("Error on Create TCs Repositories", res.Error.Error())
-			return res.Error
-		}
-	}
-	return nil
+func CreateTCs(tc models.TrackingCenter, tx *gorm.DB) error {
+	err :=
+		tx.
+			Create(&tc).
+			Error
+	return err
 }
 
 func UpdateTC(tx *gorm.DB, distrib_id string, place string, parent_distrib_id string, parent_ref_place string, side string) error {
@@ -91,26 +94,43 @@ func UpdateTC(tx *gorm.DB, distrib_id string, place string, parent_distrib_id st
 	return nil
 }
 
-func GetUserEmailByDistribID(distribID string) (string, *gorm.DB) {
+func GetUserEmailByDistribID(distribID string, tx *gorm.DB) (string, error) {
 	var email string
-	result := configs.DB.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email)
-	return email, result
+	err := tx.Table("users").Select("email_address").Where("distrib_id=?", distribID).Find(&email).Error
+	return email, err
 }
 
-func EditUserByDistId(distrib_id string, userIn models.User, user models.User) (models.User, *gorm.DB) {
-	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Updates(userIn)
-	return userIn, result
+func EditUserByDistId(distrib_id string, userIn models.User, tx *gorm.DB) (models.User, error) {
+	err :=
+		tx.
+			Table("users").
+			Where("distrib_id=?", distrib_id).
+			Updates(userIn).
+			Error
+	return userIn, err
 }
 
-func GetUserByRefDistribId(distrib_id string, user []models.User) ([]models.User, *gorm.DB) {
-	result := configs.DB.Where("ref_distrib_id", distrib_id).Find(&user)
-	return user, result
+func GetUserByRefDistribId(distrib_id string, tx *gorm.DB) ([]models.User, error) {
+	var user []models.User
+	err :=
+		tx.
+			Table("users").
+			Where("ref_distrib_id", distrib_id).
+			Find(&user).
+			Error
+	return user, err
 }
 
 // This function will return who referred you
-func GetRefDistribIdByDistribId(distribId string) (string, error) {
+func GetRefDistribIdByDistribId(distribId string, tx *gorm.DB) (string, error) {
 	var refDistribId string
-	err := configs.DB.Model(&models.User{}).Select("ref_distrib_id").Where("distrib_id = ?", distribId).Take(&refDistribId).Error
+	err :=
+		tx.
+			Table("users").
+			Select("ref_distrib_id").
+			Where("distrib_id = ?", distribId).
+			Take(&refDistribId).
+			Error
 	return refDistribId, err
 }
 
@@ -118,55 +138,102 @@ func GetRefDistribIdByDistribId(distribId string) (string, error) {
 // Suppose IN-00001 referred two persons, then the two person will come as a list
 func GetReferredUsersByDistribId(distribId string, tx *gorm.DB) ([]string, error) {
 	var referredDistributors []string
-	err := tx.Model(&models.User{}).Select("distrib_id").Where("ref_distrib_id = ?", distribId).Find(&referredDistributors).Error
+	err :=
+		tx.
+			Table("users").
+			Select("distrib_id").
+			Where("ref_distrib_id = ?", distribId).
+			Find(&referredDistributors).
+			Error
 	return referredDistributors, err
 }
 
-func GetUserPassByDistribId(distribId string) (string, *gorm.DB) {
+func GetUserPassByDistribId(distribId string, tx *gorm.DB) (string, error) {
 	var pass string
-	result := configs.DB.Model(&models.User{}).Where("distrib_id=?", distribId).Select("pass").Take(&pass)
-	return pass, result
+	err :=
+		tx.
+			Table("users").
+			Where("distrib_id=?", distribId).
+			Select("pass").
+			Take(&pass).
+			Error
+	return pass, err
 }
 
-func UpdatePassword(distrib_id string, newHashPass string) *gorm.DB {
-	result := configs.DB.Model(models.User{}).Where("distrib_id=?", distrib_id).Update("pass", newHashPass)
-	return result
-}
-
-func SaveOTP(Type string, Value string, OTP string) error {
-	err := configs.DB.Create(&models.OTPVerify{Type: Type, Value: Value, OTP: OTP}).Error
+func UpdatePassword(distrib_id string, newHashPass string, tx *gorm.DB) error {
+	err :=
+		tx.
+			Model("users").
+			Where("distrib_id=?", distrib_id).
+			Update("pass", newHashPass).
+			Error
 	return err
 }
 
-func CheckAndUpdateOTP(Type string, Value string, OTP string) error {
+func SaveOTP(Type string, Value string, OTP string, tx *gorm.DB) error {
+	obj :=
+		models.OTPVerify{
+			Type:  Type,
+			Value: Value,
+			OTP:   OTP,
+		}
+	err :=
+		tx.
+			Create(&obj).
+			Error
 
-	if OTP == "151515" {
-		configs.DB.Model(&models.OTPVerify{}).Where("type=? AND value=?", Type, Value).Update("status", "verified")
-		return nil
-	}
-	res := configs.DB.Model(&models.OTPVerify{}).Where("type=? AND value=? AND otp=?", Type, Value, OTP).Update("status", "verified")
-	if res.Error != nil {
-		configs.Log.Errorln("Error on CheckAndUpdateOTP repositories fn", res.Error.Error())
-		return res.Error
-	}
-	if res.RowsAffected < 1 {
-		configs.Log.Errorln("Record not found in CheckAndUpdateOTP repositories fn")
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+	return err
 }
 
-func UpdateKyc(user *models.User) {
-	configs.DB.Model(user).Where("distrib_id", user.DistribID).Updates(user)
+func CheckAndUpdateOTP(Type string, Value string, OTP string, tx *gorm.DB) error {
+
+	err :=
+		tx.
+			Model(&models.OTPVerify{}).
+			Where("type=? AND value=? AND otp=?", Type, Value, OTP).
+			Update("status", "verified").
+			Error
+
+	return err
 }
 
-func GetChequePinByDistribID(distribId string) (string, *gorm.DB) {
+func UpdateOTPVerified(Type string, Value string, tx *gorm.DB) error {
+	err :=
+		tx.
+			Model(&models.OTPVerify{}).
+			Where("type=? AND value=?", Type, Value).
+			Update("status", "verified").Error
+	return err
+}
+
+func UpdateKyc(user *models.User, tx *gorm.DB) error {
+	err :=
+		tx.
+			Model(user).
+			Where("distrib_id", user.DistribID).
+			Updates(user).
+			Error
+	return err
+}
+
+func GetChequePinByDistribID(distribId string, tx *gorm.DB) (string, error) {
 	var pin string
-	result := configs.DB.Model(&models.User{}).Select("cpa_pin").Where("distrib_id", distribId).Find(&pin)
-	return pin, result
+	err :=
+		tx.
+			Model(&models.User{}).
+			Select("cpa_pin").
+			Where("distrib_id", distribId).
+			Find(&pin).
+			Error
+	return pin, err
 }
 
-func ChangeCpaPin(distribId string, newPin string) *gorm.DB {
-	result := configs.DB.Model(&models.User{}).Where("distrib_id", distribId).Update("cpa_pin", newPin)
-	return result
+func ChangeCpaPin(distribId string, newPin string, tx *gorm.DB) error {
+	err :=
+		tx.
+			Model(&models.User{}).
+			Where("distrib_id", distribId).
+			Update("cpa_pin", newPin).
+			Error
+	return err
 }

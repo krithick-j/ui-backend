@@ -1,63 +1,53 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func PlaceOrder(OrderIn dto.PlaceOrderIn) (fiber.Map, int) {
+func PlaceOrder(OrderIn dto.PlaceOrderIn, tx *gorm.DB) (fiber.Map, int) {
 
 	orderId := GenerateUniqueHexCode(10)
 	configs.Log.Infof("Generating a new order id %s", orderId)
-
 	//sum product value
-	total, status := GetOrderDetails(OrderIn.DistribId)
+	res, status := GetOrderDetails(OrderIn.DistribId, tx)
+	total := res["data"].(dto.OrderDetailsOut)
 	total.OrderId = orderId
-	if status != http.StatusOK {
-		configs.Log.Errorln("Error on GetOrderDetails, Result---->", total)
-		return fiber.Map{"data": "Something gone wrong"}, fiber.StatusInternalServerError
+	if status != fiber.StatusOK {
+		return utils.NotNilErrorMessage(res["error"].(error), "GetOrderDetails", "PlaceOrder", status, tx)
 	}
-
-	tx := configs.DB.Begin()
 
 	totalOrderAmount := total.TotalAmount
 
 	productType := total.Products[0].ProductType
 	configs.Log.Infof("Product type %v", productType)
 	if res, status := handleProductHeaderAndLines(OrderIn, orderId, total, productType, tx); status != fiber.StatusOK {
-		configs.Log.Errorln("Error on GetOrderDetails, Result---->", total)
-		return fiber.Map{"error": res["error"]}, status
+		return utils.NotNilErrorMessage(res["error"].(error), "handleProductHeaderAndLines", "PlaceOrder", status, tx)
 	}
 
 	if res, status := handleProductType(OrderIn, productType, orderId, totalOrderAmount, tx, total); status != fiber.StatusOK {
-		return fiber.Map{"error": res["error"]}, status
+		return utils.NotNilErrorMessage(res["error"].(error), "handleProductType", "PlaceOrder", status, tx)
 	}
 
-	if commitRes := tx.Commit(); commitRes.Error != nil {
-		configs.Log.Errorln("Error on Committing ")
-		return fiber.Map{"error": commitRes.Error.Error()}, fiber.StatusInternalServerError
-	}
-
-	invoicePdfPath, status, err := GenerateInvoice(orderId, productType)
+	invoicePdfPath, status, err := GenerateInvoice(orderId, productType, tx)
 	if err != nil {
-		configs.Log.Errorln("Error on GenerateInvoice fn from Place Order fn", err.Error())
-		return fiber.Map{"error": err.Error()}, status
+		return utils.NotNilErrorMessage(res["error"].(error), "GenerateInvoice", "PlaceOrder", status, tx)
 	}
 
 	err = SendHtmlMailOrder(total, invoicePdfPath)
 	if err != nil {
-		configs.Log.Errorf("Error sending email : %s", err.Error())
+		return utils.NotNilErrorMessage(err, "SendHtmlMailOrder", "PlaceOrder", fiber.StatusInternalServerError, tx)
 	}
 	configs.Log.Infoln("Mail Sent!")
-	return fiber.Map{"success": "Ordered Placed Successfully", "link": invoicePdfPath}, http.StatusOK
+	return fiber.Map{"success": "Ordered Placed Successfully", "link": invoicePdfPath}, fiber.StatusOK
 }
 
 func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId string, totalOrderAmount float64, tx *gorm.DB, total dto.OrderDetailsOut) (fiber.Map, int) {
@@ -81,7 +71,7 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 		} else if productType == "rsp" {
 			configs.Log.Infoln("Handling RSP value-->")
 			configs.Log.Infoln("rsp value-->", total.TotalTypeValue)
-			if err := repositories.AddRsp(OrderIn.DistribId, orderId, total.TotalTypeValue); err != nil {
+			if err := repositories.AddRsp(OrderIn.DistribId, orderId, total.TotalTypeValue, tx); err != nil {
 				tx.Rollback()
 				configs.Log.Errorln("Error on AddRspTx from handleProductType fn")
 				return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
@@ -94,56 +84,59 @@ func handleProductType(OrderIn dto.PlaceOrderIn, productType string, orderId str
 
 	} else if productType == "ep" {
 
-		if res, status := handleEpProduct(total, tx, OrderIn, orderId); status != fiber.StatusOK {
+		if res, status := handleEpProduct(total, OrderIn, orderId, tx); status != fiber.StatusOK {
 			configs.Log.Errorln("Error on handleEpProduct from handleProductType fn")
 			return fiber.Map{"error": res["error"]}, fiber.StatusInternalServerError
 		}
 	}
 
-	_, cartRes := repositories.DeleteAllCartProduct(OrderIn.DistribId)
-	if cartRes.Error != nil {
+	_, err := repositories.DeleteAllCartProduct(OrderIn.DistribId, tx)
+	if err != nil {
 		tx.Rollback()
-		configs.Log.Errorln("Error on DeleteAllCartProduct from handleProductType fn")
-		return fiber.Map{"error": cartRes.Error.Error()}, fiber.StatusInternalServerError
+		configs.Log.Errorln("Error on DeleteAllCartProduct repositories from handleProductType service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	return nil, fiber.StatusOK
 }
 
-func handleEpProduct(total dto.OrderDetailsOut, tx *gorm.DB, OrderIn dto.PlaceOrderIn, orderId string) (fiber.Map, int) {
-	totalEp, res := repositories.GetEpBalance(total.DistribId)
-	if res.Error != nil {
+func handleEpProduct(total dto.OrderDetailsOut, OrderIn dto.PlaceOrderIn, orderId string, tx *gorm.DB) (fiber.Map, int) {
+	totalEp, err := repositories.GetEpBalance(total.DistribId, tx)
+	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on GetEpBalance from handleEpProduct fn")
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	if totalEp >= total.TotalTypeValue {
-		res = repositories.SaveEpTx(OrderIn.DistribId, orderId, total.TotalTypeValue)
-		if res.Error != nil {
+		err := repositories.SaveEpTx(OrderIn.DistribId, orderId, total.TotalTypeValue, tx)
+		if err != nil {
 			tx.Rollback()
-			configs.Log.Errorln("Error on SaveEpTx from handleEpProduct fn")
-			return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+			configs.Log.Errorln("Error on SaveEpTx from handleEpProduct fn: ", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 	} else {
+		tx.Rollback()
+		configs.Log.Warnln("Insufficient Balance!")
 		return fiber.Map{"data": "Insufficient Balance!"}, fiber.StatusForbidden
 	}
-	return nil, fiber.StatusOK
+
+	return fiber.Map{"data": "Handling Ep product successful"}, fiber.StatusOK
 }
 
 func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDetailsOut, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Infoln("Preparing BV product handling...")
 
 	//Referral distrib id is taken
-	referralDistribId, err := repositories.GetRefDistribIdByDistribId(OrderIn.DistribId)
+	referralDistribId, err := repositories.GetRefDistribIdByDistribId(OrderIn.DistribId, tx)
 	if err != nil {
 		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId repositories fn from handleBvProduct service fn")
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-	res := repositories.AddDirectBvTx(referralDistribId, orderId, total.TotalTypeValue)
-	if res.Error != nil {
-		tx.Rollback()
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	err = repositories.AddDirectBvTx(referralDistribId, orderId, total.TotalTypeValue, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "AddDirectBvTx", "handleBvProduct", fiber.StatusInternalServerError, tx)
 	}
 	configs.Log.Infoln("Direct BV Added")
 
@@ -154,9 +147,9 @@ func handleBvProduct(OrderIn dto.PlaceOrderIn, orderId string, total dto.OrderDe
 	configs.Log.Infoln("Place BV Added")
 	configs.Log.Infoln("Direct Commission transaction")
 
-	Dcmessage, status := SaveDirectCommissionTransaction(OrderIn.DistribId, total.TotalTypeValue, orderId)
-	if status != 200 {
-		return fiber.Map{"error": Dcmessage}, status
+	Dcmessage, status := SaveDirectCommissionTransaction(OrderIn.DistribId, total.TotalTypeValue, orderId, tx)
+	if status != fiber.StatusOK {
+		return fiber.Map{"error": Dcmessage["error"]}, status
 	}
 	configs.Log.Infoln("Direct Commison Added")
 	return nil, fiber.StatusOK
@@ -188,7 +181,7 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 	configs.Log.Infoln("OrdersHeaders: ", OrderHeaderObj.ID)
 	if err != nil {
 		tx.Rollback()
-		configs.Log.Errorln("Rollbacking orders headers: ", err.Error())
+		configs.Log.Errorln("Error on calling SaveOrderHeader repositories fn from handleProductHeaderAndLines service fn ", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 	configs.Log.Infoln("Committing transaction of order headers")
@@ -201,8 +194,10 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 			Place:         placeBv.Place,
 			Value:         placeBv.AddBv,
 		}
-		err = repositories.SaveAddedbv(&addBv)
+		err = repositories.SaveAddedbv(&addBv, tx)
 		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error on calling SaveAddedbv repositories fn from handleProductHeaderAndLines service fn: ", err.Error())
 			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 	}
@@ -224,31 +219,29 @@ func handleProductHeaderAndLines(OrderIn dto.PlaceOrderIn, orderId string, total
 		}
 
 		configs.Log.Infoln("Orders Liner Obj: \n", OrderLinerObj)
-		err = repositories.SaveOrderLiner(OrderLinerObj)
+		err = repositories.SaveOrderLiner(OrderLinerObj, tx)
 		if err != nil {
 			tx.Rollback()
+			configs.Log.Errorln("Error on calling SaveOrderLiner repositories fn from handleProductHeaderAndLines service fn: ", err.Error())
 			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 	}
-
 	return fiber.Map{"data": "Product Header and Lines handled Successfully"}, fiber.StatusOK
 }
 
-func GetAllOrders() (fiber.Map, int) {
+func GetAllOrders(tx *gorm.DB) (fiber.Map, int) {
 
 	var OrdersOut []dto.AllOrdersOut
 
 	configs.Log.Infoln("Retrieving All Orders INIT")
-	order, result := repositories.GetAllOrders()
+	order, err := repositories.GetAllOrders(tx)
 
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Infoln("No Orders Found")
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Warn("No Orders Found")
 		return fiber.Map{"data": "Not Found"}, http.StatusNotFound
 	}
-	if result.Error != nil {
-		configs.Log.Errorf("%v", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, http.StatusInternalServerError
-	}
+
 	configs.Log.Infoln("Retrieving All Orders DONE")
 	for _, order := range order {
 		var productArr []dto.ProductDetails
@@ -305,21 +298,19 @@ func GetAllOrders() (fiber.Map, int) {
 		OrdersOut = append(OrdersOut, OrderArr)
 	}
 
-	return fiber.Map{"data": OrdersOut}, http.StatusOK
+	return fiber.Map{"data": OrdersOut}, fiber.StatusOK
 }
 
-func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
+func GetOrdersByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
 
 	var OrdersOut []dto.AllOrdersOut
 
 	configs.Log.Infoln("Retrieving AllOrdersByDistribId INIT")
-	orders, err := repositories.GetOrderByDistribId(distribId)
-
-	if len(orders) == 0 {
-		configs.Log.Infoln("No Orders Found")
-		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	orders, err := repositories.GetOrderByDistribId(distribId, tx)
+	if err == gorm.ErrRecordNotFound {
+		configs.Log.Warnln("No Orders Found on calling GetOrderByDistribId: ", err.Error())
+		return fiber.Map{"data": "Not Found", "err": err}, fiber.StatusNotFound
 	}
-
 	if err != nil {
 		configs.Log.Errorf("%v", err.Error())
 		return fiber.Map{"error": err}, fiber.StatusInternalServerError
@@ -383,18 +374,18 @@ func GetOrdersByDistribId(distribId string) (fiber.Map, int) {
 
 		OrdersOut = append(OrdersOut, OrderArr)
 	}
-	return fiber.Map{"data": OrdersOut}, http.StatusOK
+	return fiber.Map{"data": OrdersOut}, fiber.StatusOK
 }
 
-func SaveDirectCommissionTransaction(distribId string, bvValue float64, reference string) (fiber.Map, int) {
+func SaveDirectCommissionTransaction(distribId string, bvValue float64, reference string, tx *gorm.DB) (fiber.Map, int) {
 
 	value := bvValue * 2.4
 
-	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
-	fmt.Println("reference distrib id ", refDistribId)
+	refDistribId, err := repositories.GetRefDistribIdByDistribId(distribId, tx)
 	if err != nil {
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
-
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId repositories fn from SaveDirectCommissionTransaction service fn")
+		return fiber.Map{"error": err.Error(), "err": err}, fiber.StatusInternalServerError
 	}
 	activateDayNumber := 21
 	obj := models.DirectCommissionTransaction{
@@ -406,8 +397,10 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 		ExpiryDate:   time.Now().AddDate(0, 6, activateDayNumber), //6 months
 	}
 
-	if res := repositories.SaveDirectCommissionTransaction(obj); res.Error != nil {
-		return fiber.Map{"error": res.Error.Error()}, fiber.StatusInternalServerError
+	if err := repositories.SaveDirectCommissionTransaction(obj, tx); err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId repositories fn from SaveDirectCommissionTransaction service fn")
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	return fiber.Map{"data": "Direct Commission transaction successful"}, fiber.StatusOK
@@ -421,28 +414,28 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 
 	configs.Log.Infoln("Checking the ICoupons")
 	for _, orderCoupon := range AppliedCoupons {
-		expiresOn, result := repositories.GetICouponExpiryDate(orderCoupon.VID)
-		if result.Error != nil {
+		expiresOn, err := repositories.GetICouponExpiryDate(orderCoupon.VID, tx)
+		if err != nil {
 			tx.Rollback()
 			configs.Log.Errorln("Error Retrieving the ICoupon Expiry Date")
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+			return fiber.Map{"error": err.Error()}, fiber.StatusBadRequest
 		}
 
 		if expiresOn.Before(time.Now()) || expiresOn.Equal(time.Now()) {
 			tx.Rollback()
-			configs.Log.Errorln("ICoupon Expired")
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+			configs.Log.Errorln("ICoupon expired")
+			return fiber.Map{"error": "ICoupon expired"}, fiber.StatusBadRequest
 		}
 
-		balance, result := repositories.GetICouponBalance(orderCoupon.VID)
-		if result.Error != nil {
+		balance, err := repositories.GetICouponBalance(orderCoupon.VID, tx)
+		if err != nil {
 			tx.Rollback()
-			configs.Log.Errorln("Error Retrieving the ICoupon Balance")
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusBadRequest
+			configs.Log.Errorln("Error on calling GetICouponBalance repositories fn from handlePlaceOrderICoupons service fn")
+			return fiber.Map{"error": err.Error()}, fiber.StatusBadRequest
 		}
 
 		if balance == 0 {
-			repositories.CloseCoupon(orderCoupon.VID)
+			repositories.CloseCoupon(orderCoupon.VID, tx)
 			tx.Rollback()
 			configs.Log.Errorln("Error Detecting used Icoupons")
 			return fiber.Map{
@@ -462,19 +455,13 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 				Value:     -balance, //using the full balance of ICoupon
 			}
 
-			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
-				tx.Rollback()
-				configs.Log.Errorln("Error while saving Icoupon Balance Transaction")
-
-				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
+			if err := repositories.SaveICouponTx(ICouponObj, tx); err != nil {
+				return utils.NotNilErrorMessage(err, "SaveICouponTx", "handlePlaceOrderICoupons", fiber.StatusBadRequest, tx)
 			}
 
 			//Balance will be zero after using full coupon, so active set to false
-			if res := repositories.CloseCoupon(orderCoupon.VID); res.Error != nil {
-				tx.Rollback()
-				configs.Log.Errorf("Error while closing the icoupon, %s", res.Error.Error())
-
-				return fiber.Map{"error": res.Error.Error()}, fiber.StatusBadRequest
+			if err := repositories.CloseCoupon(orderCoupon.VID, tx); err != nil {
+				return utils.NotNilErrorMessage(err, "CloseCoupon", "handlePlaceOrderICoupons", fiber.StatusBadRequest, tx)
 			}
 		} else {
 
@@ -484,10 +471,8 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 				Value:     -totalOrderAmount, //The order amount is less than Icoupon Balance, so icoupon have remaining balance
 				Reference: reference,
 			}
-			if err := repositories.SaveICouponTx(ICouponObj); err.Error != nil {
-				tx.Rollback()
-				configs.Log.Errorw("Error while saving icoupon transactions %v", ICouponObj)
-				return fiber.Map{"error": err.Error.Error()}, fiber.StatusBadRequest
+			if err := repositories.SaveICouponTx(ICouponObj, tx); err != nil {
+				return utils.NotNilErrorMessage(err, "SaveICouponTx", "handlePlaceOrderICoupons", fiber.StatusBadRequest, tx)
 			}
 			totalICouponBalance += balance
 			configs.Log.Infoln("TotalICouponBalance +=", totalICouponBalance)
@@ -511,7 +496,8 @@ func handlePlaceOrderICoupons(AppliedCoupons []dto.PlaceOrderCoupon, distribId s
 	return fiber.Map{"data": "Place Coupons handled successfully"}, fiber.StatusOK
 }
 
-func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
+// dto.OrderDetailsOut
+func GetOrderDetails(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	var subTotal float64 = 0.0
 	var totalSandH float64 = 0.0
 	var quantity uint = 0
@@ -521,16 +507,14 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 	var TotalTypeValue float64
 
 	//1. Retrieving All Products in Cart
-	cartItems, result := repositories.GetAllCartProductsByDistribID(distrib_id)
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID repositories fn from GetOrderDetails fn ", result.Error.Error())
-		return orderDetails, fiber.StatusInternalServerError
+	cartItems, err := repositories.GetAllCartProductsByDistribID(distrib_id, tx)
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
+	}
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllCartProductsByDistribID", "GetOrderDetails", fiber.StatusBadRequest, tx)
 	}
 	configs.Log.Infof("Cart items --> %v", cartItems)
-	if len(cartItems) < 1 {
-		configs.Log.Warnln("No Items found on the cart")
-		return orderDetails, fiber.StatusNotFound
-	}
 
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
@@ -556,10 +540,16 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalTypeValue += orderProduct.TypeValue * float64(item.Quantity)
 	}
 	//Retrieving User Data for Delivery Address
-	userData, err := repositories.GetUserByID(distrib_id)
+	userData, err := repositories.GetUserByID(distrib_id, tx)
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GetOrderDetails fn: ", err.Error())
+		return fiber.Map{"error": err.Error(), "err": err}, fiber.StatusNotFound
+	}
 	if err != nil {
-		configs.Log.Warnf("%v", orderDetails)
-		return orderDetails, fiber.StatusBadRequest
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GetOrderDetails fn: ", err.Error())
+		return fiber.Map{"error": err.Error(), "err": err}, fiber.StatusInternalServerError
 	}
 
 	shippingAddress := dto.ShippingAddress{
@@ -591,13 +581,6 @@ func GetOrderDetails(distrib_id string) (dto.OrderDetailsOut, int) {
 		TotalTypeValue:  TotalTypeValue,
 	}
 
-	if result.Error != nil {
-		return orderDetails, fiber.StatusBadRequest
-	}
-
-	if result.RowsAffected == 0 {
-		return orderDetails, http.StatusNoContent
-	}
 	configs.Log.Infof("%v", orderDetails)
-	return orderDetails, http.StatusOK
+	return utils.SuccessMessage(orderDetails, fiber.StatusOK)
 }

@@ -1,55 +1,48 @@
 package repositories
 
 import (
-	"fmt"
-	"ui-back-end/configs"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
 )
 
 // Save object in enquiry_types table
-func SaveToEnquiryType(tx *models.EnquiryType) {
+func SaveToEnquiryType(object *models.EnquiryType, tx *gorm.DB) error {
 
-	result := configs.DB.Create(&tx)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
-	}
+	err := tx.Create(&object).Error
+	return err
 }
 
 // get all objects from enquiry_type table
-func GetAllEnquiryType() ([]models.EnquiryType, *gorm.DB) {
+func GetAllEnquiryType(tx *gorm.DB) ([]models.EnquiryType, error) {
 	var obj []models.EnquiryType
 
-	result := configs.DB.Find(&obj)
-	return obj, result
+	err := tx.Find(&obj).Error
+	return obj, err
 }
 
 // insert object into contact_us table
-func SaveContactUsQuery(tx *models.ContactUs) {
+func SaveContactUsQuery(obj *models.ContactUs, tx *gorm.DB) error {
 
-	result := configs.DB.Create(&tx)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
-	}
+	err := tx.Create(&obj).Error
+	return err
 }
 
-func GetAllContactQueries() ([]models.ContactUs, *gorm.DB) {
+func GetAllContactQueries(tx *gorm.DB) ([]models.ContactUs, error) {
 	var obj []models.ContactUs
 
-	result := configs.DB.Find(&obj)
-	return obj, result
+	err := tx.Find(&obj).Error
+	return obj, err
 }
 
-func GetContactQueryStatusById(id string) (bool, *gorm.DB) {
+func GetContactQueryStatusById(id string, tx *gorm.DB) (bool, error) {
 	var status bool
 
-	result := configs.DB.Model(models.ContactUs{}).Select("status").Find(&status, id)
-	return status, result
+	err := tx.Model(models.ContactUs{}).Select("status").Find(&status, id).Error
+	return status, err
 }
 
-func SwitchContactQueryStatusById(id string) *gorm.DB {
-	status, _ := GetContactQueryStatusById(id)
-	result := configs.DB.Model(models.ContactUs{}).Where("id=?", id).Update("status", !status)
-	return result
+func SwitchContactQueryStatusById(status bool, id string, tx *gorm.DB) error {
+	err := tx.Model(models.ContactUs{}).Where("id=?", id).Update("status", !status).Error
+	return err
 }

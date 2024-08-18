@@ -14,14 +14,21 @@ func AddTc(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on parsing request from AddToCartController controller fn ", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
-	res, status := service.AddTc(payload)
+	tx := configs.DB.Begin()
+	res, status := service.AddTc(payload, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }
 
 func AvailableTc(c *fiber.Ctx) error {
 
 	distribId := c.Params("distrib_id")
-
-	res, status := service.GetAvailableAddTc(distribId)
+	tx := configs.DB.Begin()
+	res, status := service.GetAvailableAddTc(distribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }

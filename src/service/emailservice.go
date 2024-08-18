@@ -11,7 +11,9 @@ import (
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/tmplts"
+	"ui-back-end/utils"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/wneessen/go-mail"
 )
 
@@ -41,7 +43,7 @@ func MailFactory() *mail.Client {
 	return client
 }
 
-func SendPlainMail(tomail string, subject string, msg string) {
+func SendPlainMail(tomail string, subject string, msg string) (fiber.Map, int) {
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
 	m.To(tomail)
@@ -54,9 +56,10 @@ func SendPlainMail(tomail string, subject string, msg string) {
 		configs.Log.Errorln("Error on DialAndSend fn from SendPlainMail service fn", err.Error())
 		fmt.Println(err.Error())
 	}
+	return utils.SuccessMessage("Success", fiber.StatusOK)
 }
 
-func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) {
+func SendHtmlMailICoupon(tomail string, subject string, data []dto.SendCoupon) error {
 	//Add admin mail to every email
 	m := mail.NewMsg()
 	m.From("No Reply<admin@ui-network.com>")
@@ -65,18 +68,22 @@ func SendHtmlMailICouopon(tomail string, subject string, data []dto.SendCoupon) 
 	m.Subject(subject)
 	t, err := template.New("email").Parse(tmplts.ICouponTemplate)
 	if err != nil {
-		fmt.Println(err.Error())
+		configs.Log.Errorln("Error on DialAndSend fn from SendPlainMail service fn", err.Error())
+		return err
 	}
 	err = m.SetBodyHTMLTemplate(t, data)
 	if err != nil {
-		panic(err.Error())
+		configs.Log.Errorln("Error on DialAndSend fn from SendPlainMail service fn", err.Error())
+		return err
 	}
 	client := MailFactory()
 	defer client.Close()
 	err = client.DialAndSend(m)
 	if err != nil {
-		fmt.Println(err.Error())
+		configs.Log.Errorln("Error on DialAndSend fn from SendPlainMail service fn", err.Error())
+		return err
 	}
+	return nil
 }
 
 func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {

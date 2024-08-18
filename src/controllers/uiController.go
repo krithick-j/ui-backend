@@ -16,6 +16,10 @@ func GetBvCounterByStartDate(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on parsing payload from GetBvCounterByStartDate controllers fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, status := service.BvCounterByStartDate(payload)
+	tx := configs.DB.Begin()
+	res, status := service.BvCounterByStartDate(payload, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }

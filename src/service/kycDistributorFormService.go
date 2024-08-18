@@ -2,12 +2,14 @@ package service
 
 import (
 	"fmt"
+	"ui-back-end/configs"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func DistributorFormFactory(distribInformation models.User, referrerDistribInformation models.User) *fpdf.Fpdf {
@@ -821,20 +823,26 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	return pdf
 }
 
-func GenerateDistributorForm(distribId string) (string, int, error) {
+func GenerateDistributorForm(distribId string, tx *gorm.DB) (string, int, error) {
 
-	distributorInformation, err := repositories.GetUserByID(distribId)
+	distributorInformation, err := repositories.GetUserByID(distribId, tx)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GenerateDistributorForm service fn", err.Error())
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(distribId)
+	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(distribId, tx)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId repositories fn from GenerateDistributorForm service fn", err.Error())
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	referrerDistribInformation, err := repositories.GetUserByID(referrerDistribId)
+	referrerDistribInformation, err := repositories.GetUserByID(referrerDistribId, tx)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetUserByID repositories fn from GenerateDistributorForm service fn", err.Error())
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 

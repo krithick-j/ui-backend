@@ -16,7 +16,7 @@ func CreateICoupon(c *fiber.Ctx) error {
 	adminName := c.Params("admin_name")
 	fmt.Println(adminName)
 	if err := c.BodyParser(&iCouponIn); err != nil {
-		configs.Log.Errorln("Error on parsing icouponIn from CreateICoupon controller fn",err.Error())
+		configs.Log.Errorln("Error on parsing icouponIn from CreateICoupon controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	fmt.Println(iCouponIn)
@@ -25,7 +25,7 @@ func CreateICoupon(c *fiber.Ctx) error {
 	// If no error occurred, commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		configs.Log.Errorln("Error on committing function name",err.Error())
+		configs.Log.Errorln("Error on committing function name", err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(err.Error())
 
 	}
@@ -35,7 +35,11 @@ func CreateICoupon(c *fiber.Ctx) error {
 func GetICouponsByDistribId(c *fiber.Ctx) error {
 
 	DistribId := c.Params("distrib_id") //searching distrib_id parameter exists in the URL
-	res, status := service.GetAllICouponsByDistribId(DistribId)
+	tx := configs.DB.Begin()
+	res, status := service.GetAllICouponsByDistribId(DistribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }
 
@@ -45,10 +49,14 @@ func ValidateICoupon(c *fiber.Ctx) error {
 	distribID := c.Params("distrib_id")
 
 	if err := c.BodyParser(&payload); err != nil {
-		configs.Log.Errorln("Error on parsing payload from ValidateICoupon controller fn",err.Error())
+		configs.Log.Errorln("Error on parsing payload from ValidateICoupon controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	res, status := service.ValidateICoupon(payload, distribID)
+	tx := configs.DB.Begin()
+	res, status := service.ValidateICoupon(payload, distribID, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }

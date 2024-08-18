@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
@@ -14,20 +13,26 @@ import (
 func AddEnquiryType(c *fiber.Ctx) error {
 	var request dto.EnquiryTypeIn
 	if err := c.BodyParser(&request); err != nil {
-		configs.Log.Errorln("Error on parsing request from AddEnquiryType controllers function",err.Error())
+		configs.Log.Errorln("Error on parsing request from AddEnquiryType controllers function", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
 	}
-
-	res, status := service.AddEnquiryType(request)
+	tx := configs.DB.Begin()
+	res, status := service.AddEnquiryType(request, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 
 	return c.Status(status).JSON(res)
 }
 
 func GetAllEnquiryType(c *fiber.Ctx) error {
 
-	res := service.GetAllEnquiryType()
-
-	return c.Status(http.StatusOK).JSON(res)
+	tx := configs.DB.Begin()
+	res, status := service.GetAllEnquiryType(tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
 }
 
 func SubmitContactUsQuery(c *fiber.Ctx) error {
@@ -35,19 +40,23 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 	var request dto.ContactUsIn
 	//for parsing textfield in form data
 	if err := c.BodyParser(&request); err != nil {
-		configs.Log.Errorln("Error on parsing request from SubmitContactUsQuery controllers fn",err.Error())
+		configs.Log.Errorln("Error on parsing request from SubmitContactUsQuery controllers fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid text format", "err": err.Error()})
 	}
 
 	if form, err := c.MultipartForm(); err != nil {
-		configs.Log.Errorln("Error on calling MultipartForm controller fn",err.Error())
+		configs.Log.Errorln("Error on calling MultipartForm controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid form format", "err": err.Error()})
 	} else {
 		if fileFormObj, err := middleware.ParseForm(form.File); err != nil {
-			configs.Log.Errorln("Error on calling middleware.ParseForm controller function",err.Error())
+			configs.Log.Errorln("Error on calling middleware.ParseForm controller function", err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot Parse input Form", "err": err.Error()})
 		} else {
-			res, formName, status := service.SubmitContactUsQuery(*fileFormObj, request)
+			tx := configs.DB.Begin()
+			res, formName, status := service.SubmitContactUsQuery(*fileFormObj, request, tx)
+			if err := tx.Commit().Error; err != nil {
+				tx.Rollback()
+			}
 			if status == 200 {
 
 				if formName.AadhaarFront != "" {
@@ -74,14 +83,20 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 
 func GetAllContactQueries(c *fiber.Ctx) error {
 
-	res, status := service.GetAllContactQueries()
-
+	tx := configs.DB.Begin()
+	res, status := service.GetAllContactQueries(tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }
 
 func SwitchContactQueryStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
-	res, status := service.SwitchContactQueryStatus(id)
-
+	tx := configs.DB.Begin()
+	res, status := service.SwitchContactQueryStatus(id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }

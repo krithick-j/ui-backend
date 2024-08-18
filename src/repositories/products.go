@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 
@@ -11,115 +9,174 @@ import (
 )
 
 // has many
-func GetAllProducts(product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Model(&models.Product{}).Preload("ProductImages").Find(&product)
-	return product, result
-}
-
-func GetProductById(productId uint) (models.Product, *gorm.DB) {
-	var product models.Product 
-	result := configs.DB.Model(&models.Product{}).Find(&product, productId)
-	return product, result
-}
-
-func GetAllProductCategories(productCategories []models.ProductCategory) ([]models.ProductCategory, *gorm.DB) {
-	result := configs.DB.Find(&productCategories) //select * from product_category
-	return productCategories, result
-}
-
-func GetAllProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Find(&product, "product_category_id = ?", category_id)
-	return product, result
-}
-
-func GetAllProductByCategoryIdAndProductType(category_id string, productType string) ([]models.Product, *gorm.DB) {
+func GetAllProducts(tx *gorm.DB) ([]models.Product, error) {
 	var product []models.Product
-	result := configs.DB.Find(&product, "product_category_id = ? AND product_type=?", category_id, productType)
-	return product, result
+	err :=
+		tx.
+			Model(&models.Product{}).
+			Preload("ProductImages").
+			Find(&product).
+			Error
+	return product, err
 }
 
-func GetAllEpProductByCategoryID(category_id string, product []models.Product) ([]models.Product, *gorm.DB) {
-	result := configs.DB.Preload("ProductImages").Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id)
-	return product, result
+func GetProductById(productId uint, tx *gorm.DB) (models.Product, error) {
+	var product models.Product
+	err :=
+		tx.
+			Model(&models.Product{}).
+			Find(&product, productId).
+			Error
+	return product, err
+}
+
+func GetAllProductCategories(productCategories []models.ProductCategory, tx *gorm.DB) ([]models.ProductCategory, error) {
+	err := tx.Find(&productCategories).Error //select * from product_category
+	return productCategories, err
+}
+
+func GetAllProductByCategoryID(category_id string, product []models.Product, tx *gorm.DB) ([]models.Product, error) {
+	err :=
+		tx.
+			Find(&product, "product_category_id = ?", category_id).
+			Error
+	return product, err
+}
+
+func GetAllProductByCategoryIdAndProductType(category_id string, productType string, tx *gorm.DB) ([]models.Product, error) {
+	var product []models.Product
+	err :=
+		tx.
+			Find(&product, "product_category_id = ? AND product_type=?", category_id, productType).
+			Error
+	return product, err
+}
+
+func GetAllEpProductByCategoryID(category_id string, tx *gorm.DB) ([]models.Product, error) {
+	var product []models.Product
+	err :=
+		tx.
+			Preload("ProductImages").
+			Find(&product, "product_category_id = ? and ep IS NOT NULL", category_id).
+			Error
+	return product, err
 }
 
 // Get the first cart item using distrib ID in cart table
-func GetFirstCartItem(distribId string) (models.CartItem, *gorm.DB) {
+func GetFirstCartItem(distribId string, tx *gorm.DB) (models.CartItem, error) {
 	var item models.CartItem
-	result := configs.DB.Model(&models.CartItem{}).Where("distrib_id=?", distribId).First(&item)
-	return item, result
+	err :=
+		tx.
+			Model(&models.CartItem{}).
+			Where("distrib_id=?", distribId).
+			First(&item).
+			Error
+	return item, err
 }
 
-func GetProductTypeByProductID(product_id uint) (string, *gorm.DB) {
+func GetProductTypeByProductID(product_id uint, tx *gorm.DB) (string, error) {
 	var prodType string
-	result := configs.DB.Model(&models.Product{}).Select("product_type").First(&prodType, "id=?", product_id)
-	return prodType, result
+	err :=
+		tx.
+			Model(&models.Product{}).
+			Select("product_type").
+			First(&prodType, "id=?", product_id).
+			Error
+	return prodType, err
 }
 
-func GetAllProductByIDs(ids []uint) ([]models.Product, *gorm.DB) {
+func GetAllProductByIDs(ids []uint, tx *gorm.DB) ([]models.Product, error) {
 	var product []models.Product
-	result := configs.DB.Find(&product, ids)
-	return product, result
+	err :=
+		tx.
+			Find(&product, ids).
+			Error
+	return product, err
 }
 
-func SaveToCart(product models.CartItem) error {
-	println("hello from save to cart")
-	result := configs.DB.Table("cart_items").Create(&product)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
-	}
-
-	return nil
+func SaveToCart(product models.CartItem, tx *gorm.DB) error {
+	err :=
+		tx.
+			Table("cart_items").
+			Create(&product).
+			Error
+	return err
 }
 
-func GetAllCartProductsByDistribID(distrib_id string) ([]dto.ProductsOut, *gorm.DB) {
+func GetAllCartProductsByDistribID(distrib_id string, tx *gorm.DB) ([]dto.ProductsOut, error) {
 	var productsOut []dto.ProductsOut
-	result := configs.DB.Table("cart_items").Preload("Product").Select("product_id", "quantity", "id").Where("distrib_id= ?", distrib_id).Find(&productsOut)
-	return productsOut, result
+	err :=
+		tx.
+			Table("cart_items").
+			Preload("Product").
+			Select("product_id", "quantity", "id").
+			Where("distrib_id= ?", distrib_id).
+			Find(&productsOut).
+			Error
+	return productsOut, err
 }
 
-func UpdateCartProductQuantityById(cartId uint, quantity uint) *gorm.DB {
-	result := configs.DB.Model(models.CartItem{}).Where("id=?", cartId).Update("quantity", quantity)
-	return result
-}
-func DeleteCartProduct(distrib_id string, product_id string, cartItem models.CartItem) (models.CartItem, *gorm.DB) {
-	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("distrib_id= ? AND product_id=?", distrib_id, product_id).Delete(&cartItem)
-	return cartItem, result
+func UpdateCartProductQuantityById(cartId uint, quantity uint, tx *gorm.DB) error {
+	err :=
+		tx.
+			Model(models.CartItem{}).
+			Where("id=?", cartId).
+			Update("quantity", quantity).
+			Error
+	return err
 }
 
-func DeleteAllCartProduct(distrib_id string) ([]models.CartItem, *gorm.DB) {
+func DeleteCartProduct(distrib_id string, product_id string, tx *gorm.DB) (models.CartItem, error) {
+	var cartItem models.CartItem
+	err :=
+		tx.
+			Clauses(clause.Returning{}).
+			Unscoped().
+			Where("distrib_id= ? AND product_id=?", distrib_id, product_id).
+			Delete(&cartItem).
+			Error
+	return cartItem, err
+}
+
+func DeleteAllCartProduct(distrib_id string, tx *gorm.DB) ([]models.CartItem, error) {
 	var cartItem []models.CartItem
-	result := configs.DB.Clauses(clause.Returning{}).Unscoped().Where("distrib_id= ?", distrib_id).Delete(&cartItem)
-	return cartItem, result
+	err :=
+		tx.
+			Clauses(clause.Returning{}).
+			Unscoped().
+			Where("distrib_id= ?", distrib_id).
+			Delete(&cartItem).
+			Error
+	return cartItem, err
 }
 
-func EditCartProducts(distrib_id string, product_id string, payload models.CartItem) (models.CartItem, *gorm.DB) {
-	result := configs.DB.Model(models.CartItem{}).Where("distrib_id=? AND product_id=?", distrib_id, product_id).Updates(payload)
-	return payload, result
+func EditCartProducts(distrib_id string, product_id string, payload models.CartItem, tx *gorm.DB) (models.CartItem, error) {
+	err :=
+		tx.
+			Model(models.CartItem{}).
+			Where("distrib_id=? AND product_id=?", distrib_id, product_id).
+			Updates(payload).
+			Error
+	return payload, err
 }
 
 // func EditProduct(distrib_id string, product_id string, payload models.Product) (models.Product, *gorm.DB) {
-// 	result := configs.DB.Model(models.Product{}).Where("product_id=?", distrib_id, product_id).Updates(payload)
-// 	return payload, result
+// 	err := tx.Model(models.Product{}).Where("product_id=?", distrib_id, product_id).Updates(payload)
+// 	return payload, err
 // }
 
-func SaveProductImage(productImages []models.ProductImage) error {
+func SaveProductImage(productImage models.ProductImage, tx *gorm.DB) error {
 
-	for _, pm := range productImages {
-		result := configs.DB.Table("product_images").Create(&pm)
-		if result.Error != nil {
-			fmt.Printf("Error %v\n", result.Error.Error())
-		}
-	}
-
-	return nil
+	err :=
+		tx.
+			Table("product_images").
+			Create(&productImage).
+			Error
+	return err
 }
 
-func SaveProduct(product *models.Product) *models.Product {
-	result := configs.DB.Create(&product)
-	if result.Error != nil {
-		fmt.Printf("Error %v\n", result.Error.Error())
-	}
+func SaveProduct(product *models.Product, tx *gorm.DB) (*models.Product, error) {
+	err := tx.Create(&product).Error
 
-	return product
+	return product, err
 }

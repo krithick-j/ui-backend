@@ -17,7 +17,11 @@ func PlaceOrder(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	res, status := service.PlaceOrder(OrderIn)
+	tx := configs.DB.Begin()
+	res, status := service.PlaceOrder(OrderIn, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 
 	return c.Status(status).JSON(res)
 }
@@ -26,14 +30,21 @@ func GetOrdersByDistribId(c *fiber.Ctx) error {
 
 	distrib_id := c.Params("distrib_id")
 
-	res, status := service.GetOrdersByDistribId(distrib_id)
+	tx := configs.DB.Begin()
+	res, status := service.GetOrdersByDistribId(distrib_id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 
 }
 
 func GetAllOrders(c *fiber.Ctx) error {
-
-	res, status := service.GetAllOrders()
+	tx := configs.DB.Begin()
+	res, status := service.GetAllOrders(tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 
 }

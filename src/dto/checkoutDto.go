@@ -15,19 +15,18 @@ type ChequeAvailableIn struct {
 }
 
 type TakeChequeIn struct {
-	DistribId string   `json:"distrib_id"`
-	Place     string   `json:"place"`
-	Coupons   []Coupon `json:"coupons"`
+	DistribId   string `json:"distrib_id"`
+	Place       string `json:"place"`
+	ChequeCount int    `json:"cheque_count"`
 }
 
 type TakeChequeOut struct {
-	TotalBalance                     float64          `json:"total_balance"`
-	TotalAvailableBalance            float64          `json:"total_available_balance"`
-	BvBalance                        float64          `json:"bv_balance"`
-	PlacePointsArr                   []PlacePointsArr `json:"place_points"`
-	DirectCommissionBalance          float64          `json:"direct_commission_balance"`
-	DirectCommissionAvailableBalance float64          `json:"direct_commission_available_balance"`
-	OneFrequencyPlacePointsArr       []PlacePointsArr `json:"one_frequency_place_points"`
+	AvailableChequeCountArr []ChequeFrequency `json:"cheque_count"`
+}
+
+type ChequeFrequency struct {
+	Tc          string  `json:"tc"`
+	Frequency   int     `json:"frequency"`
 }
 
 type PlacePointsArr struct {
@@ -37,6 +36,10 @@ type PlacePointsArr struct {
 
 type CheckoutIn struct {
 	DistribId string `json:"distrib_id"`
+}
+type FrequencyForTc struct {
+	DistribId string `json:"distrib_id"`
+	Frequency int    `json:"frequency"`
 }
 
 type CheckoutFrequency struct {

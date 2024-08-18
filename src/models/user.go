@@ -6,10 +6,12 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 
-	DistribID      string `json:"distrib_id"`
-	Pass           string `json:"pass"`
-	CpaPin         string `json:"cpa_pin"`
-	MailingAddress string `json:"mailing_address"` //aadhar card mail address
+	DistribID      string  `json:"distrib_id"`
+	Pass           string  `json:"pass"`
+	CpaPin         string  `json:"cpa_pin"`
+	MailingAddress string  `json:"mailing_address"` //aadhar card mail address
+	CurrentRank    float64 `json:"current_rank" gorm:"default:1"`
+	HighestRank    float64 `json:"highest_rank" gorm:"default:1"`
 
 	ReferrerInformation
 	ApplicationInformation

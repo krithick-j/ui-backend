@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // how many digit's groups to process
@@ -1297,25 +1299,35 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	return pdf
 }
 
-func GenerateInvoice(orderId string, productType string) (string, int, error) {
+func GenerateInvoice(orderId string, productType string, tx *gorm.DB) (string, int, error) {
 
-	orderDetails, err := repositories.GetOrderDetailsByOrderId(orderId)
-	if orderDetails.DistribId == "" {
+	orderDetails, err := repositories.GetOrderDetailsByOrderId(orderId, tx)
+	if err == gorm.ErrRecordNotFound {
+		configs.Log.
+			Infoln("Record not Found on calling the GetOrderDetailsByOrderId fn from GenerateInvoice service fn", err.Error())
 		return "Record not Found", fiber.StatusNotFound, err
 	}
 
-	iCouponsArr, err := GetICouponArrayTotalValueByOrderId(orderId, orderDetails.DistribId)
+	res, status := GetICouponArrayTotalValueByOrderId(orderId, orderDetails.DistribId, tx)
+	if status != fiber.StatusOK {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling the GetICouponArrayTotalValueByOrderId fn from GenerateInvoice service fn", res["error"])
+		return res["error"].(string), status, res["err"].(error)
+	}
+	iCouponsArr := res["data"].([]dto.OrderedICouponOut)
+
+	bvDistributionTable, err := GetBvDistributionTableByOrdeId(orderId, orderDetails.DistribId, tx)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling the GetBvDistributionTableByOrdeId fn from GenerateInvoice service fn", res["error"])
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	bvDistributionTable, err := GetBvDistributionTableByOrdeId(orderId, orderDetails.DistribId)
+	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(orderDetails.DistribId, tx)
 	if err != nil {
-		return err.Error(), fiber.StatusInternalServerError, err
-	}
-
-	referrerDistribId, err := repositories.GetRefDistribIdByDistribId(orderDetails.DistribId)
-	if err != nil {
+		tx.Rollback()
+		configs.Log.
+			Errorln("Error on calling the GetRefDistribIdByDistribId fn from GenerateInvoice service fn", res["error"])
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 

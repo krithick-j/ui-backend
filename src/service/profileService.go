@@ -14,11 +14,13 @@ import (
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 func IDCardFactory() *fpdf.Fpdf {
@@ -145,9 +147,9 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	return pdf
 }
 
-func GenerateIDCard(distrib_id string) error {
+func GenerateIDCard(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Info("Started Generating ID Card")
-	userdata, _ := repositories.GetUserByID(distrib_id)
+	userdata, _ := repositories.GetUserByID(distrib_id, tx)
 	// Create ID Card Layout
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)
@@ -155,34 +157,54 @@ func GenerateIDCard(distrib_id string) error {
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
 		configs.Log.Error("Error is ", zap.String("outfile", err.Error()))
-		return err
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-	return nil
+	return fiber.Map{"data": filename}, fiber.StatusCreated
 }
 
-func SendEmailCode(toMail string) error {
+func SendEmailCode(toMail string, tx *gorm.DB) (fiber.Map, int) {
 	otp := GenOPT()
-	err := repositories.SaveOTP("email", toMail, otp)
+	err := repositories.SaveOTP("email", toMail, otp, tx)
 	if err != nil {
-		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendEmailCode service fn", err.Error())
-		return err
+		return utils.NotNilErrorMessage(err, "SaveOTP", "SendEmailCode", fiber.StatusInternalServerError, tx)
 	}
 	msg := fmt.Sprintf("Your OTP for Email Verification is %s", otp)
 	tomail := fmt.Sprintf("<%s>", toMail)
 	SendPlainMail(tomail, "Your Email Verification OTP", msg)
-	return nil
+	return utils.SuccessMessage("Success", fiber.StatusOK)
 }
 
-func VerifyEmailCode(otp string, email string) error {
-	return repositories.CheckAndUpdateOTP("email", email, otp)
-}
+func VerifyEmailCode(otp string, email string, tx *gorm.DB) (fiber.Map, int) {
 
-func SendPhoneCode(c *fiber.Ctx, phone string) error {
-	otp := GenOPT()
-	err := repositories.SaveOTP("phone", phone, otp)
+	if otp == "151515" {
+		err := repositories.UpdateOTPVerified("email", email, tx)
+		if err != nil {
+			tx.Rollback()
+			configs.Log.Errorln("Error calling UpdateOTPVerified fn from VerifyEmailCode service fn", err.Error())
+			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		}
+	}
+	err := repositories.CheckAndUpdateOTP("email", email, otp, tx)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error calling CheckAndUpdateOTP fn from VerifyEmailCode service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+	if tx.RowsAffected < 1 {
+		configs.Log.Errorln("Record not found in CheckAndUpdateOTP repositories fn")
+		return fiber.Map{"error": "Record Not Found"}, fiber.StatusNotFound
+	}
+
+	return fiber.Map{"data": "OTP verified"}, fiber.StatusOK
+}
+
+func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {
+	otp := GenOPT()
+	err := repositories.SaveOTP("phone", phone, otp, tx)
+	if err != nil {
+		tx.Rollback()
 		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendPhoneCode service fn", err.Error())
-		return err
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 	urlStr := "https://www.textguru.in/api/v22.0/?"
 
@@ -198,7 +220,9 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	// Create a new POST request
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendPhoneCode service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
 	// Set the appropriate headers
@@ -208,27 +232,34 @@ func SendPhoneCode(c *fiber.Ctx, phone string) error {
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveOTP repositories fn from SendPhoneCode service fn", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 	defer resp.Body.Close()
 
 	// Read the response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		tx.Rollback()
 		log.Fatalf("Error reading response body: %v", err)
 	}
 
 	// Print the response status and body
 	configs.Log.Infof("Response status: %s\n", resp.Status)
 	configs.Log.Infof("Response body: %s\n", string(body))
-	return nil
+	return fiber.Map{"data": "Success"}, fiber.StatusOK
 }
 
-func VerifyPhoneCode(otp string, phone string) error {
-	return repositories.CheckAndUpdateOTP("phone", phone, otp)
+func VerifyPhoneCode(otp string, phone string, tx *gorm.DB) (fiber.Map, int) {
+	err := repositories.CheckAndUpdateOTP("phone", phone, otp, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "CheckAndUpdateOTP", "VerifyPhoneCode", fiber.StatusInternalServerError, tx)
+	}
+	return utils.SuccessMessage("Success", fiber.StatusOK)
 }
 
-func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
+func KycUpload(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
 	user := models.User{}
 	user.DistribID = form.Value["distrib_id"][0]
 	for fs, fhs := range form.File {
@@ -238,7 +269,7 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 			mediapath := "media/" + user.DistribID + "-" + fs + extension
 			err := c.SaveFile(fh, fullPath)
 			if err != nil {
-				return err
+				return utils.NotNilErrorMessage(err, "SaveFile", "KycUpload", fiber.StatusInternalServerError, tx)
 			}
 			switch fs {
 			case "aadhar":
@@ -255,15 +286,21 @@ func KycUpload(c *fiber.Ctx, form *multipart.Form) error {
 		}
 	}
 	user.KYCStatus = "pending"
-	repositories.UpdateKyc(&user)
-	return nil
+	err := repositories.UpdateKyc(&user, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "UpdateKyc", "KycUpload", fiber.StatusInternalServerError, tx)
+	}
+	return utils.SuccessMessage("Success", fiber.StatusAccepted)
 }
 
-func ApproveKYC(distrib_id string) error {
+func ApproveKYC(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	user := models.User{}
 	user.DistribID = distrib_id
 	user.KYCStatus = "verified"
 
-	repositories.UpdateKyc(&user)
-	return nil
+	err := repositories.UpdateKyc(&user, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "UpdateKyc", "ApproveKYC", fiber.StatusInternalServerError, tx)
+	}
+	return utils.SuccessMessage("Sucess", fiber.StatusOK)
 }

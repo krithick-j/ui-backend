@@ -2,6 +2,7 @@ package service
 
 import (
 	"path/filepath"
+	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
@@ -11,34 +12,46 @@ import (
 	"gorm.io/gorm"
 )
 
-func AddEnquiryType(request dto.EnquiryTypeIn) (fiber.Map, int) {
+func AddEnquiryType(request dto.EnquiryTypeIn, tx *gorm.DB) (fiber.Map, int) {
 
 	enquiryObj := &models.EnquiryType{
 		Name:      request.Name,
 		AdminName: request.AdminName,
 	}
 
-	repositories.SaveToEnquiryType(enquiryObj)
+	err := repositories.SaveToEnquiryType(enquiryObj, tx)
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Errorln("Record not found", err.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	}
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveToEnquiryType from AddEnquiryType service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
 
-	return fiber.Map{"success": "Enquiry type added successfully"}, 200
+	return fiber.Map{"success": "Enquiry type added successfully"}, fiber.StatusOK
 }
 
-func GetAllEnquiryType() fiber.Map {
+func GetAllEnquiryType(tx *gorm.DB) (fiber.Map, int) {
 
-	var result *gorm.DB
+	enquiryTypes, err := repositories.GetAllEnquiryType(tx)
 
-	enquiryTypes, result := repositories.GetAllEnquiryType()
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Errorln("Record not found", err.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetAllEnquiryType from GetAllEnquiryType service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-	return fiber.Map{"data": enquiryTypes}
+	return fiber.Map{"data": enquiryTypes}, fiber.StatusOK
 }
 
-func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUsIn) (fiber.Map, models.ContactQueryFile, int) {
+func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUsIn, tx *gorm.DB) (fiber.Map, models.ContactQueryFile, int) {
 	var contactQueryFileObj models.ContactQueryFile
 	var AadhaarBackFileName, AadhaarFrontFileName, PanCardFileName, PassportSizeFileName string
 
@@ -52,20 +65,27 @@ func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUs
 	//create unique name
 	AadhaarBackFileName, err := middleware.GenerateUniqueFilename(textfield.DistribId, "aadhaarBack", filepath.Ext(form.AadhaarBack.Filename))
 	if err != nil {
-		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+		tx.Rollback()
+		configs.Log.Errorln("AadhaarBackFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
 	AadhaarFrontFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "aadhaarFront", filepath.Ext(form.AadhaarFront.Filename))
 	if err != nil {
-		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+		tx.Rollback()
+		configs.Log.Errorln("AadhaarFrontFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
 	PanCardFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "panCard", filepath.Ext(form.PanCard.Filename))
 	if err != nil {
-		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+		tx.Rollback()
+		configs.Log.Errorln("PanCardFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
-
 	PassportSizeFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "passportSize", filepath.Ext(form.PassportSize.Filename))
 	if err != nil {
-		return fiber.Map{"error": "Failed to generate filename"}, contactQueryFileObj, 500
+		tx.Rollback()
+		configs.Log.Errorln("PassportSizeFileName: Error on calling GetAllContactQueries from SubmitContactUsQuery service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
 
 	//mapping filename to struct
@@ -84,36 +104,51 @@ func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUs
 		ContactQueryFile:      contactQueryFileObj,
 	}
 
-	repositories.SaveContactUsQuery(contactUsObj)
-	return fiber.Map{"success": "File Uploaded successfully"}, contactQueryFileObj, 200
+	err = repositories.SaveContactUsQuery(contactUsObj, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SaveContactUsQuery from GetAllContactQueries service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
+	}
 
+	return fiber.Map{"success": "File Uploaded successfully"}, contactQueryFileObj, fiber.StatusOK
 }
 
-func GetAllContactQueries() (fiber.Map, int) {
+func GetAllContactQueries(tx *gorm.DB) (fiber.Map, int) {
 
-	var result *gorm.DB
+	contactQueries, err := repositories.GetAllContactQueries(tx)
 
-	contactQueries, result := repositories.GetAllContactQueries()
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, 404
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Errorln("Record not found", err.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, 500
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetAllContactQueries from GetAllContactQueries service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	return fiber.Map{"data": contactQueries}, 200
+	return fiber.Map{"data": contactQueries}, fiber.StatusOK
 }
 
-func SwitchContactQueryStatus(id string) (fiber.Map, int) {
-	result := repositories.SwitchContactQueryStatusById(id)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		return fiber.Map{"data": "Not Found"}, 404
+func SwitchContactQueryStatus(id string, tx *gorm.DB) (fiber.Map, int) {
+	status, err := repositories.GetContactQueryStatusById(id, tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling GetContactQueryStatusById from SwitchContactQueryStatus service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 	}
-	if result.Error != nil {
-		return fiber.Map{"error": result.Error}, 500
+	err = repositories.SwitchContactQueryStatusById(status, id, tx)
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		configs.Log.Errorln("Record not found", err.Error())
+		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
 	}
-	return fiber.Map{"data": "Contact Query Status Changed"}, 200
-
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling SwitchContactQueryStatusById from SwitchContactQueryStatus service fn ", err.Error())
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "Contact Query Status Changed"}, fiber.StatusOK
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -78,6 +79,19 @@ func GetDirectBvByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": directBv}, fiber.StatusOK
 }
 
+func GetTotalStepByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
+
+	step, err := repositories.GetStepByDistribId(DistribID, tx)
+	//Send 0 if record not found
+	if err == gorm.ErrRecordNotFound {
+		return utils.SuccessMessage(step, fiber.StatusOK)
+	}
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetStepByDistribId", "GetTotalStepByDistribId", fiber.StatusInternalServerError, tx)
+	}
+	return utils.SuccessMessage(step, fiber.StatusOK)
+}
+
 func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	directBvResult, status := GetDirectBvByDistribId(DistribID, tx)
 	if status != fiber.StatusOK {
@@ -97,11 +111,18 @@ func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	}
 	groupRsp := groupRspResult["data"]
 
+	stepResult, status := GetGroupRspByDistribId(DistribID, tx)
+	if status != fiber.StatusOK {
+		return stepResult, status
+	}
+	step := stepResult["data"]
+
 	response := fiber.Map{
 		"direct_bv":    directBv,
 		"personal_rsp": personalRsp,
 		"group_rsp":    groupRsp,
+		"step":         step,
 	}
 
-	return fiber.Map{"data": response}, fiber.StatusOK
+	return utils.SuccessMessage(response, fiber.StatusOK)
 }

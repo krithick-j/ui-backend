@@ -4,142 +4,115 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
-	"net/http"
 	"path/filepath"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func GetProducts() (fiber.Map, int) {
-	var products []models.Product
-	var result *gorm.DB
-	products, result = repositories.GetAllProducts(products)
-	println(result)
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Infoln("RecordNotFound", result.Error.Error())
-		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+func GetProducts(tx *gorm.DB) (fiber.Map, int) {
+	products, err := repositories.GetAllProducts(tx)
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetAllProducts repositories fn from GetProducts service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+	if err != nil {
+		utils.NotNilErrorMessage(err, "GetAllProducts", "GetProducts", fiber.StatusInternalServerError, tx)
 	}
-	return fiber.Map{"data": products}, fiber.StatusOK
+	return utils.SuccessMessage(products, fiber.StatusOK)
 }
 
-func GetProductCategories() (fiber.Map, int) {
+func GetProductCategories(tx *gorm.DB) (fiber.Map, int) {
 	var productCategories []models.ProductCategory
-	var result *gorm.DB
-	productCategories, result = repositories.GetAllProductCategories(productCategories)
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Errorln("RecordNotFound", result.Error.Error())
-		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	productCategories, err := repositories.GetAllProductCategories(productCategories, tx)
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetAllProductCategories repositories fn from GetProductCategories service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllProductCategories", "GetProductCategories", fiber.StatusInternalServerError, tx)
 	}
-	return fiber.Map{"data": productCategories}, fiber.StatusOK
+	return utils.SuccessMessage(productCategories, fiber.StatusOK)
 }
 
-func GetProductByCategoryID(categoryId string, productType string) (fiber.Map, int) {
+func GetProductByCategoryID(categoryId string, productType string, tx *gorm.DB) (fiber.Map, int) {
 
 	var product []models.Product
-	var result *gorm.DB
-
+	var err error
 	if productType == "" {
-		product, result = repositories.GetAllProductByCategoryID(categoryId, product)
+		product, err = repositories.GetAllProductByCategoryID(categoryId, product, tx)
 
-		if result.Error == gorm.ErrRecordNotFound {
-			configs.Log.Errorln("RecordNotFound", result.Error.Error())
-			return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+		if err == gorm.ErrRecordNotFound {
+			return utils.RecordNotFoundMessage(err, tx)
 		}
-		if result.Error != nil {
-			configs.Log.Errorln("Error on calling GetAllProductByCategoryID repositories fn from GetProductByCategoryID service fn", result.Error.Error())
-			return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetAllProductByCategoryID", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
 		}
 	} else {
-		product, result = repositories.GetAllProductByCategoryIdAndProductType(categoryId, productType)
-
-		if result.Error == gorm.ErrRecordNotFound {
-			configs.Log.Errorln("RecordNotFound", result.Error.Error())
-			return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+		product, err = repositories.GetAllProductByCategoryIdAndProductType(categoryId, productType, tx)
+		if err == gorm.ErrRecordNotFound {
+			return utils.RecordNotFoundMessage(err, tx)
 		}
-		if result.Error != nil {
-			configs.Log.Errorln("Error on calling GetAllProductByCategoryIdAndProductType repositories fn from GetProductByCategoryID service fn", result.Error.Error())
-			return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetAllProductByCategoryIdAndProductType", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
 		}
 	}
 
-	return fiber.Map{"data": product}, fiber.StatusOK
+	return utils.SuccessMessage(product, fiber.StatusOK)
 }
 
-func GetEpProductsByCategoryId(category_id string) (fiber.Map, int) {
+func GetEpProductsByCategoryId(category_id string, tx *gorm.DB) (fiber.Map, int) {
 
-	var product []models.Product
-	var result *gorm.DB
+	product, err := repositories.GetAllEpProductByCategoryID(category_id, tx)
 
-	product, result = repositories.GetAllEpProductByCategoryID(category_id, product)
-
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Errorln("RecordNotFound", result.Error.Error())
-
-		return fiber.Map{"data": "Not Found"}, fiber.StatusNotFound
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling GetAllEpProductByCategoryID repositories fn from GetEpProductsByCategoryId service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllEpProductByCategoryID", "GetEpProductsByCategoryId", fiber.StatusInternalServerError, tx)
 	}
-
-	return fiber.Map{"data": product}, fiber.StatusOK
+	return utils.SuccessMessage(product, fiber.StatusOK)
 }
 
-func GetProductsByIds(ids []uint) ([]models.Product, error) {
-	products, result := repositories.GetAllProductByIDs(ids)
+func GetProductsByIds(ids []uint, tx *gorm.DB) (fiber.Map, int) {
+	products, err := repositories.GetAllProductByIDs(ids, tx)
 
-	if result.Error != nil {
-		return nil, result.Error
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllProductByIDs", "GetProductsByIds", fiber.StatusInternalServerError, tx)
 	}
-
-	return products, nil
+	return utils.SuccessMessage(products, fiber.StatusOK)
 }
 
-func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
-	
+func AddToCart(request dto.CartItemIn, tx *gorm.DB) (fiber.Map, int) {
+
 	var firstProdType string = ""
 	var existingProductFlag bool = false
 	var existingProduct dto.ProductsOut
-	
-	firstCartItem, err := repositories.GetFirstCartItem(request.DistribID)
 
-	if err.Error != gorm.ErrRecordNotFound {
-		firstProdType, err = repositories.GetProductTypeByProductID(firstCartItem.ProductID)
-		if err.Error != nil {
-			configs.Log.Errorln("Error on calling GetProductTypeByProductID fn from AddToCart service fn", err.Error.Error())
-			return fiber.Map{"message": err.Error.Error()}, fiber.StatusInternalServerError
+	firstCartItem, err := repositories.GetFirstCartItem(request.DistribID, tx)
+
+	if err != gorm.ErrRecordNotFound {
+		firstProdType, err = repositories.GetProductTypeByProductID(firstCartItem.ProductID, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetProductTypeByProductID", "AddToCart", fiber.StatusInternalServerError, tx)
 		}
 	}
 
 	if firstProdType == "" || request.ProductType == firstProdType {
 
-		existingProducts, res := repositories.GetAllCartProductsByDistribID(request.DistribID)
+		existingProducts, err := repositories.GetAllCartProductsByDistribID(request.DistribID, tx)
 
-		if res.Error != nil {
-			fmt.Println(res.Error.Error())
-			configs.Log.Errorln("Error on calling GetAllCartProductsByDistribID fn from AddToCart service fn")
-			return fiber.Map{"error": res.Error.Error()}, fiber.StatusBadRequest
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetAllCartProductsByDistribID", "AddToCart", fiber.StatusBadRequest, tx)
 		}
 
 		ids := []uint{request.Product.ProductID}
-		_, err := repositories.GetAllProductByIDs(ids)
-		if err.RowsAffected == 0 {
-			configs.Log.Errorln("Product ID does not exist", err.Error.Error())
-			return fiber.Map{"success": "Product Id does not exist"}, fiber.StatusBadRequest
-
+		_, err = repositories.GetAllProductByIDs(ids, tx)
+		if err == gorm.ErrRecordNotFound {
+			return utils.RecordNotFoundMessage(err, tx)
 		}
 		//Checks existing product length is 0, so that error does not hit when looping
 		if len(existingProducts) != 0 {
@@ -154,7 +127,10 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 			//if cart product already exist, quantity is updating
 			if existingProductFlag {
 				configs.Log.Infoln("Updating Cart Product Quantity of product id: ", existingProduct.ID)
-				repositories.UpdateCartProductQuantityById(existingProduct.ID, existingProduct.Quantity+1)
+				err := repositories.UpdateCartProductQuantityById(existingProduct.ID, existingProduct.Quantity+1, tx)
+				if err != nil {
+					return utils.NotNilErrorMessage(err, "UpdateCartProductQuantityById", "AddToCart", fiber.StatusInternalServerError, tx)
+				}
 			} else { //else saving as a new cart product
 				product := models.CartItem{
 					DistribID: request.DistribID,
@@ -162,7 +138,10 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 					Quantity:  request.Product.Quantity,
 				}
 				configs.Log.Infoln("Saving new Cart Product of product id: ", product.ProductID)
-				repositories.SaveToCart(product)
+				err := repositories.SaveToCart(product, tx)
+				if err != nil {
+					return utils.NotNilErrorMessage(err, "SaveToCart", "AddToCart", fiber.StatusInternalServerError, tx)
+				}
 			}
 		} else { //Saving as a new cart product when there is no existing cart product
 			product := models.CartItem{
@@ -171,7 +150,10 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 				Quantity:  request.Product.Quantity,
 			}
 			configs.Log.Infoln("Saving new Cart Product when there are no existing product of product id: ", product.ProductID)
-			repositories.SaveToCart(product)
+			err := repositories.SaveToCart(product, tx)
+			if err != nil {
+				return utils.NotNilErrorMessage(err, "SaveToCart", "AddToCart", fiber.StatusInternalServerError, tx)
+			}
 		}
 		return fiber.Map{"success": "Added to Cart Successfully"}, fiber.StatusOK
 	} else {
@@ -179,29 +161,26 @@ func AddToCart(request dto.CartItemIn) (fiber.Map, int) {
 	}
 }
 
-func GetCartProductsByDistribId(user_id string) (fiber.Map, int) {
+func GetCartProductsByDistribId(user_id string, tx *gorm.DB) (fiber.Map, int) {
 
 	var products []dto.ProductsOut
 
 	configs.Log.Infoln("Retrieving all products from cart INIT")
-	products, result := repositories.GetAllCartProductsByDistribID(user_id)
+	products, err := repositories.GetAllCartProductsByDistribID(user_id, tx)
 
-	if result.Error != nil {
-		configs.Log.Errorf("Error while retrieving the cart products, %s", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllCartProductsByDistribID", "GetCartProductsByDistribId", fiber.StatusInternalServerError, tx)
 	}
 
-	if result.RowsAffected == 0 {
-		configs.Log.Infoln("No Products in Cart")
-		return fiber.Map{"data": "No Products in Cart"}, fiber.StatusOK
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
 	configs.Log.Infoln("Retrieving all products from cart DONE")
 	configs.Log.Infoln("validating cart products that exists in Product table")
 	for _, product := range products {
-		_, result := repositories.GetProductById(product.ProductID)
-		if result.Error != nil {
-			configs.Log.Errorf("Error while retrieving the cart products, %s", result.Error.Error())
-			return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+		_, err := repositories.GetProductById(product.ProductID, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetProductById", "GetCartProductsByDistribId", fiber.StatusInternalServerError, tx)
 		}
 	}
 	configs.Log.Infoln("validating cart products that exists in Product table DONE")
@@ -209,49 +188,39 @@ func GetCartProductsByDistribId(user_id string) (fiber.Map, int) {
 	return fiber.Map{"data": products}, fiber.StatusOK
 }
 
-func DeleteCartProduct(distrib_id string, product_id string) (fiber.Map, int) {
-	var cartItem models.CartItem
-	cartItem, result := repositories.DeleteCartProduct(distrib_id, product_id, cartItem)
+func DeleteCartProduct(distrib_id string, product_id string, tx *gorm.DB) (fiber.Map, int) {
+	_, err := repositories.DeleteCartProduct(distrib_id, product_id, tx)
 
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling DeleteCartProduct repositories fn from DeleteCartProduct service fn ", result.Error.Error())
-		return fiber.Map{"error": result.Error}, http.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "DeleteCartProduct", "DeleteCartProduct", fiber.StatusInternalServerError, tx)
 	}
 
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Errorln("RecordNotFound ", result.Error.Error())
-		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, http.StatusNoContent
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
-
-	return fiber.Map{"success": "Product Deleted Successfully", "DeletedProduct": cartItem}, http.StatusOK
+	return utils.SuccessMessage("Product Deleted Successfully", fiber.StatusOK)
 }
 
-func DeleteAllCartProduct(distrib_id string) (fiber.Map, int) {
-	cartItem, result := repositories.DeleteAllCartProduct(distrib_id)
+func DeleteAllCartProduct(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
+	cartItem, err := repositories.DeleteAllCartProduct(distrib_id, tx)
 
-	if result.Error != nil {
-		configs.Log.Errorln("Error on calling DeleteAllCartProduct repositories fn from DeleteAllCartProduct service fn", result.Error.Error())
-		return fiber.Map{"error": result.Error}, fiber.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "DeleteAllCartProduct", "DeleteAllCartProduct", fiber.StatusInternalServerError, tx)
 	}
 
-	if result.Error == gorm.ErrRecordNotFound {
-		configs.Log.Errorln("RecordNotFound", result.Error.Error())
-
-		return fiber.Map{"success": "Product Not Found", "DeletedProduct": cartItem}, fiber.StatusNoContent
+	if err == gorm.ErrRecordNotFound {
+		return utils.RecordNotFoundMessage(err, tx)
 	}
-
 	return fiber.Map{"success": "All Products in Cart Deleted Successfully", "deleted_products": cartItem}, fiber.StatusOK
 }
 
-func EditCartProducts(payload models.CartItem, distrib_id string, product_id string) (fiber.Map, int) {
+func EditCartProducts(payload models.CartItem, distrib_id string, product_id string, tx *gorm.DB) (fiber.Map, int) {
 
-	cartItem, result := repositories.EditCartProducts(distrib_id, product_id, payload)
+	cartItem, err := repositories.EditCartProducts(distrib_id, product_id, payload, tx)
 
-	if result.Error != nil {
-		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
-		return fiber.Map{"error": result.Error.Error()}, fiber.StatusInternalServerError
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "EditCartProducts", "EditCartProducts", fiber.StatusInternalServerError, tx)
 	}
-
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, fiber.StatusOK
 }
 
@@ -268,11 +237,14 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 // }
 
 // func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
-func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
+func CreateProduct(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
 	data := c.FormValue("data")
 	product := models.Product{}
 	json.Unmarshal([]byte(data), &product)
-	prod := repositories.SaveProduct(&product)
+	prod, err := repositories.SaveProduct(&product, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "SaveProduct", "CreateProduct", fiber.StatusInternalServerError, tx)
+	}
 	var pms []models.ProductImage
 	pid := prod.ID
 	for fs, fhs := range form.File {
@@ -284,15 +256,20 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
 			fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
 			err := c.SaveFile(fh, fullPath)
 			if err != nil {
-				configs.Log.Errorln("Error on SaveFile fn from CreateProduct service fn")
-				fmt.Println(err.Error())
+				return utils.NotNilErrorMessage(err, "SaveFile", "CreateProduct", fiber.StatusInternalServerError, tx)
 			}
 			pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
 			pm.ProductID = pid
 			pms = append(pms, pm)
 		}
 	}
-	repositories.SaveProductImage(pms)
+	for _, pm := range pms {
+
+		err := repositories.SaveProductImage(pm, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "SaveProductImage", "CreateProduct", fiber.StatusInternalServerError, tx)
+		}
+	}
 	return fiber.Map{"data": "Product Successfully created"}, fiber.StatusCreated
 }
 

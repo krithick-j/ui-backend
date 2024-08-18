@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"net/http"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -16,28 +14,54 @@ func Login(c *fiber.Ctx) error {
 		UserName string
 		Password string
 	}{}
-	c.BodyParser(&data)
-	res, status := service.LoginUser(data.UserName, data.Password)
+
+	if err := c.BodyParser(&data); err != nil {
+		configs.Log.Errorln("Error on Calling BodyParser data from Login Controller", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	tx := configs.DB.Begin()
+	res, status := service.LoginUser(data.UserName, data.Password, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on Committing tx from GetUserByDistId controller", err.Error())
+	}
 	return c.Status(status).JSON(res)
 }
 
-func GetUserByDistId(c *fiber.Ctx) error {
+func GetUserByDistribId(c *fiber.Ctx) error {
 	id := c.Params("dist_id")
-
-	res, status := service.GetUserByDistId(id)
+	tx := configs.DB.Begin()
+	res, status := service.GetUserByDistribId(id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on Committing tx from GetUserByDistId controller", err.Error())
+	}
 
 	return c.Status(status).JSON(res)
 }
 
 func GetAllUsers(c *fiber.Ctx) error {
-	res, status := service.GetUsers()
+
+	tx := configs.DB.Begin()
+	res, status := service.GetUsers(tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on Committing tx from GetAllUsers controller", err.Error())
+	}
+
 	return c.Status(status).JSON(res)
 }
 
 func GetUserTreeByDistId(c *fiber.Ctx) error {
 	id := c.Params("distrib_id")
-	res := service.GetTreeUserByDistId(id)
-	return c.Status(http.StatusOK).JSON(res)
+	tx := configs.DB.Begin()
+	res, status := service.GetTreeUserByDistId(id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+
+	return c.Status(status).JSON(res)
 }
 
 func UserRegistration(c *fiber.Ctx) error {
@@ -46,14 +70,14 @@ func UserRegistration(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on Parsing user_in UserRegistration Controller", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	resp, err := service.RegisterUser(user_in)
-	if err != nil {
-		configs.Log.Errorln("Error on Register User controller", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(resp)
-	} else {
-		configs.Log.Infoln("User Successfully Created")
-		return c.Status(http.StatusCreated).JSON(resp)
+	tx := configs.DB.Begin()
+	resp, status := service.RegisterUser(user_in, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 	}
+
+	return c.Status(status).JSON(resp)
+
 }
 
 func GenerateConsentForm(c *fiber.Ctx) error {
@@ -64,14 +88,23 @@ func GenerateConsentForm(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on Parsing user_in UserRegistration Controller", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	res, status := service.GenerateConsentForm(payload.DistribId)
+	tx := configs.DB.Begin()
+	res, status := service.GenerateConsentForm(payload.DistribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+
 	return c.Status(status).JSON(res)
 }
 
 func GenerateKYCDistribForm(c *fiber.Ctx) error {
 	distribId := c.Params("distrib_id")
+	tx := configs.DB.Begin()
+	filename, status, err := service.GenerateDistributorForm(distribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 
-	filename, status, err := service.GenerateDistributorForm(distribId)
 	if err != nil {
 		configs.Log.Errorln("Error on GenerateDistributorForm service from GenerateKYCDistribForm Controller", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
@@ -89,22 +122,34 @@ func EditUserByDistId(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on parsing user_in from EditUserByDistId controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-
-	res, status := service.EditUserByDistId(DistribID, user_in)
-
+	tx := configs.DB.Begin()
+	res, status := service.EditUserByDistId(DistribID, user_in, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }
 
 func NewReferrals(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
-	res, status := service.GetNewReferrals(distrib_id)
+
+	tx := configs.DB.Begin()
+	res, status := service.GetNewReferrals(distrib_id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+
 	return c.Status(status).JSON(res)
 }
 
 func GetTrackingCenters(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 
-	res, status := service.GetTrackingCentersByDistribId(distrib_id, true, "", "")
+	tx := configs.DB.Begin()
+	res, status := service.GetTrackingCentersByDistribId(distrib_id, true, "", "", tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 	return c.Status(status).JSON(res)
 }
 
@@ -117,7 +162,11 @@ func UpdateUserPass(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	res, status := service.UpdateUserPass(user_in)
+	tx := configs.DB.Begin()
+	res, status := service.UpdateUserPass(user_in, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
 
 	return c.Status(status).JSON(res)
 }
@@ -131,8 +180,12 @@ func GetIDCard(c *fiber.Ctx) error {
 		configs.Log.Errorln("Erron on parsing data from GetIDCard controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	service.GenerateIDCard(data.DistribId)
-	return c.Status(fiber.StatusCreated).JSON("{msg:success}")
+	tx := configs.DB.Begin()
+	res, status := service.GenerateIDCard(data.DistribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
 }
 
 func GetMediaFile(c *fiber.Ctx) error {
@@ -151,30 +204,34 @@ func SendEmailCode(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on Parsing data from SendEmailCode controller fn")
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	service.SendEmailCode(data.Email)
-	c.Status(fiber.StatusCreated).SendString("Created")
+	tx := configs.DB.Begin()
+	res, status := service.SendEmailCode(data.Email, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	c.Status(status).JSON(res)
 	return nil
 }
 
 func VerifyEmailCode(c *fiber.Ctx) error {
 
-	data := struct {
+	payload := struct {
 		OTP   string `json:"otp"`
 		Email string `json:"email"`
 	}{}
-	err := c.BodyParser(&data)
-	if err != nil {
-		configs.Log.Errorln("Error on Parsing body data from VerifyEmailCode controller fn", err.Error())
-		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
+
+	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on calling BodyParser fn from VerifyEmailCode controllers fn ", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	err = service.VerifyEmailCode(data.OTP, data.Email)
-	if err != nil {
-		configs.Log.Errorln("Error on Verify Email Code", err.Error())
-		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
-	} else {
-		c.Status(fiber.StatusOK).SendString("Ok")
+
+	tx := configs.DB.Begin()
+	res, status := service.VerifyEmailCode(payload.OTP, payload.Email, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 	}
-	return nil
+
+	return c.Status(status).JSON(res)
 }
 
 func SendPhoneCode(c *fiber.Ctx) error {
@@ -187,9 +244,13 @@ func SendPhoneCode(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on Parsing data from SendPhoneCode fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	service.SendPhoneCode(c, data.PhoneNo)
-	c.Status(fiber.StatusCreated).SendString("Created")
-	return nil
+	tx := configs.DB.Begin()
+	res, status := service.SendPhoneCode(c, data.PhoneNo, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+
+	return c.Status(status).JSON(res)
 }
 
 func VerifyPhoneCode(c *fiber.Ctx) error {
@@ -198,44 +259,46 @@ func VerifyPhoneCode(c *fiber.Ctx) error {
 		OTP     string `json:"otp"`
 		PhoneNo string `json:"phone_no"`
 	}{}
-	err := c.BodyParser(&data)
-	if err != nil {
+
+	if err := c.BodyParser(&data); err != nil {
 		configs.Log.Errorln("Error on Parsing data from VerifyPhoneCode controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).Send([]byte(err.Error()))
 	}
-	err = service.VerifyPhoneCode(data.OTP, data.PhoneNo)
-	if err == nil {
-		c.Status(fiber.StatusOK).SendString("Ok")
-	} else {
-		c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	tx := configs.DB.Begin()
+	res, status := service.VerifyPhoneCode(data.OTP, data.PhoneNo, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 	}
-	return nil
+	return c.Status(status).JSON(res)
 }
 
 func KycUpload(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		configs.Log.Errorln("Error on calling MultipartForm fn from KycUpload controller fn", err.Error())
-		fmt.Println(err.Error())
 	}
-	service.KycUpload(c, form)
-	c.Status(fiber.StatusAccepted).SendString("Accepted")
-	return nil
+	tx := configs.DB.Begin()
+	res, status := service.KycUpload(c, form, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
 }
 
 func ApproveKYC(c *fiber.Ctx) error {
 	data := struct {
 		DistribId string `json:"distrib_id"`
 	}{}
-	err := c.BodyParser(&data)
-	if err != nil {
+
+	if err := c.BodyParser(&data); err != nil {
 		configs.Log.Errorln("Error on parsing data from ApproveKYC controller function", err.Error())
 		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
 	}
-	err = service.ApproveKYC(data.DistribId)
-	if err != nil {
-		c.Status(fiber.StatusBadRequest).SendString("{\"error\":\"Bad Request\"}")
+	tx := configs.DB.Begin()
+	res, status := service.ApproveKYC(data.DistribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 	}
-	c.Status(fiber.StatusOK).SendString("{\"msg\":\"Verified\"}")
-	return nil
+
+	return c.Status(status).JSON(res)
 }

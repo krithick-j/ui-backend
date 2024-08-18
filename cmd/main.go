@@ -58,3 +58,4 @@ func main() {
 	api.Route("/admin", routes.AdminRouter)           //logger added
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }
+	

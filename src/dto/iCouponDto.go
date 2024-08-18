@@ -44,6 +44,9 @@ type BvHistoryIn struct {
 	ToDate    time.Time `json:"to_date"`
 }
 
+// Alias for BvHistoryIn
+type RspValueIn = BvHistoryIn
+
 type GetICouponOut struct {
 	DistribID      string  `json:"distrib_id"`
 	DateOn         string  `json:"date_on"`

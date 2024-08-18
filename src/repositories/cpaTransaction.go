@@ -19,9 +19,21 @@ func GetCpaBalance(distrib_id string, tx *gorm.DB) (float64, error) {
 	var value float64
 	err :=
 		tx.
-			Table("cpa_transaction").
-			Select("COALESCE(SUM(bv_value), 0)").
-			Where("distrib_id", distrib_id).
+			Model(&models.CpaTransaction{}).
+			Select("COALESCE(SUM(amount), 0)").
+			Where("distrib_id=?", distrib_id).
+			Take(&value).
+			Error
+	return value, err
+}
+
+func GetAvailableCpaBalance(distrib_id string, tx *gorm.DB) (float64, error) {
+	var value float64
+	err :=
+		tx.
+			Model(&models.CpaTransaction{}).
+			Select("COALESCE(SUM(amount), 0)").
+			Where("distrib_id=? AND is_active=1", distrib_id).
 			Take(&value).
 			Error
 	return value, err

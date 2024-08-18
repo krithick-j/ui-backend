@@ -5,6 +5,7 @@ from utils.common import (
     get_personal_rsp,
     get_rank_goal,
     get_referred_users_by_distrib_id,
+    get_step_by_distrib_id,
 )
 from utils.config import DB
 from typing import Dict
@@ -22,6 +23,10 @@ def check_direct_bv(distrib_id: str, rank: int)-> bool:
     direct_bv = get_direct_bv(distrib_id)
     return direct_bv >= GOAL[rank]["DRBV"]
 
+def check_step_value(distrib_id: str, rank: int)-> bool:
+    step_value = get_step_by_distrib_id(distrib_id)
+    return step_value >= GOAL[rank]["STEP"]
+
 def check_rank_for_user(distrib_id: str)->int:
     orank = [2, 2.5, 3, 3.5, 4]
     ranks = [2.5, 3, 3.5, 4]
@@ -29,7 +34,8 @@ def check_rank_for_user(distrib_id: str)->int:
         if not all([
             check_personal_rsp(distrib_id, rank),
             check_group_rsp(distrib_id, rank),
-            check_direct_bv(distrib_id, rank)
+            check_direct_bv(distrib_id, rank),
+            check_step_value(distrib_id, rank)
         ]):
             return orank[idx]
 

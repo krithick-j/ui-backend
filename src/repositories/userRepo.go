@@ -237,3 +237,15 @@ func ChangeCpaPin(distribId string, newPin string, tx *gorm.DB) error {
 			Error
 	return err
 }
+
+func GetCurrentRankValueByDistribId(distribId string, tx *gorm.DB) (float64, error) {
+	var currentRank float64
+	err :=
+		tx.
+			Model(&models.User{}).
+			Select("current_rank").
+			Where("distrib_id", distribId).
+			Take(&currentRank).
+			Error
+	return currentRank, err
+}

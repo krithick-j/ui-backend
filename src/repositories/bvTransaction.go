@@ -81,7 +81,6 @@ func GetBVforTCOneRow(distrib_id string, place string, tx *gorm.DB) (models.TCBv
 // Get Tracking Center BV by Date
 func GetBVforTCOneRowByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time, tx *gorm.DB) (models.TCBvOneRow, error) {
 	tcbv := models.TCBvOneRow{}
-	fmt.Print("hi from row")
 	err :=
 		tx.
 			Table("bv_transactions").
@@ -98,7 +97,6 @@ func GetBVforTCOneRowByDate(distrib_id string, tc string, fromDate time.Time, to
 // set toDate as empty string to to get date from till last
 func GetBVforTCOneRowByDateGeneric(distrib_id string, tc string, is_active bool, fromDate string, toDate string, tx *gorm.DB) (models.TCBvOneRow, error) {
 	tcbv := models.TCBvOneRow{}
-	fmt.Print("hi from row")
 	query :=
 		tx.
 			Table("bv_transactions").
@@ -133,4 +131,21 @@ func GetBvSumByDistribId(distribId, transType string, tx *gorm.DB) (int, error) 
 			Scan(&bvSum).
 			Error
 	return bvSum, err
+}
+
+// This function will give you the count of cheque taken by the distrib id in a Month
+func GetStepByDistribId(distribId string, tx *gorm.DB) (int64, error) {
+	var count int64
+
+	firstOfMonth := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location())
+	fmt.Print("month date", firstOfMonth)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1).Add(time.Hour*23 + time.Minute*59 + time.Second*59)
+	fmt.Print("month date last:", lastOfMonth)
+	query :=
+		tx.
+			Table("bv_transactions").
+			Where("distrib_id=? AND trans_type='cheque'", distribId)
+	query = query.Where("created_at BETWEEN ? AND ?", firstOfMonth, lastOfMonth)
+	err := query.Count(&count).Error
+	return count, err
 }

@@ -1,5 +1,7 @@
 from typing import Dict, List, Tuple
 from utils.config import DB
+from datetime import datetime, timedelta
+
 
 def get_all_users_with_frequency() -> List[str]:
     '''
@@ -107,4 +109,33 @@ def get_direct_bv(distrib_id: str) -> float:
     except Exception as e:
         print(f"Error in get_direct_bv: {str(e)}")
         return 0.0
+
+def get_step_by_distrib_id(distrib_id: str) -> int:
+    try:
+        cursor = DB.cursor()
+        # Calculate the first and last days of the current month
+        first_of_month = datetime(datetime.now().year, datetime.now().month, 1)
+        last_of_month = first_of_month + timedelta(days=32)
+        last_of_month = datetime(last_of_month.year, last_of_month.month, 1) - timedelta(seconds=1)
+
+        # SQL query to count the transactions
+        query = """
+            SELECT COUNT(*)
+            FROM bv_transactions
+            WHERE distrib_id = %s
+            AND trans_type = %s
+            AND created_at BETWEEN %s AND %s
+        """
+        
+        # Execute the query with the provided parameters
+        cursor.execute(query, (distrib_id, 'cheque', first_of_month, last_of_month))
+        count = cursor.fetchone()[0]
+
+        return count
+    
+    except Exception as e:
+        print(f"Error in get_step_by_distrib_id: {str(e)}")
+        return 0
+
+
     

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"ui-back-end/configs"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,7 @@ import (
 
 func NotNilErrorMessage(err error, method string, serviceMethod string, status int, tx *gorm.DB) (fiber.Map, int) {
 	tx.Rollback()
-	configs.Log.Errorln("Error on calling %s from %s service fn: ", err.Error())
+	configs.Log.Errorln(fmt.Sprintf("Error on calling %s from %s service fn: %s", method, serviceMethod, err.Error()))
 	return fiber.Map{"error": err.Error(), "err": err}, status
 }
 

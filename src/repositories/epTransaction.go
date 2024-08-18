@@ -11,7 +11,7 @@ func SaveEpTx(distrib_id string, order_id string, total_ep_value float64, tx *go
 	obj := models.EpTransaction{
 		DistribId: distrib_id,
 		Reference: order_id,
-		Value:     -total_ep_value,
+		Value:     total_ep_value,
 	}
 
 	err := tx.Create(&obj).Error

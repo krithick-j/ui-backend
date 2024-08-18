@@ -46,6 +46,21 @@ func GetDirectBvByDistribID(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func GetTotalStepsByDistribId(c *fiber.Ctx) error {
+	distrib_id := c.Params("distrib_id")
+
+	tx := configs.DB.Begin()
+	res, status := service.GetTotalStepByDistribId(distrib_id, tx)
+
+	if err := tx.Commit().Error; err != nil {
+		configs.Log.Errorln("Error on committing transaction:", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+
+	}
+
+	return c.Status(status).JSON(res)
+}
+
 func GetRspValuesByDistribID(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 

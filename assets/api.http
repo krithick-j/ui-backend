@@ -534,6 +534,41 @@ GET {{host}}/rsp/personalRsp/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
+###				
+GET {{host}}/rsp/steps/IN-00001 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+POST {{host}}/cheque/checkFrequencyAmount HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"frequency": 2
+}
+
+###
+POST {{host}}/cheque/chequeCount HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001"
+}
+
+###
+POST {{host}}/cheque/takeCheque HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "001",
+	"cheque_count": 0
+}
 
 ###
 POST {{host}}/order HTTP/1.1

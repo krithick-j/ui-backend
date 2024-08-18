@@ -168,5 +168,5 @@ func GetOrderDetails(c *fiber.Ctx) error {
 		tx.Rollback()
 	}
 
-	return c.Status(status).JSON(fiber.Map{"data": res})
+	return c.Status(status).JSON(res)
 }

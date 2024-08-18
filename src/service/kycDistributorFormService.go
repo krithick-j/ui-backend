@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 	"ui-back-end/configs"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/go-pdf/fpdf"
 	"github.com/gofiber/fiber/v2"
@@ -73,7 +73,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY -= 2
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
-	pdf.CellFormat(55, 4, middleware.FormatTimeByLocation(distribInformation.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05"), "1", 0, "R", false, 0, "")
+	pdf.CellFormat(55, 4, utils.FormatTimeByLocation(distribInformation.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05"), "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
 	currY += 10

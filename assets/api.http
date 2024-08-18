@@ -546,8 +546,8 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-	"distrib_id": "IN-00001",
-	"frequency": 2
+	"distrib_id": "IN-00002",
+	"frequency": 4
 }
 
 ###
@@ -556,7 +556,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-	"distrib_id": "IN-00001"
+	"distrib_id": "IN-00002"
 }
 
 ###
@@ -565,7 +565,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-	"distrib_id": "IN-00001",
+	"distrib_id": "IN-00002",
 	"place": "001",
 	"cheque_count": 0
 }

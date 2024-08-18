@@ -8,7 +8,6 @@ import (
 )
 
 func GenerateUniqueFilename(distribId string, fileName string, ext string) (string, error) {
-	println("ext-->", ext)
 	if ext != "" {
 		timestamp := time.Now().Format("2006-01-02T15-04-05")
 		filename := fmt.Sprintf("%s_%s_%s%s", distribId, timestamp, fileName, ext)

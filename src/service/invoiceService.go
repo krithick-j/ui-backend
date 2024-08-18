@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"math"
 
@@ -229,7 +229,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	currX += 40
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
-	formattedItcTime := middleware.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05")
+	formattedItcTime := utils.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05")
 	pdf.Cell(0, 0, formattedItcTime)
 	pdf.SetFont("Arial", "", 8)
 	//ORDER DETAILS END
@@ -844,7 +844,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	currX += 40
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
-	formattedItcTime := middleware.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05")
+	formattedItcTime := utils.FormatTimeByLocation(orderDetails.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05")
 	pdf.Cell(0, 0, formattedItcTime)
 	pdf.SetFont("Arial", "", 8)
 	//ORDER DETAILS END

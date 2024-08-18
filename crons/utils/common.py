@@ -130,7 +130,7 @@ def get_step_by_distrib_id(distrib_id: str) -> int:
         # Execute the query with the provided parameters
         cursor.execute(query, (distrib_id, 'cheque', first_of_month, last_of_month))
         count = cursor.fetchone()[0]
-
+        count = count//2
         return count
     
     except Exception as e:

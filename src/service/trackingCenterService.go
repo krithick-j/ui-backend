@@ -14,6 +14,7 @@ import (
 )
 
 func FindRecursiveTC(ruser *dto.RecursiveUser, dist_id string, place string, side string, tx *gorm.DB) (fiber.Map, int) {
+	fmt.Println("----------||||||--------------------")
 	tc, err := repositories.GetTrackingCenter(dist_id, place, tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetTrackingCenter", "FindRecursiveTC", fiber.StatusInternalServerError, tx)
@@ -60,6 +61,7 @@ func FindRecursiveTC(ruser *dto.RecursiveUser, dist_id string, place string, sid
 }
 
 func FindRecursiveTCForRankBv(leftRankBv *float64, rightRankBv *float64, dist_id string, place string, side string, tx *gorm.DB) (fiber.Map, int) {
+
 	tc, err := repositories.GetTrackingCenter(dist_id, place, tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetTrackingCenter", "FindRecursiveTCForRankBv", fiber.StatusInternalServerError, tx)
@@ -94,6 +96,7 @@ func FindRecursiveTCForRankBv(leftRankBv *float64, rightRankBv *float64, dist_id
 
 // only return tracking centers with respect to distrib id
 func FindRecursiveTCOnlyDistribId(ruser *dto.RecursiveUser, dist_id string, place string, side string, tx *gorm.DB) (fiber.Map, int) {
+	fmt.Println(")))))))))))))_-------------------")
 	tc, err := repositories.GetTrackingCenter(dist_id, place, tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetTrackingCenter", "FindRecursiveTCOnlyDistribId", fiber.StatusInternalServerError, tx)
@@ -141,6 +144,7 @@ func FindRecursiveTCOnlyDistribId(ruser *dto.RecursiveUser, dist_id string, plac
 func GetTreeUserByDistId(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 
 	ruser := new(dto.RecursiveUser)
+	fmt.Println(":::::::::::::::::::::::::::::;")
 	tc, err := repositories.GetTrackingCenter(distrib_id, "001", tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetTrackingCenter", "GetTreeUserByDistId", fiber.StatusInternalServerError, tx)
@@ -203,6 +207,35 @@ func GetTrackingCentersByDistribId(distrib_id string, isActive bool, fromDate st
 	return fiber.Map{"data": tcOut}, fiber.StatusOK
 }
 
+func GetTrackingCentersByDistribIdForCheque(distrib_id string, fromDate string, toDate string, tx *gorm.DB) (fiber.Map, int) {
+
+	tcArr := []dto.TCBv{}
+	res, err := repositories.GetAllTrackingCenters(distrib_id, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllTrackingCenters", "GetTrackingCentersByDistribId", fiber.StatusInternalServerError, tx)
+	}
+
+	tcOut := dto.TrackingCenterOut{}
+	tcOut.DistribId = distrib_id
+	for _, place := range res {
+		bvres, err := repositories.GetBVforTCOneRowByDateForCheque(distrib_id, place.Place, fromDate, toDate, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetAllTrackingCenters", "GetTrackingCentersByDistribId", fiber.StatusInternalServerError, tx)
+		}
+		obj := dto.TCBv{
+			Place:   place.Place,
+			LPoint:  bvres.LValue,
+			RPoint:  bvres.RValue,
+			BvPoint: bvres.BValue,
+		}
+		tcArr = append(tcArr, obj)
+	}
+
+	tcOut.Tc = tcArr
+
+	return fiber.Map{"data": tcOut}, fiber.StatusOK
+}
+
 func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId string, tx *gorm.DB, totalBv float64) (fiber.Map, int) {
 
 	sum := 0.0
@@ -225,12 +258,12 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				return utils.NotNilErrorMessage(err, "ActivateTC", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
 			}
 			trackingCenter, err := repositories.GetTrackingCenter(distrib_id, placeBv.Place, tx)
-			if err != nil {
-				return utils.NotNilErrorMessage(err, "ActivateTC", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
 			}
 			parentTrackingCenter, err := repositories.GetTrackingCenter(trackingCenter.PDistribId, trackingCenter.PPlace, tx)
-			if err != nil {
-				return utils.NotNilErrorMessage(err, "ActivateTC", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
 			}
 			var side string
 			if parentTrackingCenter.LeftDistribID == trackingCenter.DistribID && parentTrackingCenter.LeftPlace == trackingCenter.Place {

@@ -89,6 +89,7 @@ func GetTotalStepByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetStepByDistribId", "GetTotalStepByDistribId", fiber.StatusInternalServerError, tx)
 	}
+	step = step / 2
 	return utils.SuccessMessage(step, fiber.StatusOK)
 }
 

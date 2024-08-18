@@ -119,6 +119,30 @@ func GetBVforTCOneRowByDateGeneric(distrib_id string, tc string, is_active bool,
 	return tcbv, err
 }
 
+func GetBVforTCOneRowByDateForCheque(distrib_id string, tc string, fromDate string, toDate string, tx *gorm.DB) (models.TCBvOneRow, error) {
+	tcbv := models.TCBvOneRow{}
+	query :=
+		tx.
+			Table("bv_transactions").
+			Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
+			Where("distrib_id = ? AND place = ? AND ((is_active = 1 AND trans_type='product') OR (trans_type='cheque'))", distrib_id, tc)
+
+	if fromDate != "" && toDate != "" {
+		query =
+			query.
+				Where("activate_date BETWEEN ? AND ?", fromDate, toDate)
+	} else if toDate != "" {
+		query =
+			query.
+				Where("activate_date >= ?", fromDate)
+	}
+	err :=
+		query.
+			Take(&tcbv).
+			Error
+	return tcbv, err
+}
+
 // Get Sum of Bv transactions of an individual distributor with trans type product
 func GetBvSumByDistribId(distribId, transType string, tx *gorm.DB) (int, error) {
 	var bvSum int

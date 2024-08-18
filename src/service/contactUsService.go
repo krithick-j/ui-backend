@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -63,25 +63,25 @@ func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUs
 	}
 
 	//create unique name
-	AadhaarBackFileName, err := middleware.GenerateUniqueFilename(textfield.DistribId, "aadhaarBack", filepath.Ext(form.AadhaarBack.Filename))
+	AadhaarBackFileName, err := utils.GenerateUniqueFilename(textfield.DistribId, "aadhaarBack", filepath.Ext(form.AadhaarBack.Filename))
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("AadhaarBackFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
 		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
-	AadhaarFrontFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "aadhaarFront", filepath.Ext(form.AadhaarFront.Filename))
+	AadhaarFrontFileName, err = utils.GenerateUniqueFilename(textfield.DistribId, "aadhaarFront", filepath.Ext(form.AadhaarFront.Filename))
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("AadhaarFrontFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
 		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
-	PanCardFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "panCard", filepath.Ext(form.PanCard.Filename))
+	PanCardFileName, err = utils.GenerateUniqueFilename(textfield.DistribId, "panCard", filepath.Ext(form.PanCard.Filename))
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("PanCardFileName: Error on calling GenerateUniqueFilename from SubmitContactUsQuery service fn ", err.Error())
 		return fiber.Map{"error": err.Error()}, contactQueryFileObj, fiber.StatusInternalServerError
 	}
-	PassportSizeFileName, err = middleware.GenerateUniqueFilename(textfield.DistribId, "passportSize", filepath.Ext(form.PassportSize.Filename))
+	PassportSizeFileName, err = utils.GenerateUniqueFilename(textfield.DistribId, "passportSize", filepath.Ext(form.PassportSize.Filename))
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("PassportSizeFileName: Error on calling GetAllContactQueries from SubmitContactUsQuery service fn ", err.Error())

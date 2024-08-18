@@ -9,7 +9,6 @@ import (
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/tmplts"
 	"ui-back-end/utils"
 
@@ -93,7 +92,7 @@ func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {
 	m.To(order.CustomerDetails.Email)
 	m.Bcc(adminmail)
 	m.Subject("Your order is received")
-	order.CreatedAt = middleware.FormatTimeByLocation(time.Now(), "Asia/Kolkata", "02-01-2006")
+	order.CreatedAt = utils.FormatTimeByLocation(time.Now(), "Asia/Kolkata", "02-01-2006")
 
 	// funcMap := template.FuncMap{
 	// 	"incIndex": incIndex,

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/service"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -48,8 +48,8 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 		configs.Log.Errorln("Error on calling MultipartForm controller fn", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid form format", "err": err.Error()})
 	} else {
-		if fileFormObj, err := middleware.ParseForm(form.File); err != nil {
-			configs.Log.Errorln("Error on calling middleware.ParseForm controller function", err.Error())
+		if fileFormObj, err := utils.ParseForm(form.File); err != nil {
+			configs.Log.Errorln("Error on calling utils.ParseForm controller function", err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot Parse input Form", "err": err.Error()})
 		} else {
 			tx := configs.DB.Begin()

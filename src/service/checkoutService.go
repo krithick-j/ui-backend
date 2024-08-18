@@ -6,7 +6,6 @@ import (
 	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
-	"ui-back-end/src/middleware"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 	"ui-back-end/utils"
@@ -37,7 +36,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn, tx *gorm.DB) (fibe
 	//Formula and addition
 	for _, tc := range trackingCentersAllArray.Tc {
 
-		ChequeFrequency := middleware.NCheckoutPossible(tc.LPoint, tc.RPoint, CHEQUE_DRAW_VALUE)
+		ChequeFrequency := utils.NCheckoutPossible(tc.LPoint, tc.RPoint, CHEQUE_DRAW_VALUE)
 		//Adding is_active = 0 values
 		cfObj := dto.ChequeFrequency{
 			Tc:        tc.Place,
@@ -153,9 +152,6 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 	COUNT := 2                                                //Left and Right inside the tracking center
 
-	resp := "none"
-	handle := "none"
-
 	for i := 1; i <= TakeChequeIn.ChequeCount; i++ {
 
 		tcBv, err := repositories.GetBVforTCOneRow(TakeChequeIn.DistribId, TakeChequeIn.Place, tx)
@@ -164,7 +160,7 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
 		}
 
-		totalChequeCount := middleware.NCheckoutPossible(tcBv.LValue, tcBv.RValue, CHEQUE_DRAW_VALUE)
+		totalChequeCount := utils.NCheckoutPossible(tcBv.LValue, tcBv.RValue, CHEQUE_DRAW_VALUE)
 		if totalChequeCount < float64(TakeChequeIn.ChequeCount) {
 			tx.Rollback()
 			configs.Log.Errorln("Error from totalChequeCount validation. Cheque cannot be taken because of insufficient BV values")
@@ -202,8 +198,6 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			if status != fiber.StatusOK {
 				return res, status
 			}
-			resp = "Cheque taken Successful and added to Ep Balance"
-			handle = "ep"
 		} else {
 			res, status := handleCpaTransaction(TakeChequeIn.DistribId, oneFrequencyAmount, checkoutId, tx)
 			if status != fiber.StatusOK {
@@ -214,19 +208,13 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			if status != fiber.StatusOK {
 				return res, status
 			}
-			resp = "Cheque taken Successful and added to CPA Balance"
-			handle = "bv"
 		}
 		err = repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count, tx)
 		if err != nil {
 			return utils.NotNilErrorMessage(err, "IncrementCheckoutFrequency", "TakeChequeByDistribIdAndPlace", fiber.StatusInternalServerError, tx)
 		}
 	}
-	response := map[string]interface{}{
-		"resp":   resp,
-		"handle": handle,
-	}
-	return utils.SuccessMessage(response, fiber.StatusOK)
+	return utils.SuccessMessage("Cheque taken successful", fiber.StatusOK)
 }
 
 func handleChequeBvTransaction(TakeChequeIn dto.TakeChequeIn, checkoutId string, CHEQUE_DRAW_VALUE int, tx *gorm.DB) (fiber.Map, int) {

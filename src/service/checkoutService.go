@@ -20,7 +20,7 @@ func TotalChequeValueByDistribId(TakeChequeIn dto.CheckoutIn, tx *gorm.DB) (fibe
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 
 	//Get Tracking Center with is_active = 1
-	trackingCentersActiveValue, status := GetTrackingCentersByDistribId(TakeChequeIn.DistribId, true, "", "", tx)
+	trackingCentersActiveValue, status := GetTrackingCentersByDistribIdForCheque(TakeChequeIn.DistribId, "", "", tx)
 	if status != fiber.StatusOK {
 		return trackingCentersActiveValue, status
 	}
@@ -203,11 +203,10 @@ func TakeChequeByDistribIdAndPlace(TakeChequeIn dto.TakeChequeIn, tx *gorm.DB) (
 			if status != fiber.StatusOK {
 				return res, status
 			}
-
-			res, status = handleChequeBvTransaction(TakeChequeIn, checkoutId, CHEQUE_DRAW_VALUE, tx)
-			if status != fiber.StatusOK {
-				return res, status
-			}
+		}
+		res, status := handleChequeBvTransaction(TakeChequeIn, checkoutId, CHEQUE_DRAW_VALUE, tx)
+		if status != fiber.StatusOK {
+			return res, status
 		}
 		err = repositories.IncrementCheckoutFrequency(TakeChequeIn.DistribId, TakeChequeIn.Place, count, tx)
 		if err != nil {

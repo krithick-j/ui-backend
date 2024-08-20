@@ -126,22 +126,13 @@ func GetValuesForCpa(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	totalCpaDcBalance := totalCpaBalance + totalCpaBalance
 	totalAvailalbeCpaDcBalance := totalAvailableCpaBalance + totalAvailableCpaBalance
 
-	type Response struct {
-		DirectComissionTotalBalance          float64 `json:"dc_total_balance"`
-		DirectComissionTotalAvailableBalance float64 `json:"dc_total_avail_balance"`
-		CpaTotalBalance                      float64 `json:"cpa_total_balance"`
-		CpaTotalAvailableBalance             float64 `json:"bv_total_avail_balance"`
-		TotalCpaDcBalance                    float64 `json:"total_cpa_dc_balance"`
-		TotalCpaDcAvailableBalance           float64 `json:"total_cpa_dc_avail_balance"`
-	}
-
-	response := Response{
-		DirectComissionTotalBalance:          totalDcBalance,
-		DirectComissionTotalAvailableBalance: totalAvailalbeDcBalance,
-		CpaTotalBalance:                      totalCpaBalance,
-		CpaTotalAvailableBalance:             totalAvailableCpaBalance,
-		TotalCpaDcBalance:                    totalCpaDcBalance,
-		TotalCpaDcAvailableBalance:           totalAvailalbeCpaDcBalance,
+	response := map[string]float64{
+		"dc_total_balance":           totalDcBalance,
+		"dc_total_avail_balance":     totalAvailalbeDcBalance,
+		"cpa_total_balance":          totalCpaBalance,
+		"bv_total_avail_balance":     totalAvailableCpaBalance,
+		"total_cpa_dc_balance":       totalCpaDcBalance,
+		"total_cpa_dc_avail_balance": totalAvailalbeCpaDcBalance,
 	}
 	return utils.SuccessMessage(response, fiber.StatusOK)
 }

@@ -576,6 +576,11 @@ GET {{host}}/cheque/cpaValues/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
+###
+GET {{host}}/rsp/grpPerformance/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
 
 ###
 POST {{host}}/order HTTP/1.1

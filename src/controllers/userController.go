@@ -30,7 +30,7 @@ func Login(c *fiber.Ctx) error {
 }
 
 func GetUserByDistribId(c *fiber.Ctx) error {
-	id := c.Params("dist_id")
+	id := c.Params("distrib_id")
 	tx := configs.DB.Begin()
 	res, status := service.GetUserByDistribId(id, tx)
 	if err := tx.Commit().Error; err != nil {

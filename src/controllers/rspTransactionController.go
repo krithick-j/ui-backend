@@ -31,6 +31,18 @@ func GetGroupRspByDistribID(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func GetGroupPerformanceByDistribId(c *fiber.Ctx) error {
+	id := c.Params("distrib_id")
+	tx := configs.DB.Begin()
+	res, status := service.GetGroupPerformanceByDistribId(id, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on Committing tx from GetGroupPerformanceByDistribId controller", err.Error())
+	}
+
+	return c.Status(status).JSON(res)
+}
+
 func GetDirectBvByDistribID(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"ui-back-end/configs"
 	"ui-back-end/src/repositories"
 	"ui-back-end/utils"
@@ -33,36 +32,65 @@ func GetGroupRspByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	}
 	//avan rsp mattum add aaga koodathu
 	if err != nil {
-		tx.Rollback()
-		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId from test service fn", err.Error())
+		return utils.NotNilErrorMessage(err, "GetReferredUsersByDistribId", "GetGroupRspByDistribId", fiber.StatusInternalServerError, tx)
 	}
-	fmt.Println("referred distrib ids", referredDistribIds)
 
 	for _, referredDistribId := range referredDistribIds {
-		//suppose IN-00001 is distrib id and referrerid is also IN-00001 then, it will loop continuously right ? So I am continuing to next distrib id
-
-		if DistribID == referredDistribId {
-			continue
-		}
-		fmt.Println("referred distrib id is--->", referredDistribId, "distrib id is --->", DistribID)
 
 		totalRspForOneDistrib, err := repositories.GetPersonalRspSumByDistribId(referredDistribId, tx)
 		if err != nil {
-			tx.Rollback()
-			configs.Log.Errorln("Error on calling GetPersonalRspSumByDistribIdt from test service fn", err.Error())
+			utils.NotNilErrorMessage(err, "GetPersonalRspSumByDistribIdt", "GetGroupRspByDistribId", fiber.StatusInternalServerError, tx)
 		}
 
 		rspSum += totalRspForOneDistrib
 
 		recursiveRspSum, status := GetGroupRspByDistribId(referredDistribId, tx)
 		if status != fiber.StatusOK {
-			tx.Rollback()
 			return recursiveRspSum, status
 		}
 		rspSum += recursiveRspSum["data"].(float64)
 	}
 
 	return fiber.Map{"data": rspSum}, fiber.StatusOK
+}
+
+// This function will give a tree to traverse down like a chain of referrals
+// Suppose IN-00001 refers IN-00002, and IN-00002 refers IN-00003, then the array returns [IN-00002,IN-00003] if distribId is IN-00001.
+// Returns [IN-00003] if input is IN-00002
+func GetGroupPerformanceByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	// Get the referral chain for the given distribId
+	res, status := GetReferralChainByDistribId(distribId, tx)
+	if status != fiber.StatusOK {
+		return res, status
+	}
+
+	referredDistribIds := res["data"].([]string)
+
+	// Get the current rank of the original distributor
+	currentRankDistribId, err := repositories.GetCurrentRankValueByDistribId(distribId, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetCurrentRankValueByDistribId", "GetGroupPerformanceByDistribId", fiber.StatusInternalServerError, tx)
+	}
+
+	// Count the number of referred distributors with rank >= the original distributor
+	var count int64
+	if len(referredDistribIds) > 0 {
+		// Use a single query to get the ranks of all referred distributors
+		referredRanks, err := repositories.GetCurrentRankArrByDistribId(referredDistribIds, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetCurrentRankArrByDistribId", "GetGroupPerformanceByDistribId", fiber.StatusInternalServerError, tx)
+		}
+
+		// Count the number of ranks that are >= currentRankDistribId
+		for _, rank := range referredRanks {
+			if rank >= currentRankDistribId {
+				count++
+			}
+		}
+	}
+
+	// Return the count as the performance metric
+	return utils.SuccessMessage(count, fiber.StatusOK)
 }
 
 func GetDirectBvByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
@@ -72,8 +100,7 @@ func GetDirectBvByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 		return fiber.Map{"data": directBv}, fiber.StatusOK
 	}
 	if err != nil {
-		tx.Rollback()
-		configs.Log.Errorln("Error on calling GetDirectBvByDistribID from test service fn", err.Error())
+		return utils.NotNilErrorMessage(err, "GetReferredUsersByDistribId", "GetGroupRspByDistribId", fiber.StatusInternalServerError, tx)
 	}
 
 	return fiber.Map{"data": directBv}, fiber.StatusOK

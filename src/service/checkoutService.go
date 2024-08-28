@@ -123,16 +123,16 @@ func GetValuesForCpa(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	}
 
 	//totalAvailablePoints is only is_active
-	totalCpaDcBalance := totalCpaBalance + totalCpaBalance
-	totalAvailalbeCpaDcBalance := totalAvailableCpaBalance + totalAvailableCpaBalance
+	totalCpaDcBalance := totalCpaBalance + totalDcBalance
+	totalAvailalbeCpaDcBalance := totalAvailableCpaBalance + totalAvailalbeDcBalance
 
 	response := map[string]float64{
-		"dc_total_balance":           totalDcBalance,
-		"dc_total_avail_balance":     totalAvailalbeDcBalance,
-		"cpa_total_balance":          totalCpaBalance,
-		"bv_total_avail_balance":     totalAvailableCpaBalance,
-		"total_cpa_dc_balance":       totalCpaDcBalance,
-		"total_cpa_dc_avail_balance": totalAvailalbeCpaDcBalance,
+		"dc_total_balance":        totalDcBalance,
+		"dc_total_avail_balance":  totalAvailalbeDcBalance,
+		"cpa_total_balance":       totalCpaBalance,
+		"cpa_total_avail_balance": totalAvailableCpaBalance,
+		"total_balance":           totalCpaDcBalance,
+		"total_avail_balance":     totalAvailalbeCpaDcBalance,
 	}
 	return utils.SuccessMessage(response, fiber.StatusOK)
 }

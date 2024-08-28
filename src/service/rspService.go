@@ -1,7 +1,10 @@
 package service
 
 import (
+	"time"
 	"ui-back-end/configs"
+	"ui-back-end/src/dto"
+	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
 	"ui-back-end/utils"
 
@@ -145,12 +148,85 @@ func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	}
 	step := stepResult["data"]
 
+	groupPerformanceResult, status := GetGroupPerformanceByDistribId(DistribID, tx)
+
+	if status != fiber.StatusOK {
+		return stepResult, status
+	}
+	grpPerformance := groupPerformanceResult["data"]
+
 	response := fiber.Map{
-		"direct_bv":    directBv,
-		"personal_rsp": personalRsp,
-		"group_rsp":    groupRsp,
-		"step":         step,
+		"direct_bv":         directBv,
+		"personal_rsp":      personalRsp,
+		"group_rsp":         groupRsp,
+		"step":              step,
+		"group_performance": grpPerformance,
 	}
 
 	return utils.SuccessMessage(response, fiber.StatusOK)
+}
+
+func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
+
+	reference := GenerateUniqueHexCode(10)
+	var icouponBalance float64
+	cpaBalance, err := repositories.GetAvailableCpaBalance(payload.DistribID, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetCpaBalance", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+	}
+
+	totalAvailalbeDcBalance, err := repositories.GetDirectCommissionActiveValueByDistribId(payload.DistribID, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetDirectCommissionActiveValueByDistribId", "GetValuesForCpa", fiber.StatusInternalServerError, tx)
+	}
+
+	for _, icoupon := range payload.Coupons {
+		icouponBalance = icouponBalance + (icoupon.Value * float64(icoupon.Quantity))
+	}
+
+	if payload.CpaAmount > cpaBalance {
+		return utils.CommonMessage("Insufficient cpa amount", fiber.StatusInternalServerError, tx)
+	}
+
+	if payload.DcAmount > totalAvailalbeDcBalance {
+		return utils.CommonMessage("Insufficient dc amount", fiber.StatusInternalServerError, tx)
+	}
+
+	totalBalance := payload.CpaAmount + payload.DcAmount
+
+	cpaObj := models.CpaTransaction{
+		DistribId:    payload.DistribID,
+		Reference:    reference,
+		ActivateDate: time.Now(),
+		IsActive:     true,
+		Amount:       -payload.CpaAmount, //cpa value detected
+	}
+	err = repositories.SaveCpaTransaction(cpaObj, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "SaveCpaTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+	}
+
+	dcObj := models.DirectCommissionTransaction{
+		DistribId:    "",
+		Value:        -payload.DcAmount,
+		Reference:    reference,
+		RefDistribId: payload.DistribID, //This will be used to calculate the total dc amount and used to reduce the amount
+		ActivateDate: time.Now(),
+		ExpiryDate:   time.Now().AddDate(0, 6, 0),
+		IsActive:     false,
+	}
+
+	err = repositories.SaveDirectCommissionTransaction(dcObj, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "SaveDirectCommissionTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+	}
+
+	if totalBalance != icouponBalance {
+		return utils.CommonMessage("Icoupon Balance and total balance does not match", fiber.StatusInternalServerError, tx)
+	}
+	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now(), tx)
+	if status != fiber.StatusCreated {
+		return res, status
+	}
+	return utils.SuccessMessage(res["data"], status)
 }

@@ -13,6 +13,7 @@ func CheckoutRouter(router fiber.Router) {
 	router.Post("/checkFrequencyAmount", controllers.AddFrequencyAmount)
 	router.Get("/cpaValues/:distrib_id", controllers.GetValuesForCpa)
 	router.Post("/takeCheque", controllers.TakeChequeByDistribId)
+	router.Post("/takeCpa", controllers.SaveCpaICoupon)
 	router.Put("/changePin", controllers.EditChequePin)
 	router.Post("/login", controllers.ChequeLogin)
 }

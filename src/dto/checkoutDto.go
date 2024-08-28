@@ -67,3 +67,9 @@ type TcChequeFrequency struct {
 	BvPoint   int
 	Frequency uint
 }
+
+type TakeCpaAmount struct {
+	ICouponIn
+	DcAmount float64 `json:"dc_amount"`
+	CpaAmount float64 `json:"cpa_amount"`
+}

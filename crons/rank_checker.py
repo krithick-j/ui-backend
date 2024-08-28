@@ -5,7 +5,6 @@ from utils.common import (
     get_group_rsp_by_distrib_id,
     get_personal_rsp,
     get_rank_goal,
-    get_referred_users_by_distrib_id,
     get_step_by_distrib_id,
 )
 from utils.config import DB
@@ -56,26 +55,33 @@ def check_rank_for_all()->None:
        highest_rank = user['highest_rank']
        new_rank = check_rank_for_user(user['id'])
        update_current_highest_rank(user['id'], new_rank, highest_rank)
+       detect_direct_bv(user['id'])
+       
+def detect_direct_bv(distribID)->None:
+    direct_bv = get_direct_bv(distribID)
+    cursor = DB.cursor()
+    
+    if direct_bv >= 500:
+        query = f"INSERT INTO rsp_transactions (distrib_id, direct_bv) VALUES ({distribID}, -500)"
+        cursor.execute(query)
+        DB.commit()
+        cursor.close()
 
 def update_current_highest_rank(distrib_id, new_rank, highest_rank):
     try:
        cursor = DB.cursor()
+       params = [new_rank]
 
-       sql = f"UPDATE users SET current_rank = %s"
+       sql = "UPDATE users SET current_rank = %s"
 
         # Adding an additional update condition if the new rank is higher
        if new_rank > highest_rank:
            sql += ", highest_rank = %s"
+           params.append(new_rank)
+           
 
         # Completing the query with the WHERE clause
        sql += " WHERE distrib_id = %s"
-
-        # Parameters to be used in the query
-       params = [new_rank]
-
-       if new_rank > highest_rank:
-           params.append(new_rank)
-
        params.append(distrib_id)
 
         # Executing the query with the parameters

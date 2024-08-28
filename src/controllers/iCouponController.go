@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/service"
@@ -21,7 +22,7 @@ func CreateICoupon(c *fiber.Ctx) error {
 	}
 	fmt.Println(iCouponIn)
 	tx := configs.DB.Begin()
-	res, status := service.AddICoupon(iCouponIn, adminName, tx)
+	res, status := service.AddICoupon(iCouponIn, adminName,time.Now(), tx)
 	// If no error occurred, commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()

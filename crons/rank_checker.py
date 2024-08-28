@@ -1,42 +1,53 @@
 from utils.common import (
     get_all_users_with_frequency,
     get_direct_bv,
+    get_group_performance_by_distrib_id,
     get_group_rsp_by_distrib_id,
     get_personal_rsp,
     get_rank_goal,
-    get_referred_users_by_distrib_id,
     get_step_by_distrib_id,
 )
 from utils.config import DB
 from typing import Dict
 
 
-def check_personal_rsp(distrib_id: str, rank: int)-> bool:
-    personal_rsp = get_personal_rsp(distrib_id)
+def check_personal_rsp(personal_rsp, rank: int)-> bool:
     return personal_rsp >= GOAL[rank]["PRSP"]
 
-def check_group_rsp(distrib_id: str, rank: int)-> bool:
-    group_rsp, _ = get_group_rsp_by_distrib_id(distrib_id)
+def check_group_rsp(group_rsp, rank: int)-> bool:
     return group_rsp >= GOAL[rank]["GRSP"]
 
-def check_direct_bv(distrib_id: str, rank: int)-> bool:
-    direct_bv = get_direct_bv(distrib_id)
+def check_direct_bv(direct_bv, rank: int)-> bool:
     return direct_bv >= GOAL[rank]["DRBV"]
 
-def check_step_value(distrib_id: str, rank: int)-> bool:
-    step_value = get_step_by_distrib_id(distrib_id)
+def check_step_value(step_value, rank: int)-> bool:
     return step_value >= GOAL[rank]["STEP"]
+
+def check_group_performance(grp_performance, rank: int) -> bool:
+    return grp_performance >= GOAL[rank]["GPRF"]
 
 def check_rank_for_user(distrib_id: str)->int:
     orank = [2, 2.5, 3, 3.5, 4]
     ranks = [2.5, 3, 3.5, 4]
+    grp_performance = get_group_performance_by_distrib_id(distrib_id)
+    step_value = get_step_by_distrib_id(distrib_id)
+    direct_bv = get_direct_bv(distrib_id)
+    group_rsp, _ = get_group_rsp_by_distrib_id(distrib_id)
+    personal_rsp = get_personal_rsp(distrib_id)
+    
+    checks = {
+        rank: all([
+            check_personal_rsp(personal_rsp, rank),
+            check_group_rsp(group_rsp, rank),
+            check_direct_bv(direct_bv, rank),
+            check_step_value(step_value, rank),
+            check_group_performance(grp_performance, rank)
+        ])
+        for rank in ranks
+    }   
+         
     for idx, rank in enumerate(ranks):
-        if not all([
-            check_personal_rsp(distrib_id, rank),
-            check_group_rsp(distrib_id, rank),
-            check_direct_bv(distrib_id, rank),
-            check_step_value(distrib_id, rank)
-        ]):
+        if not checks[rank]:
             return orank[idx]
 
 def check_rank_for_all()->None:
@@ -44,27 +55,33 @@ def check_rank_for_all()->None:
        highest_rank = user['highest_rank']
        new_rank = check_rank_for_user(user['id'])
        update_current_highest_rank(user['id'], new_rank, highest_rank)
-    #    print(f"""current rank for {user['id']} is {check_rank_for_user(user['id'])}""")
+       detect_direct_bv(user['id'])
+       
+def detect_direct_bv(distribID)->None:
+    direct_bv = get_direct_bv(distribID)
+    cursor = DB.cursor()
+    
+    if direct_bv >= 500:
+        query = f"INSERT INTO rsp_transactions (distrib_id, direct_bv) VALUES ({distribID}, -500)"
+        cursor.execute(query)
+        DB.commit()
+        cursor.close()
 
 def update_current_highest_rank(distrib_id, new_rank, highest_rank):
     try:
        cursor = DB.cursor()
+       params = [new_rank]
 
-       sql = f"UPDATE users SET current_rank = %s"
+       sql = "UPDATE users SET current_rank = %s"
 
         # Adding an additional update condition if the new rank is higher
        if new_rank > highest_rank:
            sql += ", highest_rank = %s"
+           params.append(new_rank)
+           
 
         # Completing the query with the WHERE clause
        sql += " WHERE distrib_id = %s"
-
-        # Parameters to be used in the query
-       params = [new_rank]
-
-       if new_rank > highest_rank:
-           params.append(new_rank)
-
        params.append(distrib_id)
 
         # Executing the query with the parameters

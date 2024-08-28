@@ -356,3 +356,37 @@ func UpdateUserPass(payload dto.UserPassIn, tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": "Password changed Successfully"}, fiber.StatusOK
 
 }
+
+func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	var userArr []string
+
+	// Recursive function to build the referral chain
+	var buildReferralChain func(distribId string, tx *gorm.DB) error
+	buildReferralChain = func(distribId string, tx *gorm.DB) error {
+		referredDistribIds, err := repositories.GetReferredUsersByDistribId(distribId, tx)
+		if err == gorm.ErrRecordNotFound {
+			return nil // No more referrals found, end the recursion
+		}
+		if err != nil {
+			return err // Return the error if something went wrong
+		}
+
+		for _, id := range referredDistribIds {
+			userArr = append(userArr, id)    // Add to the chain
+			err = buildReferralChain(id, tx) // Recurse to find the next level of referrals
+			if err != nil {
+				return err // Propagate the error if something went wrong during recursion
+			}
+		}
+		return nil
+}
+
+	// Start building the referral chain
+	err := buildReferralChain(distribId, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetReferredUsersByDistribId", "GetReferralChainByDistribId", fiber.StatusInternalServerError, tx)
+	}
+
+	// Return the final referral chain
+	return utils.SuccessMessage(userArr, fiber.StatusOK)
+}

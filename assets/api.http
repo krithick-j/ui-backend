@@ -534,6 +534,11 @@ GET {{host}}/rsp/personalRsp/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
+###
+GET {{host}}/rsp/grpPerformance/IN-00005 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
 ###				
 GET {{host}}/rsp/steps/IN-00001 HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
@@ -547,7 +552,7 @@ Content-Type: application/json
 
 {
 	"distrib_id": "IN-00001",
-	"frequency": 4
+	"frequency": 5
 }
 
 ###
@@ -567,16 +572,47 @@ Content-Type: application/json
 {
 	"distrib_id": "IN-00001",
 	"place": "001",
-	"cheque_count": 4
+	"cheque_count": 5
 }
 
+
+###
+POST {{host}}/cheque/takeCheque HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"place": "001",
+	"cheque_count": 4
+}
 
 ###
 GET {{host}}/cheque/cpaValues/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
+###
+GET {{host}}/rsp/rspValues/IN-00004 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
 
+###
+POST {{host}}/cheque/takeCpa HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001",
+	"coupons": [
+		{
+			"value": 5000,
+			"quantity": 1
+		}
+	],
+	"cpa_amount": 2500,
+	"dc_amount": 2500
+}
 ###
 POST {{host}}/order HTTP/1.1
 Authorization: Bearer {{authToken}}

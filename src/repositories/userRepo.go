@@ -141,8 +141,9 @@ func GetReferredUsersByDistribId(distribId string, tx *gorm.DB) ([]string, error
 	err :=
 		tx.
 			Table("users").
+			Distinct("distrib_id").
 			Select("distrib_id").
-			Where("ref_distrib_id = ?", distribId).
+			Where("ref_distrib_id = ? AND distrib_id != ref_distrib_id", distribId).
 			Find(&referredDistributors).
 			Error
 	return referredDistributors, err
@@ -248,4 +249,10 @@ func GetCurrentRankValueByDistribId(distribId string, tx *gorm.DB) (float64, err
 			Take(&currentRank).
 			Error
 	return currentRank, err
+}
+
+func GetCurrentRankArrByDistribId(referredDistribIds []string, tx *gorm.DB) ([]float64, error) {
+	var referredRanks []float64
+	err := tx.Model(&models.User{}).Where("distrib_id IN ?", referredDistribIds).Pluck("current_rank", &referredRanks).Error
+	return referredRanks, err
 }

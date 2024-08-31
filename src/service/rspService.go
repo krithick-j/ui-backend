@@ -124,6 +124,30 @@ func GetTotalStepByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 }
 
 func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
+	var personalRspMax, groupRspMax, directBvMax, stepMax, groupPerformanceMax int
+	rankValue, err := repositories.GetCurrentRankValueByDistribId(DistribID, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetCurrentRankValueByDistribId", "GetRspValuesByDistribID", fiber.StatusInternalServerError, tx)
+	}
+
+	rankDetails, err := repositories.GetRankDetailsByDistribId(rankValue, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetRankDetailsByDistribId", "GetRspValuesByDistribID", fiber.StatusInternalServerError, tx)
+	}
+	for _, rankRow := range rankDetails {
+		switch rankRow.Type {
+		case "PRSP":
+			personalRspMax = rankRow.Target
+		case "GRSP":
+			groupRspMax = rankRow.Target
+		case "DRBV":
+			directBvMax = rankRow.Target
+		case "STEP":
+			stepMax = rankRow.Target
+		case "GPRF":
+			groupPerformanceMax = rankRow.Target
+		}
+	}
 	directBvResult, status := GetDirectBvByDistribId(DistribID, tx)
 	if status != fiber.StatusOK {
 		return directBvResult, status
@@ -163,6 +187,28 @@ func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 		"group_performance": grpPerformance,
 	}
 
+	response = fiber.Map{
+		"direct_bv": fiber.Map{
+			"value":     directBv,
+			"max_value": directBvMax,
+		},
+		"personal_rsp": fiber.Map{
+			"value":     personalRsp,
+			"max_value": personalRspMax,
+		},
+		"group_rsp": fiber.Map{
+			"value":     groupRsp,
+			"max_value": groupRspMax,
+		},
+		"step": fiber.Map{
+			"value":     step,
+			"max_value": stepMax,
+		},
+		"group_performance": fiber.Map{
+			"value":     grpPerformance,
+			"max_value": groupPerformanceMax,
+		},
+	}
 	return utils.SuccessMessage(response, fiber.StatusOK)
 }
 

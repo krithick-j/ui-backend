@@ -98,7 +98,6 @@ func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {
 	// 	"incIndex": incIndex,
 	// }
 	m.AttachFile(attachment)
-
 	t, err := template.New("email").Parse(tmplts.OrderTemplate)
 	if err != nil {
 		fmt.Println(err.Error())

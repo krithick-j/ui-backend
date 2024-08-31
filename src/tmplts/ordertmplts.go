@@ -26,8 +26,7 @@ var OrderTemplate string = `<!DOCTYPE html>
 <body>
     <p>This is a noreply email. Your Order Details are:</p>
 	<p>Dear {{.CustomerDetails.Name}}, </p>
-	<p>We received your order on.<date></p>
-	<p>Your order details as below</p>
+	<p>Your Order Details as below</p>
     <table>
         <thead>
             <tr>

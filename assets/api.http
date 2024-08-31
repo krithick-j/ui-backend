@@ -552,7 +552,7 @@ Content-Type: application/json
 
 {
 	"distrib_id": "IN-00001",
-	"frequency": 5
+	"frequency": 1
 }
 
 ###

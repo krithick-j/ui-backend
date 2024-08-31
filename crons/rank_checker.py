@@ -8,8 +8,6 @@ from utils.common import (
     get_step_by_distrib_id,
 )
 from utils.config import DB
-from typing import Dict
-
 
 def check_personal_rsp(personal_rsp, rank: int)-> bool:
     return personal_rsp >= GOAL[rank]["PRSP"]
@@ -60,9 +58,8 @@ def check_rank_for_all()->None:
 def detect_direct_bv(distribID)->None:
     direct_bv = get_direct_bv(distribID)
     cursor = DB.cursor()
-    
     if direct_bv >= 500:
-        query = f"INSERT INTO rsp_transactions (distrib_id, direct_bv) VALUES ({distribID}, -500)"
+        query = f"INSERT INTO rsp_transactions (distrib_id, direct_bv) VALUES ('{distribID}', -500)"
         cursor.execute(query)
         DB.commit()
         cursor.close()

@@ -593,7 +593,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 ###
-GET {{host}}/rsp/rspValues/IN-00004 HTTP/1.1
+GET {{host}}/rsp/rspValues/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

@@ -53,6 +53,18 @@ func GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func GetUserRank(c *fiber.Ctx) error {
+	distribId := c.Params("distrib_id")
+	tx := configs.DB.Begin()
+	res, status := service.GetUserRank(distribId, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on Committing tx from GetAllUsers controller", err.Error())
+	}
+
+	return c.Status(status).JSON(res)
+}
+
 func GetUserTreeByDistId(c *fiber.Ctx) error {
 	id := c.Params("distrib_id")
 	tx := configs.DB.Begin()

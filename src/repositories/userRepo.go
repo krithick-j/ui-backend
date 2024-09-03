@@ -251,6 +251,21 @@ func GetCurrentRankValueByDistribId(distribId string, tx *gorm.DB) (float64, err
 	return currentRank, err
 }
 
+func GetCurrentTitleRankByDistribId(distribId string, tx *gorm.DB) (float64, float64, error) {
+	type Rank struct {
+		CurrentRank float64 `gorm:"column:current_rank"`
+		TitleRank   float64 `gorm:"column:highest_rank"`
+	}
+	var rank Rank
+	err := tx.
+		Model(&models.User{}).
+		Select("current_rank, highest_rank").
+		Where("distrib_id = ?", distribId).
+		Take(&rank).
+		Error
+	return rank.CurrentRank, rank.TitleRank, err
+}
+
 func GetCurrentRankArrByDistribId(referredDistribIds []string, tx *gorm.DB) ([]float64, error) {
 	var referredRanks []float64
 	err := tx.Model(&models.User{}).Where("distrib_id IN ?", referredDistribIds).Pluck("current_rank", &referredRanks).Error

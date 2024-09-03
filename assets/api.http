@@ -36,6 +36,11 @@ GET {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 
 ###
+GET {{host}}/user/rank/IN-00004 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
 GET  {{host}}/product/orderDetails?distrib_id=IN-00003 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
@@ -462,6 +467,11 @@ Content-Type: application/json
 
 ###
 GET {{host}}/iCoupon/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+GET {{host}}/static/socialConn HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

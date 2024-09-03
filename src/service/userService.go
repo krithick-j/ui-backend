@@ -90,6 +90,18 @@ func GetUsers(tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": users}, fiber.StatusOK
 }
 
+func GetUserRank(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	currentRank, titleRank, err := repositories.GetCurrentTitleRankByDistribId(distribId, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetCurrentTitleRankByDistribId", "GetUserRank", fiber.StatusInternalServerError, tx)
+	}
+	data := map[string]float64{
+		"current_rank": currentRank,
+		"title_rank":   titleRank,
+	}
+	return utils.SuccessMessage(data, fiber.StatusOK)
+}
+
 func FindNextAvailUserSeq(tx *gorm.DB) (string, error) {
 	last_no, err := repositories.GetLastId(tx)
 	if err != nil {
@@ -379,7 +391,7 @@ func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int)
 			}
 		}
 		return nil
-}
+	}
 
 	// Start building the referral chain
 	err := buildReferralChain(distribId, tx)

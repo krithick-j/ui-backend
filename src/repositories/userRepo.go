@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"time"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
@@ -75,6 +76,11 @@ func CreateTCs(tc models.TrackingCenter, tx *gorm.DB) error {
 		tx.
 			Create(&tc).
 			Error
+	return err
+}
+
+func UpdateLastLogin(distrib_id string, tx *gorm.DB) error {
+	err := tx.Table("users").Where("distrib_id=?", distrib_id).UpdateColumn("last_login", time.Now()).Error
 	return err
 }
 

@@ -56,7 +56,19 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring, KYCStatus: res.KYCStatus}
+	//update last login
+	err = repositories.UpdateLastLogin(res.DistribID, tx)
+	if err != nil {
+		utils.NotNilErrorMessage(err, "UpdateLastLogin", "LoginUser", fiber.StatusInternalServerError, tx)
+	}
+
+	authout := dto.AuthOut{
+		Name:      res.Name,
+		DistribID: res.DistribID,
+		AuthToken: tokenstring,
+		KYCStatus: res.KYCStatus,
+		LastLogin: res.LastLogin.UTC(),
+	}
 	return fiber.Map{"data": authout}, fiber.StatusAccepted
 }
 
@@ -364,9 +376,7 @@ func UpdateUserPass(payload dto.UserPassIn, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
-
 	return fiber.Map{"data": "Password changed Successfully"}, fiber.StatusOK
-
 }
 
 func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {

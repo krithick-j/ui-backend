@@ -38,29 +38,13 @@ func GetProductCategories(tx *gorm.DB) (fiber.Map, int) {
 	return utils.SuccessMessage(productCategories, fiber.StatusOK)
 }
 
-func GetProductByCategoryID(categoryId string, productType string, tx *gorm.DB) (fiber.Map, int) {
+func GetProductByCategoryID(categoryIds []string, productTypes []string, tx *gorm.DB) (fiber.Map, int) {
 
-	var product []models.Product
-	var err error
-	if productType == "" {
-		product, err = repositories.GetAllProductByCategoryID(categoryId, product, tx)
-
-		if err == gorm.ErrRecordNotFound {
-			return utils.RecordNotFoundMessage(err, tx)
-		}
-		if err != nil {
-			return utils.NotNilErrorMessage(err, "GetAllProductByCategoryID", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
-		}
-	} else {
-		product, err = repositories.GetAllProductByCategoryIdAndProductType(categoryId, productType, tx)
-		if err == gorm.ErrRecordNotFound {
-			return utils.RecordNotFoundMessage(err, tx)
-		}
-		if err != nil {
-			return utils.NotNilErrorMessage(err, "GetAllProductByCategoryIdAndProductType", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
-		}
+    // Construct the query with both category IDs and product types
+    product, err := repositories.GetAllProductByCategoryIdAndProductTypeFilter(categoryIds, productTypes, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetAllProductByCategoryIdAndProductTypeFilter", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
 	}
-
 	return utils.SuccessMessage(product, fiber.StatusOK)
 }
 

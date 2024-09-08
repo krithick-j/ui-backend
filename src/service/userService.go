@@ -333,9 +333,11 @@ func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.Use
 }
 
 func EditUserByDistId(DistribId string, userIn models.User, tx *gorm.DB) (fiber.Map, int) {
+	if userIn.Pass != "" {
+		return utils.CommonMessage("Cannot change password!", fiber.StatusForbidden, tx)
+	}
 
 	user, err := repositories.EditUserByDistId(DistribId, userIn, tx)
-
 	if err != nil {
 		configs.Log.Errorln("Error calling EditUserByDistId fn from EditUserByDistId service fn", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError

@@ -339,12 +339,16 @@ func GetOrdersByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
 		}
 
 		for _, productLine := range order.OrdersLiners {
+			imageUrl, err := repositories.GetProductImage(productLine.ProductID, tx)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return utils.NotNilErrorMessage(err, "GetProductImage", "GetOrdersByDistribId", fiber.StatusInternalServerError, tx)
+			}
 			productArrObj := dto.ProductDetails{
 				Id:           productLine.ID,
 				Name:         productLine.Name,
 				Quantity:     productLine.Quantity,
 				Price:        productLine.UnitPrice,
-				ProductImage: "",
+				ProductImage: imageUrl,
 				ProductType:  productLine.ProductType,
 				SAndH:        productLine.SandH,
 				SubTotal:     productLine.SubTotal,
@@ -518,11 +522,15 @@ func GetOrderDetails(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 
 	//2. Populating OrderProduct Array field
 	for _, item := range cartItems {
+		imageUrl, err := repositories.GetProductImage(item.Product.ID, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "GetProductImage", "GetOrderDetails", fiber.StatusBadRequest, tx)
 
+		}
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{
 			ProductID:     item.Product.ID,
-			ProductImage:  "",
+			ProductImage:  imageUrl,
 			Name:          item.Product.Name,
 			Quantity:      item.Quantity,
 			UnitPrice:     item.Product.Price,

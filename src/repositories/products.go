@@ -191,6 +191,18 @@ func SaveProductImage(productImage models.ProductImage, tx *gorm.DB) error {
 	return err
 }
 
+func GetProductImage(productId uint, tx *gorm.DB) (string, error) {
+	var image string
+	err :=
+		tx.
+			Table("product_images").
+			Select("image").
+			Where("product_id=?", productId).
+			Take(&image).
+			Error
+	return image, err
+}
+
 func SaveProduct(product *models.Product, tx *gorm.DB) (*models.Product, error) {
 	err := tx.Create(&product).Error
 

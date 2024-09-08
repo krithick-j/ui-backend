@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"time"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
@@ -75,6 +76,11 @@ func CreateTCs(tc models.TrackingCenter, tx *gorm.DB) error {
 		tx.
 			Create(&tc).
 			Error
+	return err
+}
+
+func UpdateLastLogin(distrib_id string, tx *gorm.DB) error {
+	err := tx.Table("users").Where("distrib_id=?", distrib_id).UpdateColumn("last_login", time.Now()).Error
 	return err
 }
 
@@ -249,6 +255,21 @@ func GetCurrentRankValueByDistribId(distribId string, tx *gorm.DB) (float64, err
 			Take(&currentRank).
 			Error
 	return currentRank, err
+}
+
+func GetCurrentTitleRankByDistribId(distribId string, tx *gorm.DB) (float64, float64, error) {
+	type Rank struct {
+		CurrentRank float64 `gorm:"column:current_rank"`
+		TitleRank   float64 `gorm:"column:highest_rank"`
+	}
+	var rank Rank
+	err := tx.
+		Model(&models.User{}).
+		Select("current_rank, highest_rank").
+		Where("distrib_id = ?", distribId).
+		Take(&rank).
+		Error
+	return rank.CurrentRank, rank.TitleRank, err
 }
 
 func GetCurrentRankArrByDistribId(referredDistribIds []string, tx *gorm.DB) ([]float64, error) {

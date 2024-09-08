@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -29,10 +30,19 @@ func GetProductCategoriesController(c *fiber.Ctx) error {
 }
 
 func GetProductsByCategoryID(c *fiber.Ctx) error {
-	categoryId := c.Params("category_id")
-	productType := c.Query("product_type")
+	categoryIdParam := c.Query("category_id")
+	var categoryIds []string
+    if categoryIdParam != "" {
+        categoryIds = strings.Split(categoryIdParam, ",")
+    }
+
+	productTypeParam := c.Query("product_type")
+    var productTypes []string
+    if productTypeParam != "" {
+        productTypes = strings.Split(productTypeParam, ",")
+    }
 	tx := configs.DB.Begin()
-	res, status := service.GetProductByCategoryID(categoryId, productType, tx)
+	res, status := service.GetProductByCategoryID(categoryIds, productTypes, tx)
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 	}

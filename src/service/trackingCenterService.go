@@ -347,17 +347,17 @@ func GetAvailableAddTc(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetBvSumByDistribId", "AddTc", fiber.StatusInternalServerError, tx)
 	}
-
 	str := fmt.Sprintf("%v", bvSum)
-
 	if bvSum < 1000 {
 		return utils.SuccessMessage(0, fiber.StatusForbidden)
 	} else if bvSum > 1000 && bvSum < 10000 {
 		return utils.SuccessMessage(int(str[0]-'0'), fiber.StatusOK) // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
 	} else if bvSum > 10000 && bvSum < 100000 {
-		return utils.SuccessMessage(int(str[0]-'0')*10+int(str[1]-'0'), fiber.StatusOK) // int('7' - '0')  '7' is 55 in ASCII, '0' is 48, so 55 - 48 = 7
+		return utils.SuccessMessage(int(str[0]-'0')*10+int(str[1]-'0'), fiber.StatusOK) // 38500 = 38
+	} else if bvSum > 100000 && bvSum < 1000000 {
+		return utils.SuccessMessage(int(str[0]-'0')*100+int(str[1]-'0')*10+int(str[2]-'0'), fiber.StatusOK) // 388500 = 388
 	} else {
-		return utils.SuccessMessage(0, fiber.StatusInternalServerError)
+		return utils.CommonMessage("Something went wrong!", fiber.StatusInternalServerError, tx)
 	}
 }
 

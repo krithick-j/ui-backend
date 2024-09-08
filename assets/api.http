@@ -36,7 +36,17 @@ GET {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 
 ###
+GET {{host}}/user/rank/IN-00004 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
 GET  {{host}}/product/orderDetails?distrib_id=IN-00003 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
+GET  {{host}}/product/filterByCategory?category_id=1,2,3&product_type=bv,rsp HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 
@@ -466,6 +476,11 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 ###
+GET {{host}}/static/socialConn HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
 POST {{host}}/cheque/login HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -541,6 +556,12 @@ Content-Type: application/json
 
 ###				
 GET {{host}}/rsp/steps/IN-00001 HTTP/1.1
+# GET {{host}}/test/IN-00002 HTTP/1.1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###				
+GET {{host}}/tc/availableTc/IN-00001 HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

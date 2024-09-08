@@ -1,17 +1,22 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // User struct modified based on Distributor Application Form
 type User struct {
 	gorm.Model
 
-	DistribID      string  `json:"distrib_id"`
-	Pass           string  `json:"pass"`
-	CpaPin         string  `json:"cpa_pin"`
-	MailingAddress string  `json:"mailing_address"` //aadhar card mail address
-	CurrentRank    float64 `json:"current_rank" gorm:"default:1"`
-	HighestRank    float64 `json:"highest_rank" gorm:"default:1"`
+	DistribID      string    `json:"distrib_id"`
+	Pass           string    `json:"pass"`
+	CpaPin         string    `json:"cpa_pin"`
+	MailingAddress string    `json:"mailing_address"` //aadhar card mail address
+	CurrentRank    float64   `json:"current_rank" gorm:"default:1"`
+	HighestRank    float64   `json:"highest_rank" gorm:"default:1"`
+	LastLogin      time.Time `json:"last_login"`
 
 	ReferrerInformation
 	ApplicationInformation

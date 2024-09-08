@@ -1,6 +1,9 @@
 package dto
 
-import "ui-back-end/src/models"
+import (
+	"time"
+	"ui-back-end/src/models"
+)
 
 // User Input from Client
 type UserIn struct {
@@ -23,10 +26,11 @@ type UserOut struct {
 }
 
 type AuthOut struct {
-	DistribID string `json:"distrib_id"`
-	Name      string `json:"name"`
-	AuthToken string `json:"auth_token"`
-	KYCStatus string `json:"kyc_status"`
+	DistribID string    `json:"distrib_id"`
+	Name      string    `json:"name"`
+	AuthToken string    `json:"auth_token"`
+	KYCStatus string    `json:"kyc_status"`
+	LastLogin time.Time `json:"last_login"`
 }
 
 type RecursiveUser struct {

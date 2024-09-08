@@ -17,6 +17,6 @@ func ProductRouter(router fiber.Router) {
 	router.Delete("/cartProduct/", controllers.DeleteCartProduct)
 	router.Delete("/allCartProducts/", controllers.DeleteAllCartProduct)
 	router.Get("/categories", controllers.GetProductCategoriesController)
-	router.Get("/filterByCategory/:category_id", controllers.GetProductsByCategoryID)
+	router.Get("/filterByCategory", controllers.GetProductsByCategoryID)
 	router.Get("/orderDetails/", controllers.GetOrderDetails) /////////////////////////////////
 }

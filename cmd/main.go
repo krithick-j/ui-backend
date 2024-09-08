@@ -38,6 +38,8 @@ func main() {
 	api.Route("/user", routes.UserRouter) //Logger added
 	api.Route("/test", routes.TestRouter)
 	api.Route("/tc", routes.TcRouter)
+	api.Route("/static", routes.StaticRouter)         //this route is no longer used
+
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},

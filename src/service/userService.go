@@ -56,7 +56,19 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
 
-	authout := dto.AuthOut{Name: res.Name, DistribID: res.DistribID, AuthToken: tokenstring, KYCStatus: res.KYCStatus}
+	//update last login
+	err = repositories.UpdateLastLogin(res.DistribID, tx)
+	if err != nil {
+		utils.NotNilErrorMessage(err, "UpdateLastLogin", "LoginUser", fiber.StatusInternalServerError, tx)
+	}
+
+	authout := dto.AuthOut{
+		Name:      res.Name,
+		DistribID: res.DistribID,
+		AuthToken: tokenstring,
+		KYCStatus: res.KYCStatus,
+		LastLogin: res.LastLogin.UTC(),
+	}
 	return fiber.Map{"data": authout}, fiber.StatusAccepted
 }
 
@@ -88,6 +100,18 @@ func GetUsers(tx *gorm.DB) (fiber.Map, int) {
 	}
 
 	return fiber.Map{"data": users}, fiber.StatusOK
+}
+
+func GetUserRank(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	currentRank, titleRank, err := repositories.GetCurrentTitleRankByDistribId(distribId, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetCurrentTitleRankByDistribId", "GetUserRank", fiber.StatusInternalServerError, tx)
+	}
+	data := map[string]float64{
+		"current_rank": currentRank,
+		"title_rank":   titleRank,
+	}
+	return utils.SuccessMessage(data, fiber.StatusOK)
 }
 
 func FindNextAvailUserSeq(tx *gorm.DB) (string, error) {
@@ -309,9 +333,11 @@ func handleTCRegistration(user_in dto.UserIn, distrib_id string, user models.Use
 }
 
 func EditUserByDistId(DistribId string, userIn models.User, tx *gorm.DB) (fiber.Map, int) {
+	if userIn.Pass != "" {
+		return utils.CommonMessage("Cannot change password!", fiber.StatusForbidden, tx)
+	}
 
 	user, err := repositories.EditUserByDistId(DistribId, userIn, tx)
-
 	if err != nil {
 		configs.Log.Errorln("Error calling EditUserByDistId fn from EditUserByDistId service fn", err.Error())
 		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
@@ -352,9 +378,7 @@ func UpdateUserPass(payload dto.UserPassIn, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
 	}
-
 	return fiber.Map{"data": "Password changed Successfully"}, fiber.StatusOK
-
 }
 
 func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
@@ -379,7 +403,7 @@ func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int)
 			}
 		}
 		return nil
-}
+	}
 
 	// Start building the referral chain
 	err := buildReferralChain(distribId, tx)

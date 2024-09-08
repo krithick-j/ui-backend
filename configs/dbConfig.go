@@ -26,6 +26,6 @@ func DbConnect(config *Config) {
 	}
 
 	Log.Infoln(context.Background(), "\x1b[32m🚀Successfully connected to Database\b[0m")
-	// db.AutoMigrate(&models.CpaTransaction{})
+	// db.AutoMigrate(&models.User{})
 	DB = db
 }

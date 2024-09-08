@@ -19,7 +19,7 @@ type DeliveryAddress struct {
 
 type OrderProduct struct {
 	ProductID     uint    `json:"product_id"`
-	ProductImage  string  `json:"product_image"`
+	ProductImage  string  `json:"image"`
 	Name          string  `json:"name"`
 	Quantity      uint    `json:"quantity"`
 	UnitPrice     float64 `json:"unit_price"`

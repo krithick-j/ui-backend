@@ -51,6 +51,11 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 ###
+GET  {{host}}/product HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+###
 POST {{host}}/order HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json

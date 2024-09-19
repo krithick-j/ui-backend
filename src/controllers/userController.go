@@ -53,7 +53,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
-func GetUserRank(c *fiber.Ctx) error {
+func GetProfileDetails(c *fiber.Ctx) error {
 	distribId := c.Params("distrib_id")
 	tx := configs.DB.Begin()
 	res, status := service.GetProfileDetails(distribId, tx)

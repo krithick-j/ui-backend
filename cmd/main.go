@@ -38,8 +38,7 @@ func main() {
 	api.Route("/user", routes.UserRouter) //Logger added
 	api.Route("/test", routes.TestRouter)
 	api.Route("/tc", routes.TcRouter)
-	api.Route("/static", routes.StaticRouter)         //this route is no longer used
-
+	api.Route("/static", routes.StaticRouter) //this route is no longer used
 
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
@@ -55,9 +54,8 @@ func main() {
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/redeem", routes.RedeemRouter)
 	api.Route("/tc", routes.TcRouter)
-	api.Route("/cheque", routes.CheckoutRouter)       //logger added
+	api.Route("/cheque", routes.CheckoutRouter)        //logger added
 	api.Route("/contactCenter", routes.ContactCenter) //logger added
-	api.Route("/admin", routes.AdminRouter)           //logger added
+	api.Route("/admin", routes.AdminRouter)            //logger added
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }
-	

@@ -270,7 +270,7 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 	if totalBalance != icouponBalance {
 		return utils.CommonMessage("Icoupon Balance and total balance does not match", fiber.StatusInternalServerError, tx)
 	}
-	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now(), tx)
+	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now().AddDate(0,6,0), tx)
 	if status != fiber.StatusCreated {
 		return res, status
 	}

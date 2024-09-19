@@ -56,7 +56,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 func GetUserRank(c *fiber.Ctx) error {
 	distribId := c.Params("distrib_id")
 	tx := configs.DB.Begin()
-	res, status := service.GetUserRank(distribId, tx)
+	res, status := service.GetProfileDetails(distribId, tx)
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on Committing tx from GetAllUsers controller", err.Error())

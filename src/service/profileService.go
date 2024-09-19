@@ -179,23 +179,18 @@ func VerifyEmailCode(otp string, email string, tx *gorm.DB) (fiber.Map, int) {
 	if otp == "151515" {
 		err := repositories.UpdateOTPVerified("email", email, tx)
 		if err != nil {
-			tx.Rollback()
-			configs.Log.Errorln("Error calling UpdateOTPVerified fn from VerifyEmailCode service fn", err.Error())
-			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+			utils.NotNilErrorMessage(err, "UpdateOTPVerified", "VerifyEmailCode", fiber.StatusInternalServerError, tx)
 		}
 	}
 	err := repositories.CheckAndUpdateOTP("email", email, otp, tx)
 	if err != nil {
-		tx.Rollback()
-		configs.Log.Errorln("Error calling CheckAndUpdateOTP fn from VerifyEmailCode service fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		utils.NotNilErrorMessage(err, "CheckAndUpdateOTP", "VerifyEmailCode", fiber.StatusInternalServerError, tx)
 	}
-	if tx.RowsAffected < 1 {
-		configs.Log.Errorln("Record not found in CheckAndUpdateOTP repositories fn")
-		return fiber.Map{"error": "Record Not Found"}, fiber.StatusNotFound
+	if err == gorm.ErrRecordNotFound {
+		utils.RecordNotFoundMessage(err, tx)
 	}
 
-	return fiber.Map{"data": "OTP verified"}, fiber.StatusOK
+	return utils.SuccessMessage("OTP verified", fiber.StatusOK)
 }
 
 func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {

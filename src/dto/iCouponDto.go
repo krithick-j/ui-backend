@@ -26,8 +26,8 @@ type SendCoupon struct {
 	VID       string
 	Pin       string
 	Value     float64
-	DateOn    time.Time
-	ExpiresOn time.Time
+	DateOn    string
+	ExpiresOn string
 	Active    bool
 }
 

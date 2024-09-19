@@ -13,5 +13,4 @@ func ContactCenter(router fiber.Router) {
 	router.Get("/getAllContactQueries", controllers.GetAllContactQueries)
 	router.Post("/enquiryType", controllers.AddEnquiryType)
 	router.Get("/allEnquiryType", controllers.GetAllEnquiryType)	
-	
 }

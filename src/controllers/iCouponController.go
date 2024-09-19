@@ -22,7 +22,7 @@ func CreateICoupon(c *fiber.Ctx) error {
 	}
 	fmt.Println(iCouponIn)
 	tx := configs.DB.Begin()
-	res, status := service.AddICoupon(iCouponIn, adminName,time.Now(), tx)
+	res, status := service.AddICoupon(iCouponIn, adminName,time.Now().AddDate(0, 6, 0), tx)
 	// If no error occurred, commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()

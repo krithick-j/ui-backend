@@ -1,4 +1,4 @@
-@host = http://localhost:8000/api
+@host = https://ui-network.com/api
 # @host = https://ui-network.com/api 
 
 
@@ -94,6 +94,22 @@ content-type: application/json
     "country": "India",
     "home_phone_no": "080-12345678",
     "mobile_phone_no": "+91-9876543210"
+}
+
+###
+POST {{host}}/auth/emailcode HTTP/1.1
+content-type: application/json
+
+{
+    "email": "arunsmart@gmail.com",
+}
+
+###
+PUT {{host}}/auth/emailcode HTTP/1.1
+content-type: application/json
+
+{
+    "email": "arunsmart@gmail.com",
 }
 
 ###

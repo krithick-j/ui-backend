@@ -102,16 +102,18 @@ func GetUsers(tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": users}, fiber.StatusOK
 }
 
-func GetUserRank(distribId string, tx *gorm.DB) (fiber.Map, int) {
-	currentRank, titleRank, err := repositories.GetCurrentTitleRankByDistribId(distribId, tx)
+func GetProfileDetails(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	profileDetails, err := repositories.GetProfileDetails(distribId, tx)
 	if err != nil {
-		return utils.NotNilErrorMessage(err, "GetCurrentTitleRankByDistribId", "GetUserRank", fiber.StatusInternalServerError, tx)
+		return utils.NotNilErrorMessage(err, "GetProfileDetails", "GetProfileDetails", fiber.StatusInternalServerError, tx)
 	}
-	data := map[string]float64{
-		"current_rank": currentRank,
-		"title_rank":   titleRank,
+	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006")
+	out := map[string]any{
+		"current_rank": profileDetails.CurrentRank,
+		"last_login":   lastLogin,
+		"title_rank":   profileDetails.TitleRank,
 	}
-	return utils.SuccessMessage(data, fiber.StatusOK)
+	return utils.SuccessMessage(out, fiber.StatusOK)
 }
 
 func FindNextAvailUserSeq(tx *gorm.DB) (string, error) {
@@ -258,6 +260,7 @@ func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.
 		ApplicationInformation:        ApplicationInfo,
 		BankDetails:                   BankDetails,
 		PreferredPlacementInformation: PreferredPlacementInformation,
+		LastLogin:                     time.Now(),
 	}
 	return user
 }

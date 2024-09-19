@@ -33,6 +33,12 @@ type AuthOut struct {
 	LastLogin time.Time `json:"last_login"`
 }
 
+type ProfileDetails struct {
+	CurrentRank float64   `gorm:"column:current_rank"`
+	TitleRank   float64   `gorm:"column:highest_rank"`
+	LastLogin   time.Time `gorm:"column:last_login"`
+}
+
 type RecursiveUser struct {
 	Name           string         `json:"name"`
 	TrackingCenter string         `json:"tracking_center"`

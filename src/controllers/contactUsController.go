@@ -58,7 +58,6 @@ func SubmitContactUsQuery(c *fiber.Ctx) error {
 				tx.Rollback()
 			}
 			if status == 200 {
-
 				if formName.AadhaarFront != "" {
 					path := fmt.Sprintf("contactQueryUploads/%s", formName.AadhaarFront)
 					c.SaveFile(&fileFormObj.AadhaarFront, path)

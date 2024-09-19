@@ -11,6 +11,7 @@ import (
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -122,8 +123,8 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string,expireDate time.Time, 
 				VID:       iCoupon.VID,
 				Pin:       iCoupon.Pin,
 				Value:     iCoupon.Value,
-				DateOn:    iCoupon.DateOn,
-				ExpiresOn: iCoupon.ExpiresOn,
+				DateOn:    utils.FormatTimeByLocation(iCoupon.ExpiresOn, "Asia/Kolkata", "02-01-2006"),
+				ExpiresOn: utils.FormatTimeByLocation(iCoupon.ExpiresOn, "Asia/Kolkata", "02-01-2006"),
 				Active:    iCoupon.Active,
 			}
 			iCoupons = append(iCoupons, SendCoupon)

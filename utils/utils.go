@@ -32,6 +32,11 @@ func CommonMessage(Message string, status int, tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"error": Message}, status
 }
 
+func ErrorMessage(Message string, status int) (fiber.Map, int) {
+	configs.Log.Errorln(Message)
+	return fiber.Map{"error": Message}, status
+}
+
 func SuccessMessage(data any, status int) (fiber.Map, int) {
 	return fiber.Map{"data": data}, status
 }

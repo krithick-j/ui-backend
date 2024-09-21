@@ -84,7 +84,7 @@ func GenerateUniqueHexCode(length int) string {
 // }
 
 // This function is used to generate ICoupon and send email
-func AddICoupon(iCouponIn dto.ICouponIn, adminName string,expireDate time.Time, tx *gorm.DB) (fiber.Map, int) {
+func AddICoupon(iCouponIn dto.ICouponIn, adminName string, expireDate time.Time, tx *gorm.DB) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
 	var iCoupons []dto.SendCoupon
@@ -123,7 +123,7 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string,expireDate time.Time, 
 				VID:       iCoupon.VID,
 				Pin:       iCoupon.Pin,
 				Value:     iCoupon.Value,
-				DateOn:    utils.FormatTimeByLocation(iCoupon.ExpiresOn, "Asia/Kolkata", "02-01-2006"),
+				DateOn:    utils.FormatTimeByLocation(iCoupon.DateOn, "Asia/Kolkata", "02-01-2006"),
 				ExpiresOn: utils.FormatTimeByLocation(iCoupon.ExpiresOn, "Asia/Kolkata", "02-01-2006"),
 				Active:    iCoupon.Active,
 			}

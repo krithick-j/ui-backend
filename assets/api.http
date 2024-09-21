@@ -1,5 +1,6 @@
-@host = https://ui-network.com/api
-# @host = https://ui-network.com/api 
+# @host = https://ui-network.com/api
+# @host = https://stg.ui-network.com/api 
+@host = http://localhost:8000/api 
 
 
 ###
@@ -36,7 +37,7 @@ GET {{host}}/user/tree/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 
 ###
-GET {{host}}/user/rank/IN-00004 HTTP/1.1
+GET {{host}}/user/profile/IN-00001 HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 

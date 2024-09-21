@@ -67,7 +67,6 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 		DistribID: res.DistribID,
 		AuthToken: tokenstring,
 		KYCStatus: res.KYCStatus,
-		LastLogin: res.LastLogin.UTC(),
 	}
 	return fiber.Map{"data": authout}, fiber.StatusAccepted
 }
@@ -107,7 +106,7 @@ func GetProfileDetails(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetProfileDetails", "GetProfileDetails", fiber.StatusInternalServerError, tx)
 	}
-	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006")
+	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006 15:04")
 	out := map[string]any{
 		"current_rank": profileDetails.CurrentRank,
 		"last_login":   lastLogin,

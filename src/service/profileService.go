@@ -46,18 +46,18 @@ func IDCardFactory() *fpdf.Fpdf {
 }
 
 func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *fpdf.Fpdf {
-
 	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
 	extension := filepath.Ext(userphoto)
 	extension, _ = strings.CutPrefix(extension, ".")
-
+	fmt.Println("userphoto", userphoto)
+	fmt.Println("extension", extension)
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
 		errStr := fmt.Sprintf("File Does Not exist: %s", userphoto)
 		utils.ErrorMessage(errStr, fiber.StatusNotFound)
 	}
-	if _, err := os.Stat("./assets/images/uilogo.png"); errors.Is(err, os.ErrNotExist) {
-		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/uilogo.png"))
+	if _, err := os.Stat("./assets/images/uilogo.jpeg"); errors.Is(err, os.ErrNotExist) {
+		configs.Log.Error("File Does Not exist", zap.String("image", "./assets/images/uilogo.jpeg"))
 	}
 	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
 	var (
@@ -153,6 +153,7 @@ func GenerateIDCard(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Info("Started Generating ID Card")
 	userdata, _ := repositories.GetUserByID(distrib_id, tx)
 	// Create ID Card Layout
+	fmt.Println("hello")
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)

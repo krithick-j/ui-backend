@@ -9,7 +9,7 @@ import (
 
 func Test() (fiber.Map, int) {
 	tx := configs.DB.Begin()
-	invoicePdfPath, status, err := GenerateInvoice("3A733A61C3", "bv", tx)
+	invoicePdfPath, status, err := GenerateDistributorForm("IN-00001", tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GenerateInvoice", "Test", status, tx)
 	}

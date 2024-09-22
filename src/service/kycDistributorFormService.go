@@ -22,25 +22,15 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 		currY float64 = 8
 	)
 
-	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
-	//Ubiquitous Infinity Network Pvt Ltd and Address
-	pdf.SetFont("Arial", "B", 12)
-	currX += 8
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Ubiquitous Infinity Network Pvt Ltd")
-	pdf.SetFont("Arial", "", 8)
-	currX += 5
-	currY += 5
-	pdf.SetXY(currX, currY)
-	currX += 4
-	currY += 4
 	currX += 12
-	currY += 4
+	currY += 2
+	pdf.SetXY(currX, currY)
+	pdf.Image("assets/images/uilogo.jpeg", currX, currY, 47, 18, false, "jpeg", 0, "")
 
 	//Line
 	currX = 0
-	currY += 5
+	currY += 25
+	pdf.SetXY(currX, currY)
 	pdf.Line(currX, currY, currX+600, currY)
 
 	//INVOICE

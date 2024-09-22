@@ -37,8 +37,8 @@ func IDCardFactory() *fpdf.Fpdf {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
-	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
-	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 70, 12, 6, 0, false, "jpeg", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 104, 49, 6, 0, false, "jpeg", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -83,7 +83,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	pdf.SetFont("Arial", "", 8)
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Dist ID: "+userdata.DistribID)
+	pdf.Cell(0, 0, "Distrib ID: "+userdata.DistribID)
 	currY += 4
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "Email: "+userdata.EmailAddress)

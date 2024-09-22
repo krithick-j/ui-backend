@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"mime/multipart"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
@@ -38,10 +40,10 @@ func GetProductCategories(tx *gorm.DB) (fiber.Map, int) {
 	return utils.SuccessMessage(productCategories, fiber.StatusOK)
 }
 
-func GetProductByCategoryID(categoryIds []string, productTypes []string, tx *gorm.DB) (fiber.Map, int) {
+func GetProductByCategoryID(categoryIds []string, productTypes []string, isActive bool, tx *gorm.DB) (fiber.Map, int) {
 
-    // Construct the query with both category IDs and product types
-    product, err := repositories.GetAllProductByCategoryIdAndProductTypeFilter(categoryIds, productTypes, tx)
+	// Construct the query with both category IDs and product types
+	product, err := repositories.GetAllProductByCategoryIdAndProductTypeFilter(categoryIds, productTypes, isActive, tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetAllProductByCategoryIdAndProductTypeFilter", "GetProductByCategoryID", fiber.StatusInternalServerError, tx)
 	}
@@ -208,19 +210,6 @@ func EditCartProducts(payload models.CartItem, distrib_id string, product_id str
 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, fiber.StatusOK
 }
 
-// func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
-
-// 	cartItem, result := repositories.EditProduct(distrib_id, product_id, payload)
-
-// 	if result.Error != nil {
-// 		configs.Log.Errorln("Error saving user to the database:", result.Error.Error())
-// 		return fiber.Map{"error": result.Error.Error()}, http.StatusBadGateway
-// 	}
-
-// 	return fiber.Map{"success": "Product Updated Successfully", "UpdatedProduct": cartItem}, http.StatusOK
-// }
-
-// func CreateProduct(payload dto.ProductIn, adminName string) (fiber.Map, int) {
 func CreateProduct(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
 	data := c.FormValue("data")
 	product := models.Product{}
@@ -257,18 +246,54 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, 
 	return fiber.Map{"data": "Product Successfully created"}, fiber.StatusCreated
 }
 
-// func EditProduct(payload models.Product, distrib_id string, product_id string) (fiber.Map, int) {
-// 	func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
-// 							fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
-// 							err := c.SaveFile(fh, fullPath)
-// 							if err != nil {
-// 	                               configs.Log.Errorln("Error on SaveFile fn from CreateProduct service fn")
-// 									fmt.Println(err.Error())
-// 							}
-// 							pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + fs + extension
-// 	func CreateProduct(c *fiber.Ctx, form *multipart.Form) (fiber.Map, int) {
-// 					}
-// 			}
-// 			repositories.SaveProductImage(pms)
-// 	       return fiber.Map{"data": "Product Successfully created"}, fiber.StatusCreated
-// 	 }
+func EditProduct(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
+	//data are stored here
+	data := c.FormValue("data")
+	product := models.Product{}
+	json.Unmarshal([]byte(data), &product)
+	err := repositories.UpdateProduct(&product, tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "UpdateProduct", "EditProduct", fiber.StatusInternalServerError, tx)
+	}
+
+	//images are deleted here
+	deletedImagesStr := c.FormValue("deleted_images")
+	delImagesStrSlice := strings.Split(deletedImagesStr, ",")
+	for _, imgStr := range delImagesStrSlice {
+		if imgID, err := strconv.Atoi(strings.TrimSpace(imgStr)); err == nil {
+			err := repositories.DeleteProductImageByID(uint(imgID), tx)
+			if err != nil {
+				return utils.NotNilErrorMessage(err, "DeleteProductImageByID", "EditProduct", fiber.StatusInternalServerError, tx)
+			}
+		}
+	}
+
+	//Images are created here
+	var pms []models.ProductImage
+	pid := product.ID
+	for _, fhs := range form.File {
+		for _, fh := range fhs {
+			pm := models.ProductImage{}
+			extension := filepath.Ext(fh.Filename)
+			fmt.Println(extension, fh.Filename)
+			uniqueName := GenerateUniqueHexCode(10)
+			fullPath := "./assets/" + fmt.Sprintf("%d", pid) + "-" + uniqueName + extension
+			err := c.SaveFile(fh, fullPath)
+			if err != nil {
+				return utils.NotNilErrorMessage(err, "SaveFile", "EditProduct", fiber.StatusInternalServerError, tx)
+			}
+			pm.Image = "media/" + fmt.Sprintf("%d", pid) + "-" + uniqueName + extension
+
+			pm.ProductID = pid
+			pms = append(pms, pm)
+		}
+	}
+	for _, pm := range pms {
+		err := repositories.SaveProductImage(pm, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "SaveProductImage", "EditProduct", fiber.StatusInternalServerError, tx)
+		}
+	}
+
+	return fiber.Map{"data": "Product Successfully edited"}, fiber.StatusCreated
+}

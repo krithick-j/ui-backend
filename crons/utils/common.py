@@ -99,7 +99,7 @@ def get_direct_bv(distrib_id: str) -> float:
     try:
         cursor = DB.cursor()
         sql = f"""
-        SELECT SUM(direct_bv) FROM rsp_transactions WHERE distrib_id ='{distrib_id}'
+        SELECT COALESCE(SUM(direct_bv), 0) FROM rsp_transactions WHERE distrib_id ='{distrib_id}'
         """
         cursor.execute(sql)
         result = cursor.fetchone()

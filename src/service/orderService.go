@@ -39,7 +39,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, tx *gorm.DB) (fiber.Map, int) {
 
 	invoicePdfPath, status, err := GenerateInvoice(orderId, productType, tx)
 	if err != nil {
-		return utils.NotNilErrorMessage(res["error"].(error), "GenerateInvoice", "PlaceOrder", status, tx)
+		return utils.NotNilErrorMessage(err, "GenerateInvoice", "PlaceOrder", status, tx)
 	}
 
 	err = SendHtmlMailOrder(total, invoicePdfPath)

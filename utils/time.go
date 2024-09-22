@@ -3,7 +3,7 @@ package utils
 import "time"
 
 // Use "02-01-2006" for dd-mm-yyyy
-// Use Asia/Kolkata for ITC time
+// Use Asia/Kolkata for IST time
 func FormatTimeByLocation(timeObj time.Time, location string, formatType string) string {
 	loc, _ := time.LoadLocation(location)
 	timeString := timeObj.In(loc).Format(formatType)

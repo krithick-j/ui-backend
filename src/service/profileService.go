@@ -37,8 +37,8 @@ func IDCardFactory() *fpdf.Fpdf {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
-	pdf.Image("./assets/images/logo.jpeg", 70, 12, 6, 0, false, "jpeg", 0, "")
-	pdf.Image("./assets/images/logo.png", 104, 49, 6, 0, false, "jpeg", 0, "")
+	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -53,11 +53,11 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
-		errStr := fmt.Sprintf("File Does Not exit: %s", userphoto)
+		errStr := fmt.Sprintf("File Does Not exist: %s", userphoto)
 		utils.ErrorMessage(errStr, fiber.StatusNotFound)
 	}
-	if _, err := os.Stat("./assets/images/logo.jpeg"); errors.Is(err, os.ErrNotExist) {
-		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/logo.jpeg"))
+	if _, err := os.Stat("./assets/images/uilogo.png"); errors.Is(err, os.ErrNotExist) {
+		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/uilogo.png"))
 	}
 	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
 	var (

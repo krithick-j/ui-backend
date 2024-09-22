@@ -142,6 +142,20 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func UpdateDp(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		configs.Log.Errorln("Error on parsing multipartForm from CreateProduct", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	tx := configs.DB.Begin()
+	res, status := service.UpdateDp(c, form, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
+}
+
 func NewReferrals(c *fiber.Ctx) error {
 	distrib_id := c.Params("distrib_id")
 

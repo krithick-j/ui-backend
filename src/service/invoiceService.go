@@ -138,40 +138,26 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 		currX float64 = 60
 		currY float64 = 8
 	)
-
 	// Function to check if there is enough space for the table
 	checkSpaceForTable := func(pdf *fpdf.Fpdf, rowCount int, rowHeight float64, lineHeight float64, headerHeight float64) {
 		_, pageHeight := pdf.GetPageSize()
 		_, _, _, bottomMargin := pdf.GetMargins()
 		availableHeight := pageHeight - pdf.GetY() - bottomMargin - 10
 		requiredHeight := lineHeight + headerHeight + float64(int(rowHeight)*rowCount)
-		fmt.Println("Required height--->", requiredHeight, "Available Height----->", availableHeight)
 		if requiredHeight > availableHeight {
 			pdf.AddPage()
 			currY = 10.0
 		}
 	}
-
-	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
-	//Universe International and Address
-	pdf.SetFont("Arial", "B", 12)
-	currX += 8
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Universe International")
-	pdf.SetFont("Arial", "", 8)
-	currX += 5
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "(Unit of GS ENTERPRISES)")
-	currX += 4
-	currY += 4
 	currX += 12
-	currY += 4
+	currY += 2
+	pdf.SetXY(currX, currY)
+	pdf.Image("assets/images/uilogo.jpeg", currX, currY, 44, 18, false, "jpeg", 0, "")
 
 	//Line
 	currX = 0
-	currY += 5
+	currY += 25
+	pdf.SetXY(currX, currY)
 	pdf.Line(currX, currY, currX+600, currY)
 
 	//INVOICE
@@ -370,6 +356,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	headerHeight := 8.0
 
 	checkSpaceForTable(pdf, len(orderDetails.OrdersLiners), rowHeight, lineHeight, headerHeight)
+
 	//Line
 	currX = 0
 	currY += 5
@@ -423,6 +410,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 		checkSpaceForTable(pdf, len(orderDetails.OrdersLiners), rowHeight, lineHeight, headerHeight)
 
 		fmt.Print("index:", i, "product details: ", product)
+
 		//Set Invoice Header
 		currX = 10
 		currY += rowHeight
@@ -499,6 +487,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	rowHeight = 8.0
 
 	checkSpaceForTable(pdf, len(bvDistributionTable), rowHeight, lineHeight, headerHeight)
+
 	//Line
 	currX = 0
 	currY += lineHeight
@@ -638,7 +627,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	pdf.SetFont("Arial", "", 7)
 	pdf.SetTextColor(128, 128, 128)
 
-	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Universe International Direct Selling (India) Pvt Ltd regarding this transaction."
+	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Ubiquitous Infinity Network Pvt Ltd regarding this transaction."
 	currY += 10.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -767,26 +756,15 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 		}
 	}
 
-	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
-	//Universe International and Address
-	pdf.SetFont("Arial", "B", 12)
-	currX += 8
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Universe International")
-	pdf.SetFont("Arial", "", 8)
-	currX += 5
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "(Unit of GS ENTERPRISES)")
-	currX += 4
-	currY += 4
 	currX += 12
-	currY += 4
+	currY += 2
+	pdf.SetXY(currX, currY)
+	pdf.Image("assets/images/uilogo.jpeg", currX, currY, 44, 18, false, "jpeg", 0, "")
 
 	//Line
 	currX = 0
-	currY += 5
+	currY += 25
+	pdf.SetXY(currX, currY)
 	pdf.Line(currX, currY, currX+600, currY)
 
 	//INVOICE
@@ -1192,7 +1170,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	pdf.SetFont("Arial", "", 7)
 	pdf.SetTextColor(128, 128, 128)
 
-	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Universe International Direct Selling (India) Pvt Ltd regarding this transaction."
+	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Ubiquitous Infinity Network Pvt Ltd regarding this transaction."
 	currY += 10.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -1343,6 +1321,8 @@ func GenerateInvoice(orderId string, productType string, tx *gorm.DB) (string, i
 	filename := fmt.Sprintf("./tmp/invoice-%s.pdf", orderId)
 	err = pdf.OutputFileAndClose(filename)
 	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln(fmt.Sprintf("Error on calling %s from %s service fn: %s", "OutputFileAndClose", "GenerateInvoice", err.Error()))
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 	return filename, fiber.StatusOK, err

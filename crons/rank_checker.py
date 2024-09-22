@@ -49,6 +49,7 @@ def check_rank_for_user(distrib_id: str)->int:
             return orank[idx]
 
 def check_rank_for_all()->None:
+
    for user in users:
        highest_rank = user['highest_rank']
        new_rank = check_rank_for_user(user['id'])
@@ -89,11 +90,21 @@ def update_current_highest_rank(distrib_id, new_rank, highest_rank):
     except Exception as e:
         print(f"Error in update_current_highest_rank: {str(e)}")
         return 0.0
+
+def update_rsp_time():
+    cursor = DB.cursor()
+    #To update the last update time
+    query = "UPDATE rsp_update_times SET rsp_update = NOW() "     
+    cursor.execute(query)
+    DB.commit()
+    cursor.close()
+
     
         
 users = get_all_users_with_frequency()
 GOAL = get_rank_goal()
 check_rank_for_all()
+update_rsp_time()
 # distrib_id = 'IN-00001'
 # GOAL = get_rank_goal()
 # print("bronze",check_rank_for_user(distrib_id, 1, 2))

@@ -18,6 +18,7 @@ type Product struct {
 	ProductImages     []ProductImage `json:"product_images"` //Multiple Images
 	GstPercentage     float64        `json:"gst_percentage"`
 	Details           string         `json:"details"`
+	Status            string            `json:"status" gorm:"default:'active'`
 }
 
 type ProductImage struct {

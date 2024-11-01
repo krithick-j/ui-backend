@@ -55,16 +55,15 @@ func GetAllProductByCategoryIdAndProductType(category_id string, productType str
 func GetAllProductByCategoryIdAndProductTypeFilter(categoryIds []string, productTypes []string, tx *gorm.DB) ([]models.Product, error) {
 
 	var products []models.Product
-	query := tx
 	if len(categoryIds) > 0 {
-		query = query.Where("product_category_id IN (?)", categoryIds)
+		tx = tx.Where("product_category_id IN (?)", categoryIds)
 	}
 	if len(productTypes) > 0 {
-		query = query.Where("product_type IN (?)", productTypes)
+		tx = tx.Where("product_type IN (?)", productTypes)
 	}
 
 	// Execute the query
-	err := query.Find(&products).Error
+	err := tx.Preload("ProductImages").Find(&products).Error
 	return products, err
 }
 

@@ -686,7 +686,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "      on the same, I can write to admin@ui-network.com ."
+	txt = "      on the same, I can write to support@ui-network.com ."
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -736,7 +736,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "27. I hereby agree to send in any complaints to the company on the official email address admin@ui-network.com and give the company 45 days to provide an"
+	txt = "27. I hereby agree to send in any complaints to the company on the official email address support@ui-network.com and give the company 45 days to provide an"
 	currY += 6.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -790,7 +790,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetTextColor(128, 128, 128)
 
 	txt = "Please send an email to "
-	mail := `admin@ui-network.com`
+	mail := `support@ui-network.com`
 	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
 	rest := " in case of further queries."
 	currY += 6.0
@@ -812,7 +812,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	mailtxt := "admin@ui-network.com"
+	mailtxt := "support@ui-network.com"
 	currX += 105
 	pdf.SetXY(currX, currY)
 	pdf.SetTextColor(0, 0, 255) // Set text color to blue

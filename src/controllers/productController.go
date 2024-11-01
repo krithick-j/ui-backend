@@ -10,7 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
-
+//In controller, you just validate the input and call the service function. Business logic written in service level.
 func GetProductsController(c *fiber.Ctx) error {
 	tx := configs.DB.Begin()
 	res, status := service.GetProducts(tx)

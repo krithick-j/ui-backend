@@ -712,7 +712,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
 	txt = "Please send an email to "
-	mail := `admin@ui-network.com`
+	mail := `support@ui-network.com`
 	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
 	rest := " in case of further queries."
 	currY += 6.0
@@ -734,7 +734,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	mailtxt := "admin@ui-network.com"
+	mailtxt := "support@ui-network.com"
 	currX += 105
 	pdf.SetXY(currX, currY)
 	pdf.SetTextColor(0, 0, 255) // Set text color to blue
@@ -1266,7 +1266,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
 	txt = "Please send an email to "
-	mail := `admin@ui-network.com`
+	mail := `support@ui-network.com`
 	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
 	rest := " in case of further queries."
 	currY += 6.0
@@ -1288,7 +1288,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	mailtxt := "admin@ui-network.com"
+	mailtxt := "support@ui-network.com"
 	currX += 105
 	pdf.SetXY(currX, currY)
 	pdf.SetTextColor(0, 0, 255) // Set text color to blue

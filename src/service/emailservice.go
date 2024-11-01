@@ -44,7 +44,7 @@ func MailFactory() *mail.Client {
 
 func SendPlainMail(tomail string, subject string, msg string) (fiber.Map, int) {
 	m := mail.NewMsg()
-	m.From("No Reply<admin@ui-network.com>")
+	m.From("No Reply<support@ui-network.com>")
 	m.To(tomail)
 	m.Subject(subject)
 	m.SetBodyString(mail.TypeTextPlain, msg)
@@ -61,7 +61,7 @@ func SendPlainMail(tomail string, subject string, msg string) (fiber.Map, int) {
 func SendHtmlMailICoupon(tomail string, subject string, data []dto.SendCoupon) error {
 	//Add admin mail to every email
 	m := mail.NewMsg()
-	m.From("No Reply<admin@ui-network.com>")
+	m.From("No Reply<support@ui-network.com>")
 	m.To(tomail)
 	m.Bcc(adminmail)
 	m.Subject(subject)
@@ -88,7 +88,7 @@ func SendHtmlMailICoupon(tomail string, subject string, data []dto.SendCoupon) e
 func SendHtmlMailOrder(order dto.OrderDetailsOut, attachment string) error {
 
 	m := mail.NewMsg()
-	m.From("No Reply<admin@ui-network.com>")
+	m.From("No Reply<support@ui-network.com>")
 	m.To(order.CustomerDetails.Email)
 	m.Bcc(adminmail)
 	m.Subject("Your order is received")

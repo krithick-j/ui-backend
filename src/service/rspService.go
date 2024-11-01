@@ -179,35 +179,36 @@ func GetRspValuesByDistribID(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 	}
 	grpPerformance := groupPerformanceResult["data"]
 
-	response := fiber.Map{
-		"direct_bv":         directBv,
-		"personal_rsp":      personalRsp,
-		"group_rsp":         groupRsp,
-		"step":              step,
-		"group_performance": grpPerformance,
+	rspUpdateTime, err := repositories.GetRspTime(tx)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetRspTime", "GetRspValuesByDistribID", fiber.StatusInternalServerError, tx)
 	}
+	fmtUpdateTime := utils.FormatTimeByLocation(rspUpdateTime, "Asia/Kolkata", "2 Jan 2006 15:04")
 
-	response = fiber.Map{
-		"direct_bv": fiber.Map{
-			"value":     directBv,
-			"max_value": directBvMax,
+	response := fiber.Map{
+		"data": fiber.Map{
+			"direct_bv": fiber.Map{
+				"value":     directBv,
+				"max_value": directBvMax,
+			},
+			"personal_rsp": fiber.Map{
+				"value":     personalRsp,
+				"max_value": personalRspMax,
+			},
+			"group_rsp": fiber.Map{
+				"value":     groupRsp,
+				"max_value": groupRspMax,
+			},
+			"step": fiber.Map{
+				"value":     step,
+				"max_value": stepMax,
+			},
+			"group_performance": fiber.Map{
+				"value":     grpPerformance,
+				"max_value": groupPerformanceMax,
+			},
 		},
-		"personal_rsp": fiber.Map{
-			"value":     personalRsp,
-			"max_value": personalRspMax,
-		},
-		"group_rsp": fiber.Map{
-			"value":     groupRsp,
-			"max_value": groupRspMax,
-		},
-		"step": fiber.Map{
-			"value":     step,
-			"max_value": stepMax,
-		},
-		"group_performance": fiber.Map{
-			"value":     grpPerformance,
-			"max_value": groupPerformanceMax,
-		},
+		"updated_time": fmtUpdateTime,
 	}
 	return utils.SuccessMessage(response, fiber.StatusOK)
 }
@@ -270,7 +271,7 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 	if totalBalance != icouponBalance {
 		return utils.CommonMessage("Icoupon Balance and total balance does not match", fiber.StatusInternalServerError, tx)
 	}
-	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now().AddDate(0,6,0), tx)
+	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now().AddDate(0, 6, 0), tx)
 	if status != fiber.StatusCreated {
 		return res, status
 	}

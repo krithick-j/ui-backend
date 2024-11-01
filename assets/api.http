@@ -1,6 +1,6 @@
 # @host = https://ui-network.com/api
 # @host = https://stg.ui-network.com/api 
-@host = http://localhost:8000/api 
+@host = https://ui-network.com/api 
 
 
 ###
@@ -47,7 +47,7 @@ Authorization: Bearer {{authToken}}
 content-type: application/json
 
 ###
-GET  {{host}}/product/filterByCategory?category_id=1,2,3&product_type=bv,rsp HTTP/1.1
+GET  {{host}}/product/filterByCategory?category_id=1,2,3&product_type=bv,rsp&is_active=false HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 
@@ -56,6 +56,14 @@ GET  {{host}}/product HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
 
+###
+PUT  {{host}}/admin/72 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+
+}
 ###
 POST {{host}}/order HTTP/1.1
 Authorization: Bearer {{authToken}}
@@ -110,8 +118,50 @@ PUT {{host}}/auth/emailcode HTTP/1.1
 content-type: application/json
 
 {
-    "email": "arunsmart@gmail.com",
+    "email": "arunsmart@gmail.com"
 }
+
+###
+PUT {{host}}/user/updateUser/IN-00001 HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+  "distrib_id": "string",
+  "pass": "string",
+  "cpa_pin": "string",
+  "mailing_address": "string",
+  "title": "mr./mrs./ms./N/A",
+  "name": "string",
+  "cheque_name": "string", 
+  "email_address": "string",
+  "home_phone_no": "string", 
+  "mobile_phone_no": "string",
+  "valid_id_no": "string",
+  "date_of_birth": "YYYY-MM-DD",
+  "mothers_maiden_name": "string",
+  "benificiary_name": "string",
+  "benificiary_relationship": "string",
+  "address1": "string",
+  "address2": "string",
+  "town_or_city": "string",
+  "district": "string",
+  "state_or_province": "string",
+  "pin_or_zip_code": "string",
+  "country": "string",
+  "pan_card": "string",
+  "bank_name": "string",
+  "bank_acc_no": "string",
+  "ifsc_code": "string",
+  "kyc_photo": "string",
+  "kyc_adhaar": "string",
+  "kyc_pan": "string",
+  "kyc_distrib_application_form": "string",
+  "kyc_acknowledgement_form": "string",
+  "kyc_status": "not_submitted/pending/verified"
+}
+
+
 
 ###
 GET  {{host}}/product/cartProducts/IN-00001 HTTP/1.1
@@ -240,6 +290,15 @@ content-type: application/json
 POST {{host}}/contactCenter/enquiryType HTTP/1.1
 Authorization: Bearer {{authToken}}
 content-type: application/json
+
+###
+POST {{host}}/user/distribApplicationForm HTTP/1.1
+Authorization: Bearer {{authToken}}
+content-type: application/json
+
+{
+	"distrib_id": "IN-00001"
+}
 
 //both less than 4000
 ###
@@ -396,7 +455,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 ###
-GET {{host}}/product/filterByCategory/1?product_type= HTTP/1.1
+GET {{host}}/product/filterByCategory/1?product_type=bv HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -422,7 +481,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-	"distrib_id": "IN-00015"
+	"distrib_id": "IN-00002"
 }
 
 ###
@@ -547,7 +606,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 	
 ###				
-GET {{host}}/test/IN-00001 HTTP/1.1
+GET {{host}}/test/ HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

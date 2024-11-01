@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"strings"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -32,17 +31,19 @@ func GetProductCategoriesController(c *fiber.Ctx) error {
 func GetProductsByCategoryID(c *fiber.Ctx) error {
 	categoryIdParam := c.Query("category_id")
 	var categoryIds []string
-    if categoryIdParam != "" {
-        categoryIds = strings.Split(categoryIdParam, ",")
-    }
+	isActive := c.QueryBool("is_active", true) //For user product api, give is active as 1. for admin, don't use is_active query
+
+	if categoryIdParam != "" {
+		categoryIds = strings.Split(categoryIdParam, ",")
+	}
 
 	productTypeParam := c.Query("product_type")
-    var productTypes []string
-    if productTypeParam != "" {
-        productTypes = strings.Split(productTypeParam, ",")
-    }
+	var productTypes []string
+	if productTypeParam != "" {
+		productTypes = strings.Split(productTypeParam, ",")
+	}
 	tx := configs.DB.Begin()
-	res, status := service.GetProductByCategoryID(categoryIds, productTypes, tx)
+	res, status := service.GetProductByCategoryID(categoryIds, productTypes, isActive, tx)
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 	}
@@ -147,7 +148,7 @@ func CreateProduct(c *fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		configs.Log.Errorln("Error on parsing multipartForm from CreateProduct", err.Error())
-		fmt.Println(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 	tx := configs.DB.Begin()
 	res, status := service.CreateProduct(c, form, tx)
@@ -157,18 +158,19 @@ func CreateProduct(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
-// func EditProduct(c *fiber.Ctx) error {
-// 	distrib_id := c.Query("distrib_id")
-// 	product_id := c.Query("product_id")
-
-// 	var payload models.Product
-// 	if err := c.BodyParser(&payload); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request format"})
-// 	}
-
-// 	res, status := service.EditProduct(payload, distrib_id, product_id)
-// 	return c.Status(status).JSON(res)
-// }
+func EditProduct(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		configs.Log.Errorln("Error on parsing multipartForm from CreateProduct", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	tx := configs.DB.Begin()
+	res, status := service.EditProduct(c, form, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
+}
 
 func GetOrderDetails(c *fiber.Ctx) error {
 	distrib_id := c.Query("distrib_id")

@@ -39,7 +39,7 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, tx *gorm.DB) (fiber.Map, int) {
 
 	invoicePdfPath, status, err := GenerateInvoice(orderId, productType, tx)
 	if err != nil {
-		return utils.NotNilErrorMessage(res["error"].(error), "GenerateInvoice", "PlaceOrder", status, tx)
+		return utils.NotNilErrorMessage(err, "GenerateInvoice", "PlaceOrder", status, tx)
 	}
 
 	err = SendHtmlMailOrder(total, invoicePdfPath)
@@ -525,7 +525,6 @@ func GetOrderDetails(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 		imageUrl, err := repositories.GetProductImage(item.Product.ID, tx)
 		if err != nil {
 			return utils.NotNilErrorMessage(err, "GetProductImage", "GetOrderDetails", fiber.StatusBadRequest, tx)
-
 		}
 		configs.Log.Infof("The Individual Item %v", item.Product.ProductType)
 		orderProduct := dto.OrderProduct{

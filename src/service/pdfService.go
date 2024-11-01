@@ -41,12 +41,12 @@ func GenerateConsentForm(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	pdf.Write(0, htmlContent.String())
 
 	// Save the PDF file to the specified path
-	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
-	err = pdf.OutputFileAndClose(filename)
+	savePath := fmt.Sprintf("./assets/%s-.pdf", distrib_id)
+	err = pdf.OutputFileAndClose(savePath)
 	if err != nil {
 		return utils.CommonErrorMessage(err, "Failed to save PDF", fiber.StatusInternalServerError, tx)
 	}
-
+	fileName := fmt.Sprintf("media/%s-ack-letter.pdf", distrib_id)
 	// Return success response with file location
-	return fiber.Map{"data": "DistribApplicationForm successfully generated", "file": filename}, fiber.StatusOK
+	return fiber.Map{"data": "DistribApplicationForm successfully generated", "file": fileName}, fiber.StatusOK
 }

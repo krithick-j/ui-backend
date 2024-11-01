@@ -10,6 +10,7 @@ by default. The same center code if referred in other places called place
 import (
 	"crypto/sha256"
 	"fmt"
+	"mime/multipart"
 	"strconv"
 	"strings"
 	"time"
@@ -67,7 +68,6 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 		DistribID: res.DistribID,
 		AuthToken: tokenstring,
 		KYCStatus: res.KYCStatus,
-		LastLogin: res.LastLogin.UTC(),
 	}
 	return fiber.Map{"data": authout}, fiber.StatusAccepted
 }
@@ -107,7 +107,7 @@ func GetProfileDetails(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetProfileDetails", "GetProfileDetails", fiber.StatusInternalServerError, tx)
 	}
-	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006")
+	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006 15:04")
 	out := map[string]any{
 		"current_rank": profileDetails.CurrentRank,
 		"last_login":   lastLogin,
@@ -416,4 +416,20 @@ func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int)
 
 	// Return the final referral chain
 	return utils.SuccessMessage(userArr, fiber.StatusOK)
+}
+
+func UpdateDp(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
+	distrib_id := c.FormValue("distrib_id")
+	fh, err := c.FormFile("dp")
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "FormFile", "UpdateDp", fiber.StatusInternalServerError, tx)
+	}
+	fullPath := "./assets/distrib-image/" + distrib_id + ".png"
+	err = c.SaveFile(fh, fullPath)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "SaveFile", "UpdateDp", fiber.StatusInternalServerError, tx)
+	}
+
+	mediaPath := "media/distrib-image/" + distrib_id + ".png"
+	return fiber.Map{"data": "User Dp Successfully updated", "path": mediaPath}, fiber.StatusOK
 }

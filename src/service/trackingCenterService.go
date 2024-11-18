@@ -277,13 +277,22 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				side = "bv"
 			}
 
+			// Example current date
+			currentDate := time.Now()
+
+			// Calculate the next Friday
+			daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
+			nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
+
+			// Add 14 days to get the desired ActivateDate
+			activateDate := nextFriday.AddDate(0, 0, 14)
 			BvObj := models.BvTransaction{
 				DistribId:    distrib_id,
 				Place:        placeBv.Place,
 				OrderId:      orderId,
 				Date:         time.Now(),
 				BvValue:      placeBv.AddBv,
-				ActivateDate: time.Now().AddDate(0, 0, 15),
+				ActivateDate: activateDate,
 				Side:         side,
 				TransType:    "product",
 			}
@@ -314,13 +323,20 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 					//if parentTc.LeftDistribID == currentTc.DistribID && parentTc.LeftPlace == currentTc.Place {
 					side = "left"
 				}
+				// Example current date
+				currentDate := time.Now()
+
+				// Calculate the next Friday
+				daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
+				nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
+
 				BvObj := models.BvTransaction{
 					DistribId:    parentTc.DistribID,
 					Place:        parentTc.Place,
 					OrderId:      orderId,
 					Date:         time.Now(),
 					BvValue:      placeBv.AddBv,
-					ActivateDate: time.Now().AddDate(0, 0, 15),
+					ActivateDate: nextFriday,
 					Side:         side,
 					TransType:    "product",
 				}

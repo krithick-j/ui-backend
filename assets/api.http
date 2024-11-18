@@ -1,6 +1,6 @@
 # @host = https://ui-network.com/api
 # @host = https://stg.ui-network.com/api 
-@host = https://ui-network.com/api 
+@host = http://localhost:8000/api 
 
 
 ###
@@ -608,7 +608,6 @@ Content-Type: application/json
 ###				
 GET {{host}}/test/ HTTP/1.1
 # GET {{host}}/test/IN-00002 HTTP/1.1
-Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 	

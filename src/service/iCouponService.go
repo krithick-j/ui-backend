@@ -212,10 +212,10 @@ func GetAllICouponsByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string, tx *gorm.DB) (fiber.Map, int) {
 	iCoupon, err := repositories.ValidateICoupon(payload.VID, payload.Pin, tx)
 	if err != nil {
-		tx.Rollback()
-		configs.Log.
-			Errorln("Error on calling  ValidateICoupon repositories fn from ValidateICoupon service fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		if err == gorm.ErrRecordNotFound {
+			return utils.RecordNotFoundMessage(err, tx)
+		}
+		return utils.NotNilErrorMessage(err, "ValidateICoupon", "ValidateICoupon", fiber.StatusInternalServerError, tx)
 	}
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, fiber.StatusBadRequest

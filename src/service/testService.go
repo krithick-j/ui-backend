@@ -9,10 +9,10 @@ import (
 
 func Test() (fiber.Map, int) {
 	tx := configs.DB.Begin()
-	invoicePdfPath, status, err := GenerateDistributorForm("IN-00001", tx)
+	filename, status, err := GenerateInvoice("AB9417EC34", "rsp", tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GenerateInvoice", "Test", status, tx)
 	}
 	tx.Commit()
-	return fiber.Map{"data": invoicePdfPath}, fiber.StatusOK
+	return fiber.Map{"data": filename}, fiber.StatusOK
 }

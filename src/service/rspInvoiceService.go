@@ -19,12 +19,11 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	)
 
 	// Function to check if there is enough space for the table
-	checkSpaceForTable := func(pdf *fpdf.Fpdf, rowCount int, rowHeight float64, lineHeight float64, headerHeight float64) {
+	checkSpaceForTable := func(pdf *fpdf.Fpdf, rowHeight float64, lineHeight float64, headerHeight float64) {
 		_, pageHeight := pdf.GetPageSize()
 		_, _, _, bottomMargin := pdf.GetMargins()
 		availableHeight := pageHeight - pdf.GetY() - bottomMargin - 10
-		requiredHeight := lineHeight + headerHeight + float64(int(rowHeight)*rowCount)
-		fmt.Println("Required height--->", requiredHeight, "Available Height----->", availableHeight)
+		requiredHeight := lineHeight + headerHeight + float64(int(rowHeight))
 		if requiredHeight > availableHeight {
 			pdf.AddPage()
 			currY = 10.0
@@ -237,7 +236,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	lineHeight := 10.0
 	headerHeight := 8.0
 
-	checkSpaceForTable(pdf, len(orderDetails.OrdersLiners), rowHeight, lineHeight, headerHeight)
+	checkSpaceForTable(pdf, rowHeight, lineHeight, headerHeight)
 	//Line
 	currX = 0
 	currY += 5
@@ -288,7 +287,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 
 	fmt.Println("order Details", orderDetails)
 	for i, product := range orderDetails.OrdersLiners {
-		checkSpaceForTable(pdf, len(orderDetails.OrdersLiners), rowHeight, lineHeight, headerHeight)
+		checkSpaceForTable(pdf, rowHeight, lineHeight, headerHeight)
 
 		fmt.Print("index:", i, "product details: ", product)
 		//Set Invoice Header
@@ -402,7 +401,7 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 
 	totalUsedValue := 0.0
 	for i, icoupon := range iCouponsArr {
-		checkSpaceForTable(pdf, len(iCouponsArr), rowHeight, lineHeight, headerHeight)
+		checkSpaceForTable(pdf, rowHeight, lineHeight, headerHeight)
 
 		// Set Invoice Items
 		currX = 10
@@ -437,117 +436,6 @@ func RspInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Order
 	pdf.CellFormat(44, rowHeight, fmt.Sprintf("%.2f", totalUsedValue), "1", 0, "R", true, 0, "")
 	pdf.SetFillColor(255, 255, 255)
 
-	pdf.AddPage()
-	currY = 10.0
-	currX = 10.0
-	pdf.SetFont("Arial", "BU", 11)
-	pdf.Cell(0, 0, "TERMS AND CONDITIONS")
-	pdf.SetFont("Arial", "", 7)
-	pdf.SetTextColor(128, 128, 128)
-
-	txt := "1. I have read, understood and agreed to be bound by all the terms and conditions set forth by Ubiquitous Infinity Network Pvt Ltd regarding this transaction."
-	currY += 10.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "    I have also read and agreed to comply with the Policies and Procedures as stated."
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "2. Refund Policy : "
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.SetFont("Arial", "B", 7)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	pdf.SetFont("Arial", "", 7)
-
-	txt = "Distributors are hereby notified that Products are subject to the Company's Buy-Back Policy."
-	currX += 25
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "3. The Company shall be obliged to buy-back any marketable product sold to a Customer/Distributor within fifteen (15) days from the date of invoice of the product after "
-	currY += 6.0
-	currX = 10
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "    withholding Tax Deducted at Source (TDS), Sales Incentive utilised, and other taxes if applicable, in accordance with its policies."
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "4. The Customer/Distributor should raise a written request to the Company for the product refund within 15 days from the date of invoice. No refund requests will be entertained after"
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "     15 days."
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "5. Upon receipt and examination of the physical products, the final decision for a product refund rests with the Company."
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "6. The Buy-Back Policy is only applicable for the cancellation of the full purchase order and upon the return of physical products to the company."
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "    In case of Combo products purchase or purchase order with multiple products, the distributor/customer must apply for refund conforming to all products of the said Combo set or "
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "    purchase order."
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "7. The company will not entertain a partial refund of selective products thereof. Subject to such products being in an unused state, accordingly the Company will process the refund "
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "    of the payment made by the distributor/customer."
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-
-	txt = "Please send an email to "
-	mail := `admin@ui-network.com`
-	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
-	rest := " in case of further queries."
-	currY += 6.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	currX += 27.8
-	pdf.SetXY(currX, currY)
-	pdf.SetTextColor(0, 0, 255) // Set text color to blue
-	pdf.SetFont("Arial", "U", 7)
-	pdf.WriteLinkString(0, mail, link)
-	pdf.SetFont("Arial", "", 7)
-	pdf.SetTextColor(128, 128, 128)
-	currX += 25.8
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, rest, "", 0, "L", true, 0, "")
-
-	txt = "Please PRINT this receipt for your future reference. For questions and comments, please eMail: "
-	currX = 10
-	currY += 3.0
-	pdf.SetXY(currX, currY)
-	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	mailtxt := "admin@ui-network.com"
-	currX += 105
-	pdf.SetXY(currX, currY)
-	pdf.SetTextColor(0, 0, 255) // Set text color to blue
-	pdf.SetFont("Arial", "U", 7)
-	pdf.WriteLinkString(0, mailtxt, link)
-	pdf.SetFont("Arial", "", 7)
-
+	TermsAndConditionsPage(pdf)
 	return pdf
 }

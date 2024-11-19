@@ -43,7 +43,8 @@ type ApplicationInformation struct {
 	MobilePhoneNo           string `json:"mobile_phone_no"`
 	ValidIdNo               string `json:"valid_id_no"`
 	DateOfBirth             string `json:"date_of_birth"`
-	MothersMaidenName       string `json:"mothers_maiden_name"`
+	MotherName             string `json:"mother_name"`
+	FatherName              string `json:"father_name"`
 	BenificiaryName         string `json:"benificiary_name"`
 	BeneficiaryRelationship string `json:"benificiary_relationship"`
 	AddressDetails

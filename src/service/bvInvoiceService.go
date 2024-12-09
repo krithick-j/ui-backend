@@ -425,7 +425,7 @@ func BvInvoiceFactory(orderDetails models.OrdersHeader, iCouponsArr []dto.Ordere
 	currY += 10
 
 	// Check space for the table
-	checkSpaceForTable(pdf, rowHeight, lineHeight, headerHeight)
+	pdf.AddPage()
 	// pdf.AddPage()
 	currY = 10.0
 

@@ -114,6 +114,14 @@ content-type: application/json
 }
 
 ###
+POST {{host}}/auth/phonecode HTTP/1.1
+content-type: application/json
+
+{
+    "phone_no": "7358371908"
+}
+
+###
 PUT {{host}}/auth/emailcode HTTP/1.1
 content-type: application/json
 

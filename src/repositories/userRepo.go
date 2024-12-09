@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"time"
+	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 
 	"gorm.io/gorm"
@@ -257,19 +258,16 @@ func GetCurrentRankValueByDistribId(distribId string, tx *gorm.DB) (float64, err
 	return currentRank, err
 }
 
-func GetCurrentTitleRankByDistribId(distribId string, tx *gorm.DB) (float64, float64, error) {
-	type Rank struct {
-		CurrentRank float64 `gorm:"column:current_rank"`
-		TitleRank   float64 `gorm:"column:highest_rank"`
-	}
-	var rank Rank
+func GetProfileDetails(distribId string, tx *gorm.DB) (dto.ProfileDetails, error) {
+
+	var pDetails dto.ProfileDetails
 	err := tx.
 		Model(&models.User{}).
-		Select("current_rank, highest_rank").
+		Select("current_rank, highest_rank, last_login").
 		Where("distrib_id = ?", distribId).
-		Take(&rank).
+		Take(&pDetails).
 		Error
-	return rank.CurrentRank, rank.TitleRank, err
+	return pDetails, err
 }
 
 func GetCurrentRankArrByDistribId(referredDistribIds []string, tx *gorm.DB) ([]float64, error) {

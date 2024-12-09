@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"path/filepath"
 	"ui-back-end/configs"
 	"ui-back-end/src/dto"
@@ -117,7 +118,7 @@ func SubmitContactUsQuery(form dto.ContactQueryFileForm, textfield dto.ContactUs
 func GetAllContactQueries(tx *gorm.DB) (fiber.Map, int) {
 
 	contactQueries, err := repositories.GetAllContactQueries(tx)
-
+	fmt.Println("contact queriesss--->", contactQueries)
 	if err == gorm.ErrRecordNotFound {
 		tx.Rollback()
 		configs.Log.Errorln("Record not found", err.Error())

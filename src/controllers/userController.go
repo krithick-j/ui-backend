@@ -53,10 +53,10 @@ func GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
-func GetUserRank(c *fiber.Ctx) error {
+func GetProfileDetails(c *fiber.Ctx) error {
 	distribId := c.Params("distrib_id")
 	tx := configs.DB.Begin()
-	res, status := service.GetUserRank(distribId, tx)
+	res, status := service.GetProfileDetails(distribId, tx)
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on Committing tx from GetAllUsers controller", err.Error())
@@ -136,6 +136,20 @@ func EditUserByDistId(c *fiber.Ctx) error {
 	}
 	tx := configs.DB.Begin()
 	res, status := service.EditUserByDistId(DistribID, user_in, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
+}
+
+func UpdateDp(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		configs.Log.Errorln("Error on parsing multipartForm from CreateProduct", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	tx := configs.DB.Begin()
+	res, status := service.UpdateDp(c, form, tx)
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 	}

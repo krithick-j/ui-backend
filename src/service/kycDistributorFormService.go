@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 	"ui-back-end/configs"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
@@ -21,26 +22,15 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 		currY float64 = 8
 	)
 
-	pdf.Image("assets/images/uilogo.png", currX, currY, 6, 0, false, "png", 0, "")
-	//Universe International and Address
-	pdf.SetFont("Arial", "B", 12)
-	currX += 8
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Universe International")
-	pdf.SetFont("Arial", "", 8)
-	currX += 5
-	currY += 5
-	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "(Unit of GS ENTERPRISES)")
-	currX += 4
-	currY += 4
 	currX += 12
-	currY += 4
+	currY += 2
+	pdf.SetXY(currX, currY)
+	pdf.Image("assets/images/uilogo.jpeg", currX, currY, 47, 18, false, "jpeg", 0, "")
 
 	//Line
 	currX = 0
-	currY += 5
+	currY += 25
+	pdf.SetXY(currX, currY)
 	pdf.Line(currX, currY, currX+600, currY)
 
 	//INVOICE
@@ -73,7 +63,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY -= 2
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 9)
-	pdf.CellFormat(55, 4, utils.FormatTimeByLocation(distribInformation.CreatedAt, "Asia/Kolkata", "02-01-2006 15:04:05"), "1", 0, "R", false, 0, "")
+	pdf.CellFormat(55, 4, utils.FormatTimeByLocation(time.Now(), "Asia/Kolkata", "02-01-2006 15:04:05"), "1", 0, "R", false, 0, "")
 	pdf.SetFont("Arial", "", 8)
 
 	currY += 10
@@ -427,7 +417,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetFont("Arial", "", 7)
 	pdf.CellFormat(0, 0, termsAndConditions, "", 0, "L", true, 0, "")
 
-	termsAndConditions = "4. I agree to adhere to the Know Your Customer ( KYC ) requirements as requested by Universe International Direct Selling"
+	termsAndConditions = "4. I agree to adhere to the Know Your Customer ( KYC ) requirements as requested by Ubiquitous Infinity Network Pvt Ltd"
 
 	currY += 3.0
 	pdf.SetXY(currX, currY)
@@ -686,7 +676,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "      on the same, I can write to admin@ui-network.com ."
+	txt = "      on the same, I can write to support@ui-network.com ."
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -736,7 +726,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
 
-	txt = "27. I hereby agree to send in any complaints to the company on the official email address admin@ui-network.com and give the company 45 days to provide an"
+	txt = "27. I hereby agree to send in any complaints to the company on the official email address support@ui-network.com and give the company 45 days to provide an"
 	currY += 6.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
@@ -790,7 +780,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	pdf.SetTextColor(128, 128, 128)
 
 	txt = "Please send an email to "
-	mail := `admin@ui-network.com`
+	mail := `support@ui-network.com`
 	link := "https://mail.google.com/mail/?view=cm&fs=1&to=" + mail
 	rest := " in case of further queries."
 	currY += 6.0
@@ -812,7 +802,7 @@ func DistributorFormFactory(distribInformation models.User, referrerDistribInfor
 	currY += 3.0
 	pdf.SetXY(currX, currY)
 	pdf.CellFormat(0, 0, txt, "", 0, "L", true, 0, "")
-	mailtxt := "admin@ui-network.com"
+	mailtxt := "support@ui-network.com"
 	currX += 105
 	pdf.SetXY(currX, currY)
 	pdf.SetTextColor(0, 0, 255) // Set text color to blue
@@ -848,11 +838,13 @@ func GenerateDistributorForm(distribId string, tx *gorm.DB) (string, int, error)
 
 	pdf := DistributorFormFactory(distributorInformation, referrerDistribInformation)
 
-	filename := fmt.Sprintf("./assets/%s-distrib-form.pdf", distribId)
-	err = pdf.OutputFileAndClose(filename)
+	savePath := fmt.Sprintf("./assets/%s-distrib-form.pdf", distribId)
+	err = pdf.OutputFileAndClose(savePath)
 	if err != nil {
 		return err.Error(), fiber.StatusInternalServerError, err
 	}
 
-	return filename, fiber.StatusOK, err
+	fileName := fmt.Sprintf("media/%s-distrib-form.pdf", distribId)
+
+	return fileName, fiber.StatusOK, err
 }

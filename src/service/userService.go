@@ -10,6 +10,7 @@ by default. The same center code if referred in other places called place
 import (
 	"crypto/sha256"
 	"fmt"
+	"mime/multipart"
 	"strconv"
 	"strings"
 	"time"
@@ -67,7 +68,6 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 		DistribID: res.DistribID,
 		AuthToken: tokenstring,
 		KYCStatus: res.KYCStatus,
-		LastLogin: res.LastLogin.UTC(),
 	}
 	return fiber.Map{"data": authout}, fiber.StatusAccepted
 }
@@ -102,16 +102,18 @@ func GetUsers(tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": users}, fiber.StatusOK
 }
 
-func GetUserRank(distribId string, tx *gorm.DB) (fiber.Map, int) {
-	currentRank, titleRank, err := repositories.GetCurrentTitleRankByDistribId(distribId, tx)
+func GetProfileDetails(distribId string, tx *gorm.DB) (fiber.Map, int) {
+	profileDetails, err := repositories.GetProfileDetails(distribId, tx)
 	if err != nil {
-		return utils.NotNilErrorMessage(err, "GetCurrentTitleRankByDistribId", "GetUserRank", fiber.StatusInternalServerError, tx)
+		return utils.NotNilErrorMessage(err, "GetProfileDetails", "GetProfileDetails", fiber.StatusInternalServerError, tx)
 	}
-	data := map[string]float64{
-		"current_rank": currentRank,
-		"title_rank":   titleRank,
+	lastLogin := utils.FormatTimeByLocation(profileDetails.LastLogin, "Asia/Kolkata", "02-01-2006 15:04")
+	out := map[string]any{
+		"current_rank": profileDetails.CurrentRank,
+		"last_login":   lastLogin,
+		"title_rank":   profileDetails.TitleRank,
 	}
-	return utils.SuccessMessage(data, fiber.StatusOK)
+	return utils.SuccessMessage(out, fiber.StatusOK)
 }
 
 func FindNextAvailUserSeq(tx *gorm.DB) (string, error) {
@@ -232,7 +234,8 @@ func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.
 		MobilePhoneNo:           user_in.MobilePhoneNo,
 		ValidIdNo:               user_in.ValidIdNo,
 		DateOfBirth:             user_in.DateOfBirth,
-		MothersMaidenName:       user_in.MothersMaidenName,
+		MotherName:             user_in.MotherName,
+		FatherName:              user_in.FatherName,
 		BenificiaryName:         user_in.BenificiaryName,
 		BeneficiaryRelationship: user_in.BeneficiaryRelationship,
 		AddressDetails:          AddressDetails,
@@ -258,6 +261,7 @@ func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.
 		ApplicationInformation:        ApplicationInfo,
 		BankDetails:                   BankDetails,
 		PreferredPlacementInformation: PreferredPlacementInformation,
+		LastLogin:                     time.Now(),
 	}
 	return user
 }
@@ -413,4 +417,20 @@ func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int)
 
 	// Return the final referral chain
 	return utils.SuccessMessage(userArr, fiber.StatusOK)
+}
+
+func UpdateDp(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, int) {
+	distrib_id := c.FormValue("distrib_id")
+	fh, err := c.FormFile("dp")
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "FormFile", "UpdateDp", fiber.StatusInternalServerError, tx)
+	}
+	fullPath := "./assets/distrib-image/" + distrib_id + ".png"
+	err = c.SaveFile(fh, fullPath)
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "SaveFile", "UpdateDp", fiber.StatusInternalServerError, tx)
+	}
+
+	mediaPath := "media/distrib-image/" + distrib_id + ".png"
+	return fiber.Map{"data": "User Dp Successfully updated", "path": mediaPath}, fiber.StatusOK
 }

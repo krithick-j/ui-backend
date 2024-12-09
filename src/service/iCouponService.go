@@ -11,6 +11,7 @@ import (
 	"ui-back-end/src/dto"
 	"ui-back-end/src/models"
 	"ui-back-end/src/repositories"
+	"ui-back-end/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -83,7 +84,7 @@ func GenerateUniqueHexCode(length int) string {
 // }
 
 // This function is used to generate ICoupon and send email
-func AddICoupon(iCouponIn dto.ICouponIn, adminName string,expireDate time.Time, tx *gorm.DB) (fiber.Map, int) {
+func AddICoupon(iCouponIn dto.ICouponIn, adminName string, expireDate time.Time, tx *gorm.DB) (fiber.Map, int) {
 
 	var iCoupon models.ICoupon
 	var iCoupons []dto.SendCoupon
@@ -122,8 +123,8 @@ func AddICoupon(iCouponIn dto.ICouponIn, adminName string,expireDate time.Time, 
 				VID:       iCoupon.VID,
 				Pin:       iCoupon.Pin,
 				Value:     iCoupon.Value,
-				DateOn:    iCoupon.DateOn,
-				ExpiresOn: iCoupon.ExpiresOn,
+				DateOn:    utils.FormatTimeByLocation(iCoupon.DateOn, "Asia/Kolkata", "02-01-2006"),
+				ExpiresOn: utils.FormatTimeByLocation(iCoupon.ExpiresOn, "Asia/Kolkata", "02-01-2006"),
 				Active:    iCoupon.Active,
 			}
 			iCoupons = append(iCoupons, SendCoupon)
@@ -211,10 +212,10 @@ func GetAllICouponsByDistribId(DistribID string, tx *gorm.DB) (fiber.Map, int) {
 func ValidateICoupon(payload dto.ValidateICouponIn, distribID string, tx *gorm.DB) (fiber.Map, int) {
 	iCoupon, err := repositories.ValidateICoupon(payload.VID, payload.Pin, tx)
 	if err != nil {
-		tx.Rollback()
-		configs.Log.
-			Errorln("Error on calling  ValidateICoupon repositories fn from ValidateICoupon service fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		if err == gorm.ErrRecordNotFound {
+			return utils.RecordNotFoundMessage(err, tx)
+		}
+		return utils.NotNilErrorMessage(err, "ValidateICoupon", "ValidateICoupon", fiber.StatusInternalServerError, tx)
 	}
 	if !iCoupon.Active {
 		return fiber.Map{"data": "Icoupon expired"}, fiber.StatusBadRequest

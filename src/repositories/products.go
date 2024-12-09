@@ -52,19 +52,18 @@ func GetAllProductByCategoryIdAndProductType(category_id string, productType str
 	return product, err
 }
 
-func GetAllProductByCategoryIdAndProductTypeFilter(categoryIds []string, productTypes []string, tx *gorm.DB) ([]models.Product, error) {
+func GetAllProductByCategoryIdAndProductTypeFilter(categoryIds []string, productTypes []string, IsActive bool, tx *gorm.DB) ([]models.Product, error) {
 
 	var products []models.Product
-	query := tx
 	if len(categoryIds) > 0 {
-		query = query.Where("product_category_id IN (?)", categoryIds)
+		tx = tx.Where("product_category_id IN (?)", categoryIds)
 	}
 	if len(productTypes) > 0 {
-		query = query.Where("product_type IN (?)", productTypes)
+		tx = tx.Where("product_type IN (?)", productTypes)
 	}
 
 	// Execute the query
-	err := query.Find(&products).Error
+	err := tx.Preload("ProductImages").Find(&products).Error
 	return products, err
 }
 
@@ -176,17 +175,17 @@ func EditCartProducts(distrib_id string, product_id string, payload models.CartI
 	return payload, err
 }
 
-// func EditProduct(distrib_id string, product_id string, payload models.Product) (models.Product, *gorm.DB) {
-// 	err := tx.Model(models.Product{}).Where("product_id=?", distrib_id, product_id).Updates(payload)
-// 	return payload, err
-// }
+func EditProduct(product_id string, payload models.Product, tx *gorm.DB) (models.Product, *gorm.DB) {
+	err := tx.Model(models.Product{}).Where("product_id=?", product_id).Updates(payload)
+	return payload, err
+}
 
 func SaveProductImage(productImage models.ProductImage, tx *gorm.DB) error {
 
 	err :=
 		tx.
 			Table("product_images").
-			Create(&productImage).
+			Save(&productImage).
 			Error
 	return err
 }
@@ -207,4 +206,21 @@ func SaveProduct(product *models.Product, tx *gorm.DB) (*models.Product, error) 
 	err := tx.Create(&product).Error
 
 	return product, err
+}
+
+func UpdateProduct(product *models.Product, tx *gorm.DB) error {
+	err := tx.
+		Table("users").
+		Where("product_id=?", product.ID).
+		Updates(product).
+		Error
+	return err
+}
+
+func DeleteProductImageByID(id uint, tx *gorm.DB) error {
+	err := tx.
+		Delete(&models.ProductImage{}, id).
+		Error
+
+	return err
 }

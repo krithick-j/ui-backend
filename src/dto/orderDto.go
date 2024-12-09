@@ -111,7 +111,7 @@ type ProductDetails struct {
 	Name         string  `json:"name"`
 	Quantity     uint    `json:"quantity"`
 	Price        float64 `json:"unit_price"`
-	ProductImage string  `json:"product_image"`
+	ProductImage string  `json:"image"`
 	ProductType  string  `json:"product_type"`
 	SAndH        float64 `json:"s_and_h"`
 	SubTotal     float64 `json:"sub_total"`

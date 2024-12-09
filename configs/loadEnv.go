@@ -11,7 +11,7 @@ type Config struct {
 	DBHost          string `mapstructure:"MYSQL_HOST"`
 	DBPort          int    `mapstructure:"MYSQL_PORT"`
 	ChequeDrawValue int    `mapstructure:"CHEQUE_DRAW_VALUE"`
-	AppPort int    `mapstructure:"APP_PORT"`
+	AppPort         int    `mapstructure:"APP_PORT"`
 }
 
 var GlobalConfig *Config

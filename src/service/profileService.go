@@ -37,8 +37,8 @@ func IDCardFactory() *fpdf.Fpdf {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
-	pdf.Image("./assets/images/uilogo.png", 70, 12, 6, 0, false, "png", 0, "")
-	pdf.Image("./assets/images/uilogo.png", 104, 49, 6, 0, false, "png", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 70, 12, 6, 0, false, "jpeg", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 104, 49, 6, 0, false, "jpeg", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -46,17 +46,18 @@ func IDCardFactory() *fpdf.Fpdf {
 }
 
 func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *fpdf.Fpdf {
-
 	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
 	extension := filepath.Ext(userphoto)
 	extension, _ = strings.CutPrefix(extension, ".")
-
+	fmt.Println("userphoto", userphoto)
+	fmt.Println("extension", extension)
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
-		configs.Log.Errorf("File Does Not exit %s", userphoto)
+		errStr := fmt.Sprintf("File Does Not exist: %s", userphoto)
+		utils.ErrorMessage(errStr, fiber.StatusNotFound)
 	}
-	if _, err := os.Stat("./assets/images/uilogo.png"); errors.Is(err, os.ErrNotExist) {
-		configs.Log.Error("File Does Not exit", zap.String("image", "./assets/images/uilogo.png"))
+	if _, err := os.Stat("./assets/images/uilogo.jpeg"); errors.Is(err, os.ErrNotExist) {
+		configs.Log.Error("File Does Not exist", zap.String("image", "./assets/images/uilogo.jpeg"))
 	}
 	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
 	var (
@@ -73,7 +74,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currX += -8
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Universe International - India")
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
 	pdf.SetFont("Arial", "B", 10)
 	currX += 36
 	currY -= 34
@@ -82,7 +83,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	pdf.SetFont("Arial", "", 8)
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Dist ID: "+userdata.DistribID)
+	pdf.Cell(0, 0, "Distrib ID: "+userdata.DistribID)
 	currY += 4
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, "Email: "+userdata.EmailAddress)
@@ -135,7 +136,8 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currY += 6
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(0, 0, "Universe International - India")
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
+	// pdf.Cell(0, 0, "Universe International - India")
 	currY += 4
 	pdf.SetXY(currX, currY)
 	pdf.SetFont("Arial", "", 6)
@@ -151,13 +153,13 @@ func GenerateIDCard(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Info("Started Generating ID Card")
 	userdata, _ := repositories.GetUserByID(distrib_id, tx)
 	// Create ID Card Layout
+	fmt.Println("hello")
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
 	err := pdf.OutputFileAndClose(filename)
 	if err != nil {
-		configs.Log.Error("Error is ", zap.String("outfile", err.Error()))
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		return utils.NotNilErrorMessage(err, "OutputFileAndClose", "GenerateIDCard", fiber.StatusInternalServerError, tx)
 	}
 	return fiber.Map{"data": filename}, fiber.StatusCreated
 }
@@ -179,23 +181,18 @@ func VerifyEmailCode(otp string, email string, tx *gorm.DB) (fiber.Map, int) {
 	if otp == "151515" {
 		err := repositories.UpdateOTPVerified("email", email, tx)
 		if err != nil {
-			tx.Rollback()
-			configs.Log.Errorln("Error calling UpdateOTPVerified fn from VerifyEmailCode service fn", err.Error())
-			return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+			utils.NotNilErrorMessage(err, "UpdateOTPVerified", "VerifyEmailCode", fiber.StatusInternalServerError, tx)
 		}
 	}
 	err := repositories.CheckAndUpdateOTP("email", email, otp, tx)
 	if err != nil {
-		tx.Rollback()
-		configs.Log.Errorln("Error calling CheckAndUpdateOTP fn from VerifyEmailCode service fn", err.Error())
-		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+		utils.NotNilErrorMessage(err, "CheckAndUpdateOTP", "VerifyEmailCode", fiber.StatusInternalServerError, tx)
 	}
-	if tx.RowsAffected < 1 {
-		configs.Log.Errorln("Record not found in CheckAndUpdateOTP repositories fn")
-		return fiber.Map{"error": "Record Not Found"}, fiber.StatusNotFound
+	if err == gorm.ErrRecordNotFound {
+		utils.RecordNotFoundMessage(err, tx)
 	}
 
-	return fiber.Map{"data": "OTP verified"}, fiber.StatusOK
+	return utils.SuccessMessage("OTP verified", fiber.StatusOK)
 }
 
 func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {
@@ -215,8 +212,8 @@ func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {
 	data.Set("source", "GSENTS")
 	data.Set("dmobile", "91"+phone)
 	data.Set("dlttempid", "1707171500974884924")
-	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\r\nGSENTS", otp))
-
+	data.Set("message", fmt.Sprintf("Dear Distributor,\r\nThis is your OTP for Login %s for your mobile number verification.", otp))
+	fmt.Print("otp", otp)
 	// Create a new POST request
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))
 	if err != nil {

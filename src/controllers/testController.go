@@ -7,7 +7,6 @@ import (
 )
 
 func TestController(c *fiber.Ctx) error {
-	distridId := c.Params("distribId") //string
-	res, status := service.Test(distridId)
+	res, status := service.Test()
 	return c.Status(status).JSON(res)
 }

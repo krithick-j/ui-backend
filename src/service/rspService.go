@@ -240,11 +240,14 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 	}
 
 	totalBalance := payload.CpaAmount + payload.DcAmount
-
+	if totalBalance != icouponBalance {
+		return utils.CommonMessage("Icoupon Balance and total balance does not match", fiber.StatusInternalServerError, tx)
+	}
+	activateDate := time.Now()
 	cpaObj := models.CpaTransaction{
 		DistribId:    payload.DistribID,
 		Reference:    reference,
-		ActivateDate: time.Now(),
+		ActivateDate: activateDate,
 		IsActive:     true,
 		Amount:       -payload.CpaAmount, //cpa value detected
 	}
@@ -252,26 +255,24 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "SaveCpaTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
 	}
+	if payload.DcAmount != 0 {
+		dcObj := models.DirectCommissionTransaction{
+			DistribId:    "",
+			Value:        -payload.DcAmount,
+			Reference:    reference,
+			RefDistribId: payload.DistribID, //This will be used to calculate the total dc amount and used to reduce the amount
+			ActivateDate: activateDate,
+			ExpiryDate:   activateDate.AddDate(0, 6, 0),
+			IsActive:     true,
+		}
 
-	dcObj := models.DirectCommissionTransaction{
-		DistribId:    "",
-		Value:        -payload.DcAmount,
-		Reference:    reference,
-		RefDistribId: payload.DistribID, //This will be used to calculate the total dc amount and used to reduce the amount
-		ActivateDate: time.Now(),
-		ExpiryDate:   time.Now().AddDate(0, 6, 0),
-		IsActive:     false,
+		err = repositories.SaveDirectCommissionTransaction(dcObj, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "SaveDirectCommissionTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+		}
 	}
 
-	err = repositories.SaveDirectCommissionTransaction(dcObj, tx)
-	if err != nil {
-		return utils.NotNilErrorMessage(err, "SaveDirectCommissionTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
-	}
-
-	if totalBalance != icouponBalance {
-		return utils.CommonMessage("Icoupon Balance and total balance does not match", fiber.StatusInternalServerError, tx)
-	}
-	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, time.Now().AddDate(0, 6, 0), tx)
+	res, status := AddICoupon(payload.ICouponIn, payload.DistribID, activateDate.AddDate(0, 6, 0), tx)
 	if status != fiber.StatusCreated {
 		return res, status
 	}

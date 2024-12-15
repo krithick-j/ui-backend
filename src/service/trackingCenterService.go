@@ -326,12 +326,6 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				//if parentTc.LeftDistribID == currentTc.DistribID && parentTc.LeftPlace == currentTc.Place {
 				side = "left"
 			}
-			// Example current date
-			currentDate := time.Now()
-
-			// Calculate the next Friday
-			daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
-			nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
 
 			BvObj := models.BvTransaction{
 				DistribId:    parentTc.DistribID,
@@ -339,7 +333,7 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 				OrderId:      orderId,
 				Date:         time.Now(),
 				BvValue:      placeBv.AddBv,
-				ActivateDate: nextFriday,
+				ActivateDate: activateDate,
 				Side:         side,
 				TransType:    "product",
 			}

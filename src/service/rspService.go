@@ -262,7 +262,7 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 			Reference:    reference,
 			RefDistribId: payload.DistribID, //This will be used to calculate the total dc amount and used to reduce the amount
 			ActivateDate: activateDate,
-			ExpiryDate:   activateDate.AddDate(0, 6, 0),
+			// ExpiryDate:   activateDate.AddDate(0, 6, 0),
 			IsActive:     true,
 		}
 

@@ -391,14 +391,24 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 		configs.Log.Errorln("Error on calling GetRefDistribIdByDistribId repositories fn from SaveDirectCommissionTransaction service fn")
 		return fiber.Map{"error": err.Error(), "err": err}, fiber.StatusInternalServerError
 	}
-	activateDayNumber := 21
+		// Example current date
+	currentDate := time.Now()
+
+	// Calculate the next Friday
+	daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
+	nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
+	daysUntilNextMonday := (1 - int(nextFriday.Weekday()) + 7) % 7
+	firstMonday := nextFriday.AddDate(0, 0, daysUntilNextMonday)
+	activateDate := firstMonday.AddDate(0, 0, 14) // Add 14 days to reach the 3rd Monday
+	daysToThirdMonday := int(activateDate.Sub(currentDate).Hours() / 24)
+
 	obj := models.DirectCommissionTransaction{
 		DistribId:    distribId,
 		Value:        value,
 		Reference:    reference,
 		RefDistribId: refDistribId,
-		ActivateDate: time.Now().AddDate(0, 0, activateDayNumber), //21 days
-		ExpiryDate:   time.Now().AddDate(0, 6, activateDayNumber), //6 months
+		ActivateDate: activateDate, 
+		ExpiryDate:   time.Now().AddDate(0, 6, daysToThirdMonday), //6 months
 	}
 
 	if err := repositories.SaveDirectCommissionTransaction(obj, tx); err != nil {

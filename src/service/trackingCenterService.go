@@ -246,37 +246,86 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 
 	configs.Log.Infoln("sum is ", sum, "total bv is", totalBv)
 	//Validation--> Sum of bv should match the totalValueType
-	if sum == totalBv {
-		//Adding Bv Points from the product to the tree
-		for _, placeBv := range placeBvs {
-			if placeBv.AddBv == 0 {
-				//Skip updating for empty values
-				continue
+	if sum != totalBv {
+		configs.Log.Errorln("total value and Total Bv in distribution table does not match!!Check the input values")
+		return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
+	}
+	// Example current date
+	currentDate := time.Now()
+
+	// Calculate the next Friday
+	daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
+	nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
+
+	// Add 14 days to get the desired ActivateDate
+	activateDate := nextFriday.AddDate(0, 0, 14)
+	//Adding Bv Points from the product to the tree
+	for _, placeBv := range placeBvs {
+		if placeBv.AddBv == 0 {
+			//Skip updating for empty values
+			continue
+		}
+		err := repositories.ActivateTC(distrib_id, placeBv.Place, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "ActivateTC", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+		}
+		trackingCenter, err := repositories.GetTrackingCenter(distrib_id, placeBv.Place, tx)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+		}
+		parentTrackingCenter, err := repositories.GetTrackingCenter(trackingCenter.PDistribId, trackingCenter.PPlace, tx)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+		}
+		var side string
+		if parentTrackingCenter.LeftDistribID == trackingCenter.DistribID && parentTrackingCenter.LeftPlace == trackingCenter.Place {
+			side = "left"
+		} else {
+			side = "right"
+		}
+
+		//hardcoded for 001
+		if placeBv.Place == "001" {
+			side = "bv"
+		}
+
+		BvObj := models.BvTransaction{
+			DistribId:    distrib_id,
+			Place:        placeBv.Place,
+			OrderId:      orderId,
+			Date:         time.Now(),
+			BvValue:      placeBv.AddBv,
+			ActivateDate: activateDate,
+			Side:         side,
+			TransType:    "product",
+		}
+		err = repositories.SaveBvTransaction(BvObj, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+		}
+		place := placeBv.Place
+		if side == "bv" {
+			side = "left"
+		}
+		currentTc, err := repositories.GetTrackingCenter(distrib_id, place, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+		}
+		for {
+			if currentTc.PDistribId == "" {
+				configs.Log.Infoln("Breaking from Infinite loop")
+				break
 			}
-			err := repositories.ActivateTC(distrib_id, placeBv.Place, tx)
+			parentTc, err := repositories.GetTrackingCenter(currentTc.PDistribId, currentTc.PPlace, tx)
 			if err != nil {
-				return utils.NotNilErrorMessage(err, "ActivateTC", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
-			}
-			trackingCenter, err := repositories.GetTrackingCenter(distrib_id, placeBv.Place, tx)
-			if err != nil && err != gorm.ErrRecordNotFound {
 				return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
 			}
-			parentTrackingCenter, err := repositories.GetTrackingCenter(trackingCenter.PDistribId, trackingCenter.PPlace, tx)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
-			}
-			var side string
-			if parentTrackingCenter.LeftDistribID == trackingCenter.DistribID && parentTrackingCenter.LeftPlace == trackingCenter.Place {
-				side = "left"
-			} else {
+			if parentTc.RightDistribID == currentTc.DistribID && parentTc.RightPlace == currentTc.Place {
 				side = "right"
+			} else {
+				//if parentTc.LeftDistribID == currentTc.DistribID && parentTc.LeftPlace == currentTc.Place {
+				side = "left"
 			}
-
-			//hardcoded for 001
-			if placeBv.Place == "001" {
-				side = "bv"
-			}
-
 			// Example current date
 			currentDate := time.Now()
 
@@ -284,76 +333,26 @@ func UpdateCurrentPlaceValues(distrib_id string, placeBvs []dto.PlaceBv, orderId
 			daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
 			nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
 
-			// Add 14 days to get the desired ActivateDate
-			activateDate := nextFriday.AddDate(0, 0, 14)
 			BvObj := models.BvTransaction{
-				DistribId:    distrib_id,
-				Place:        placeBv.Place,
+				DistribId:    parentTc.DistribID,
+				Place:        parentTc.Place,
 				OrderId:      orderId,
 				Date:         time.Now(),
 				BvValue:      placeBv.AddBv,
-				ActivateDate: activateDate,
+				ActivateDate: nextFriday,
 				Side:         side,
 				TransType:    "product",
 			}
-			err = repositories.SaveBvTransaction(BvObj, tx)
-			if err != nil {
-				return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
-			}
-			place := placeBv.Place
-			if side == "bv" {
-				side = "left"
-			}
-			currentTc, err := repositories.GetTrackingCenter(distrib_id, place, tx)
-			if err != nil {
-				return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
-			}
-			for {
-				if currentTc.PDistribId == "" {
-					configs.Log.Infoln("Breaking from Infinite loop")
-					break
-				}
-				parentTc, err := repositories.GetTrackingCenter(currentTc.PDistribId, currentTc.PPlace, tx)
+			if parentTc.IsActive {
+				err := repositories.SaveBvTransaction(BvObj, tx)
 				if err != nil {
-					return utils.NotNilErrorMessage(err, "GetTrackingCenter", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
+					return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
 				}
-				if parentTc.RightDistribID == currentTc.DistribID && parentTc.RightPlace == currentTc.Place {
-					side = "right"
-				} else {
-					//if parentTc.LeftDistribID == currentTc.DistribID && parentTc.LeftPlace == currentTc.Place {
-					side = "left"
-				}
-				// Example current date
-				currentDate := time.Now()
-
-				// Calculate the next Friday
-				daysUntilFriday := (5 - int(currentDate.Weekday()) + 7) % 7
-				nextFriday := currentDate.AddDate(0, 0, daysUntilFriday)
-
-				BvObj := models.BvTransaction{
-					DistribId:    parentTc.DistribID,
-					Place:        parentTc.Place,
-					OrderId:      orderId,
-					Date:         time.Now(),
-					BvValue:      placeBv.AddBv,
-					ActivateDate: nextFriday,
-					Side:         side,
-					TransType:    "product",
-				}
-				if parentTc.IsActive {
-					err := repositories.SaveBvTransaction(BvObj, tx)
-					if err != nil {
-						return utils.NotNilErrorMessage(err, "SaveBvTransaction", "UpdateCurrentPlaceValues", fiber.StatusInternalServerError, tx)
-					}
-
-				}
-				currentTc = parentTc
 			}
+			currentTc = parentTc
 		}
-		return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK
 	}
-	configs.Log.Errorln("total value and Total Bv in distribution table does not match!!Check the input values")
-	return fiber.Map{"error": "total value and Total Bv in distribution table does not match!!Check the input values"}, fiber.StatusInternalServerError
+	return fiber.Map{"data": "Data Successfully Updated"}, fiber.StatusOK
 }
 
 // available tc to buy is found using this function

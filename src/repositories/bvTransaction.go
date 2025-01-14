@@ -79,14 +79,16 @@ func GetBVforTCOneRow(distrib_id string, place string, tx *gorm.DB) (models.TCBv
 }
 
 // Get Tracking Center BV by Date
+//Used only in Bv Counter
 func GetBVforTCOneRowByDate(distrib_id string, tc string, fromDate time.Time, toDate time.Time, tx *gorm.DB) (models.TCBvOneRow, error) {
 	tcbv := models.TCBvOneRow{}
 	err :=
 		tx.
 			Table("bv_transactions").
 			Select("SUM(IF(side='bv', bv_value, 0)) as b_value, SUM(IF(side='left',bv_value, 0)) as l_value, SUM(IF(side='right', bv_value, 0)) as r_value").
-			Where("distrib_id = ? AND place = ? AND is_active = 1 ", distrib_id, tc).
-			Where("activate_date BETWEEN ? AND ?", fromDate, toDate).
+			Where("distrib_id = ? AND place = ?", distrib_id, tc).
+			Where("date BETWEEN ? AND ?", fromDate, toDate).
+			Where("trans_type='product'").
 			Take(&tcbv).
 			Error
 	return tcbv, err

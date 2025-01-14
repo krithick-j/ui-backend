@@ -49,8 +49,6 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
 	extension := filepath.Ext(userphoto)
 	extension, _ = strings.CutPrefix(extension, ".")
-	fmt.Println("userphoto", userphoto)
-	fmt.Println("extension", extension)
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
 		errStr := fmt.Sprintf("File Does Not exist: %s", userphoto)
@@ -153,7 +151,6 @@ func GenerateIDCard(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Info("Started Generating ID Card")
 	userdata, _ := repositories.GetUserByID(distrib_id, tx)
 	// Create ID Card Layout
-	fmt.Println("hello")
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
@@ -212,8 +209,7 @@ func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {
 	data.Set("source", "GSENTS")
 	data.Set("dmobile", "91"+phone)
 	data.Set("dlttempid", "1707171500974884924")
-	data.Set("message", fmt.Sprintf("Dear Distributor,\r\nThis is your OTP for Login %s for your mobile number verification.", otp))
-	fmt.Print("otp", otp)
+	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\r\nGSENTS", otp))
 	// Create a new POST request
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))
 	if err != nil {

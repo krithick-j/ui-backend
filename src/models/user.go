@@ -14,8 +14,8 @@ type User struct {
 	Pass           string    `json:"pass"`
 	CpaPin         string    `json:"cpa_pin"`
 	MailingAddress string    `json:"mailing_address"` //aadhar card mail address
-	CurrentRank    float64   `json:"current_rank" gorm:"default:1"`
-	HighestRank    float64   `json:"highest_rank" gorm:"default:1"`
+	CurrentRank    float64   `json:"current_rank" gorm:"default:2"`
+	HighestRank    float64   `json:"highest_rank" gorm:"default:2"`
 	LastLogin      time.Time `json:"last_login"`
 
 	ReferrerInformation

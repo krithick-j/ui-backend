@@ -37,8 +37,7 @@ func IDCardFactory() *fpdf.Fpdf {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
-	pdf.Image("./assets/images/uilogo.jpeg", 70, 12, 6, 0, false, "jpeg", 0, "")
-	pdf.Image("./assets/images/uilogo.jpeg", 104, 49, 6, 0, false, "jpeg", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 61, 11, 28, 0, false, "jpeg", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -57,7 +56,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	if _, err := os.Stat("./assets/images/uilogo.jpeg"); errors.Is(err, os.ErrNotExist) {
 		configs.Log.Error("File Does Not exist", zap.String("image", "./assets/images/uilogo.jpeg"))
 	}
-	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
+	pdf.Image(userphoto, 15, 13, 20, 0, false, extension, 0, "")
 	var (
 		currX float64 = 12
 		currY float64 = 45
@@ -72,9 +71,9 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currX += -8
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Pvt Ltd")
 	pdf.SetFont("Arial", "B", 10)
-	currX += 36
+	currX += 35
 	currY -= 34
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, userdata.Name)
@@ -133,8 +132,8 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currX += 10
 	currY += 6
 	pdf.SetXY(currX, currY)
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Pvt Ltd")
 	// pdf.Cell(0, 0, "Universe International - India")
 	currY += 4
 	pdf.SetXY(currX, currY)

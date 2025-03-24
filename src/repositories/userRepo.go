@@ -171,7 +171,7 @@ func GetUserPassByDistribId(distribId string, tx *gorm.DB) (string, error) {
 func UpdatePassword(distrib_id string, newHashPass string, tx *gorm.DB) error {
 	err :=
 		tx.
-			Model("users").
+			Table("users").
 			Where("distrib_id=?", distrib_id).
 			Update("pass", newHashPass).
 			Error

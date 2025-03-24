@@ -478,9 +478,9 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-	"distrib_id": "IN-00015",
-	"old_pass": "1234",
-	"new_pass": "123456"
+	"distrib_id": "IN-00001",
+	"old_pass": "123456",
+	"new_pass": "12345"
 }
 
 ###

@@ -83,11 +83,12 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	pdf.Cell(0, 0, "Distrib ID: "+userdata.DistribID)
 	currY += 4
 	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "", 6)
 	pdf.Cell(0, 0, "Email: "+userdata.EmailAddress)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Phone: +91-"+userdata.MobilePhoneNo)
 	pdf.SetFont("Arial", "I", 8)
+	pdf.Cell(0, 0, "Phone: +91-"+userdata.MobilePhoneNo)
 	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	currY += 5
 	pdf.SetXY(currX, currY)

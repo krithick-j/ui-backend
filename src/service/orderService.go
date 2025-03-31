@@ -42,11 +42,11 @@ func PlaceOrder(OrderIn dto.PlaceOrderIn, tx *gorm.DB) (fiber.Map, int) {
 		return utils.NotNilErrorMessage(err, "GenerateInvoice", "PlaceOrder", status, tx)
 	}
 
-	err = SendHtmlMailOrder(total, invoicePdfPath)
-	if err != nil {
-		return utils.NotNilErrorMessage(err, "SendHtmlMailOrder", "PlaceOrder", fiber.StatusInternalServerError, tx)
-	}
-	configs.Log.Infoln("Mail Sent!")
+	// err = SendHtmlMailOrder(total, invoicePdfPath)
+	// if err != nil {
+	// 	return utils.NotNilErrorMessage(err, "SendHtmlMailOrder", "PlaceOrder", fiber.StatusInternalServerError, tx)
+	// }
+	// configs.Log.Infoln("Mail Sent!")
 	return fiber.Map{"success": "Ordered Placed Successfully", "link": invoicePdfPath}, fiber.StatusOK
 }
 

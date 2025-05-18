@@ -54,3 +54,8 @@ type UserPassIn struct {
 	OldPass   string `json:"old_pass"`
 	NewPass   string `json:"new_pass"`
 }
+
+type ResetPass struct {
+	DistribId string `json:"distrib_id"`
+	NewPass   string `json:"new_pass"`
+}

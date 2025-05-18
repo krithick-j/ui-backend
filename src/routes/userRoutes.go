@@ -17,6 +17,7 @@ func UserRouter(router fiber.Router) {
 	router.Get("/:distrib_id", controllers.GetUserByDistribId)
 	router.Put("/updateUser/:distrib_id", controllers.EditUserByDistId)
 	router.Put("/changePass", controllers.UpdateUserPass)
+	router.Put("/resetPass", controllers.ResetPass)
 	router.Get("/acknowledgementLetter/:distrib_id", controllers.GetMediaFile)
 	//User Chain
 	router.Get("/tree/:distrib_id", controllers.GetUserTreeByDistId)

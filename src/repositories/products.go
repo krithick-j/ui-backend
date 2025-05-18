@@ -62,6 +62,10 @@ func GetAllProductByCategoryIdAndProductTypeFilter(categoryIds []string, product
 		tx = tx.Where("product_type IN (?)", productTypes)
 	}
 
+	if IsActive {
+		tx = tx.Where("status = 'active'")
+	}
+
 	// Execute the query
 	err := tx.Preload("ProductImages").Find(&products).Error
 	return products, err

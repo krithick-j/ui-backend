@@ -210,8 +210,8 @@ func SaveProduct(product *models.Product, tx *gorm.DB) (*models.Product, error) 
 
 func UpdateProduct(product *models.Product, tx *gorm.DB) error {
 	err := tx.
-		Table("users").
-		Where("product_id=?", product.ID).
+		Table("products").
+		Where("id=?", product.ID).
 		Updates(product).
 		Error
 	return err

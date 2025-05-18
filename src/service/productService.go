@@ -214,6 +214,13 @@ func CreateProduct(c *fiber.Ctx, form *multipart.Form, tx *gorm.DB) (fiber.Map, 
 	data := c.FormValue("data")
 	product := models.Product{}
 	json.Unmarshal([]byte(data), &product)
+	if product.ID != 0 {
+		err := repositories.UpdateProduct(&product, tx)
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "UpdateProduct", "CreateProduct", fiber.StatusInternalServerError, tx)
+		}
+		return fiber.Map{"data": "Product Successfully updated"}, fiber.StatusCreated
+	}
 	prod, err := repositories.SaveProduct(&product, tx)
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "SaveProduct", "CreateProduct", fiber.StatusInternalServerError, tx)

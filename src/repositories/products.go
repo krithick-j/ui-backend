@@ -62,6 +62,10 @@ func GetAllProductByCategoryIdAndProductTypeFilter(categoryIds []string, product
 		tx = tx.Where("product_type IN (?)", productTypes)
 	}
 
+	if IsActive {
+		tx = tx.Where("status = 'active'")
+	}
+
 	// Execute the query
 	err := tx.Preload("ProductImages").Find(&products).Error
 	return products, err
@@ -210,8 +214,8 @@ func SaveProduct(product *models.Product, tx *gorm.DB) (*models.Product, error) 
 
 func UpdateProduct(product *models.Product, tx *gorm.DB) error {
 	err := tx.
-		Table("users").
-		Where("product_id=?", product.ID).
+		Table("products").
+		Where("id=?", product.ID).
 		Updates(product).
 		Error
 	return err

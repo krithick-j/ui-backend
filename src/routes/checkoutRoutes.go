@@ -15,5 +15,6 @@ func CheckoutRouter(router fiber.Router) {
 	router.Post("/takeCheque", controllers.TakeChequeByDistribId)
 	router.Post("/takeCpa", controllers.SaveCpaICoupon)
 	router.Put("/changePin", controllers.EditChequePin)
+	router.Put("/resetPin", controllers.ResetChequePin)
 	router.Post("/login", controllers.ChequeLogin)
 }

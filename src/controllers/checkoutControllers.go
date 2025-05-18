@@ -115,6 +115,22 @@ func EditChequePin(c *fiber.Ctx) error {
 	return c.Status(status).JSON(res)
 }
 
+func ResetChequePin(c *fiber.Ctx) error {
+
+	var payload dto.ResetPinIn
+
+	if err := c.BodyParser(&payload); err != nil {
+		configs.Log.Errorln("Error on parsing payload from TotalChequeValueByDistribId controllers fn", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	tx := configs.DB.Begin()
+	res, status := service.ChangeChequePinWithoutOld(payload, tx)
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+	}
+	return c.Status(status).JSON(res)
+}
+
 func ChequeLogin(c *fiber.Ctx) error {
 
 	var payload dto.ChequeLogin

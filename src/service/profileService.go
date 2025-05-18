@@ -37,8 +37,7 @@ func IDCardFactory() *fpdf.Fpdf {
 	pdf.RoundedRect(48, 38, 40, 15, 1, "1234", "DF")
 	//Address Footer
 	pdf.Rect(100, 45, 80, 15, "DF")
-	pdf.Image("./assets/images/uilogo.jpeg", 70, 12, 6, 0, false, "jpeg", 0, "")
-	pdf.Image("./assets/images/uilogo.jpeg", 104, 49, 6, 0, false, "jpeg", 0, "")
+	pdf.Image("./assets/images/uilogo.jpeg", 61, 11, 28, 0, false, "jpeg", 0, "")
 	// Inner Right Rect
 	pdf.SetFillColor(0, 255, 0)
 	pdf.RoundedRect(11, 42, 32, 6, 2, "1234", "DF")
@@ -49,8 +48,6 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	userphoto, _ := strings.CutPrefix(userdata.KYCPhoto, "media/")
 	extension := filepath.Ext(userphoto)
 	extension, _ = strings.CutPrefix(extension, ".")
-	fmt.Println("userphoto", userphoto)
-	fmt.Println("extension", extension)
 	userphoto = filepath.Join("./assets", userphoto)
 	if _, err := os.Stat(userphoto); errors.Is(err, os.ErrNotExist) {
 		errStr := fmt.Sprintf("File Does Not exist: %s", userphoto)
@@ -59,7 +56,7 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	if _, err := os.Stat("./assets/images/uilogo.jpeg"); errors.Is(err, os.ErrNotExist) {
 		configs.Log.Error("File Does Not exist", zap.String("image", "./assets/images/uilogo.jpeg"))
 	}
-	pdf.Image(userphoto, 15, 10, 25, 0, false, extension, 0, "")
+	pdf.Image(userphoto, 15, 13, 20, 0, false, extension, 0, "")
 	var (
 		currX float64 = 12
 		currY float64 = 45
@@ -74,9 +71,9 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currX += -8
 	currY += 5
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Pvt Ltd")
 	pdf.SetFont("Arial", "B", 10)
-	currX += 36
+	currX += 35
 	currY -= 34
 	pdf.SetXY(currX, currY)
 	pdf.Cell(0, 0, userdata.Name)
@@ -86,11 +83,12 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	pdf.Cell(0, 0, "Distrib ID: "+userdata.DistribID)
 	currY += 4
 	pdf.SetXY(currX, currY)
+	pdf.SetFont("Arial", "", 6)
 	pdf.Cell(0, 0, "Email: "+userdata.EmailAddress)
 	currY += 4
 	pdf.SetXY(currX, currY)
-	pdf.Cell(0, 0, "Phone: +91-"+userdata.MobilePhoneNo)
 	pdf.SetFont("Arial", "I", 8)
+	pdf.Cell(0, 0, "Phone: +91-"+userdata.MobilePhoneNo)
 	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	currY += 5
 	pdf.SetXY(currX, currY)
@@ -135,8 +133,8 @@ func IDCardAddContent(pdf *fpdf.Fpdf, distrib_id string, userdata models.User) *
 	currX += 10
 	currY += 6
 	pdf.SetXY(currX, currY)
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(0, 0, "Ubiquitous Infinity Network Private Limited")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 0, "Ubiquitous Infinity Network Pvt Ltd")
 	// pdf.Cell(0, 0, "Universe International - India")
 	currY += 4
 	pdf.SetXY(currX, currY)
@@ -153,7 +151,6 @@ func GenerateIDCard(distrib_id string, tx *gorm.DB) (fiber.Map, int) {
 	configs.Log.Info("Started Generating ID Card")
 	userdata, _ := repositories.GetUserByID(distrib_id, tx)
 	// Create ID Card Layout
-	fmt.Println("hello")
 	pdf := IDCardFactory()
 	pdf = IDCardAddContent(pdf, distrib_id, userdata)
 	filename := fmt.Sprintf("./assets/%s-idcard.pdf", distrib_id)
@@ -212,8 +209,7 @@ func SendPhoneCode(c *fiber.Ctx, phone string, tx *gorm.DB) (fiber.Map, int) {
 	data.Set("source", "GSENTS")
 	data.Set("dmobile", "91"+phone)
 	data.Set("dlttempid", "1707171500974884924")
-	data.Set("message", fmt.Sprintf("Dear Distributor,\r\nThis is your OTP for Login %s for your mobile number verification.", otp))
-	fmt.Print("otp", otp)
+	data.Set("message", fmt.Sprintf("Dear Customer,\r\nThis is your OTP for Login %s for your mobile number verification On https://ui-network.com.\r\nGSENTS", otp))
 	// Create a new POST request
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode()))
 	if err != nil {

@@ -385,6 +385,17 @@ func UpdateUserPass(payload dto.UserPassIn, tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": "Password changed Successfully"}, fiber.StatusOK
 }
 
+func UpdateUserPassWithoutOldPass(payload dto.ResetPass, tx *gorm.DB) (fiber.Map, int) {
+
+	newHashpass := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPass)))
+
+	err := repositories.UpdatePassword(payload.DistribId, newHashpass, tx)
+	if err != nil {
+		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "Password changed Successfully"}, fiber.StatusOK
+}
+
 func GetReferralChainByDistribId(distribId string, tx *gorm.DB) (fiber.Map, int) {
 	var userArr []string
 

@@ -58,7 +58,7 @@ func GetFrequencyAmount(payload dto.FrequencyForTc, tx *gorm.DB) (fiber.Map, int
 	CHEQUE_DRAW_VALUE := configs.GlobalConfig.ChequeDrawValue //Cheque draw value is the constant 4000
 	COUNT := 2                                                //Left and Right inside the tracking center
 	var cpaAmount float64
-	var epAmount float64
+	// var epAmount float64
 	//Get Rank value
 	rank, err := repositories.GetCurrentRankValueByDistribId(payload.DistribId, tx)
 	if err != nil {
@@ -69,15 +69,14 @@ func GetFrequencyAmount(payload dto.FrequencyForTc, tx *gorm.DB) (fiber.Map, int
 		return utils.NotNilErrorMessage(err, "GetCheckoutFrequency", "GetFrequencyAmount", fiber.StatusInternalServerError, tx)
 	}
 	freqAmount := float64(CHEQUE_DRAW_VALUE) * float64(COUNT) * rank
-
+	var epMultiplier int
 	if payload.Frequency <= 0 {
-		epAmount = 0
+		// epAmount = 0
 		cpaAmount = 0
 		freqAmount = 0
 	} else {
 		newChequeFrequency := payload.Frequency + count
 		//Formula for ep multiplier
-		var epMultiplier int
 		for i := count; i <= newChequeFrequency; i++ {
 			if (i+1)%5 == 0 {
 				fmt.Println("i--->", i)
@@ -85,15 +84,12 @@ func GetFrequencyAmount(payload dto.FrequencyForTc, tx *gorm.DB) (fiber.Map, int
 			}
 		}
 		cpaMultiplier := payload.Frequency - epMultiplier
-		fmt.Println("cpa multiplier--->", cpaMultiplier)
-		fmt.Println("ep multiplier--->", epMultiplier)
-		fmt.Println("freqamount--->", freqAmount)
 		cpaAmount = float64(cpaMultiplier) * freqAmount
-		epAmount = float64(epMultiplier) * freqAmount
+		// epAmount = float64(epMultiplier) * freqAmount
 	}
 
-	response := map[string]float64{
-		"ep_amount":  epAmount,
+	response := map[string]any{
+		"ep_amount":  epMultiplier,
 		"cpa_amount": cpaAmount,
 	}
 	return utils.SuccessMessage(response, fiber.StatusOK)
@@ -282,6 +278,17 @@ func ChangeChequePin(payload dto.ChequePinIn, tx *gorm.DB) (fiber.Map, int) {
 	}
 
 	err = repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))), tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling ChangeCpaPin repositories fn from ChangeChequePin service fn")
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "Cpa pin changed Successfully"}, fiber.StatusOK
+}
+
+func ChangeChequePinWithoutOld(payload dto.ResetPinIn, tx *gorm.DB) (fiber.Map, int) {
+
+	err := repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))), tx)
 	if err != nil {
 		tx.Rollback()
 		configs.Log.Errorln("Error on calling ChangeCpaPin repositories fn from ChangeChequePin service fn")

@@ -55,6 +55,11 @@ type ChequePinIn struct {
 	NewPin     string `json:"new_pin"`
 }
 
+type ResetPinIn struct {
+	DistribId  string `json:"distrib_id"`
+	NewPin     string `json:"new_pin"`
+}
+
 type ChequeLogin struct {
 	DistribId string `json:"distrib_id"`
 	Pin       string `json:"pin"`

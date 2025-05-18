@@ -286,6 +286,17 @@ func ChangeChequePin(payload dto.ChequePinIn, tx *gorm.DB) (fiber.Map, int) {
 	return fiber.Map{"data": "Cpa pin changed Successfully"}, fiber.StatusOK
 }
 
+func ChangeChequePinWithoutOld(payload dto.ResetPinIn, tx *gorm.DB) (fiber.Map, int) {
+
+	err := repositories.ChangeCpaPin(payload.DistribId, fmt.Sprintf("%x", sha256.Sum256([]byte(payload.NewPin))), tx)
+	if err != nil {
+		tx.Rollback()
+		configs.Log.Errorln("Error on calling ChangeCpaPin repositories fn from ChangeChequePin service fn")
+		return fiber.Map{"error": err.Error()}, fiber.StatusInternalServerError
+	}
+	return fiber.Map{"data": "Cpa pin changed Successfully"}, fiber.StatusOK
+}
+
 func ChequeLogin(payload dto.ChequeLogin, tx *gorm.DB) (fiber.Map, int) {
 	PinHashFromPayload := fmt.Sprintf("%x", sha256.Sum256([]byte(payload.Pin)))
 

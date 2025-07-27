@@ -79,7 +79,6 @@ func GetFrequencyAmount(payload dto.FrequencyForTc, tx *gorm.DB) (fiber.Map, int
 		//Formula for ep multiplier
 		for i := count; i <= newChequeFrequency; i++ {
 			if (i+1)%5 == 0 {
-				fmt.Println("i--->", i)
 				epMultiplier += 1
 			}
 		}

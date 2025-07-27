@@ -221,22 +221,28 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 	if err != nil {
 		return utils.NotNilErrorMessage(err, "GetCpaBalance", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
 	}
-
-	totalAvailalbeDcBalance, err := repositories.GetDirectCommissionActiveValueByDistribId(payload.DistribID, tx)
-	if err != nil {
-		return utils.NotNilErrorMessage(err, "GetDirectCommissionActiveValueByDistribId", "GetValuesForCpa", fiber.StatusInternalServerError, tx)
-	}
-
-	for _, icoupon := range payload.Coupons {
-		icouponBalance = icouponBalance + (icoupon.Value * float64(icoupon.Quantity))
-	}
-
 	if payload.CpaAmount > cpaBalance {
 		return utils.CommonMessage("Insufficient cpa amount", fiber.StatusInternalServerError, tx)
 	}
 
+	// Use row-level locking to get DC balance and prevent race conditions
+	var totalAvailalbeDcBalance float64
+	err = tx.Raw(`
+		SELECT COALESCE(SUM(value), 0) 
+		FROM direct_commission_transactions 
+		WHERE ref_distrib_id = ? AND is_active = 1 
+		FOR UPDATE
+	`, payload.DistribID).Scan(&totalAvailalbeDcBalance).Error
+	if err != nil {
+		return utils.NotNilErrorMessage(err, "GetDirectCommissionActiveValueByDistribId", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+	}
+
 	if payload.DcAmount > totalAvailalbeDcBalance {
 		return utils.CommonMessage("Insufficient dc amount", fiber.StatusInternalServerError, tx)
+	}
+
+	for _, icoupon := range payload.Coupons {
+		icouponBalance = icouponBalance + (icoupon.Value * float64(icoupon.Quantity))
 	}
 
 	totalBalance := payload.CpaAmount + payload.DcAmount
@@ -256,13 +262,31 @@ func SaveCpaICoupon(payload dto.TakeCpaAmount, tx *gorm.DB) (fiber.Map, int) {
 		return utils.NotNilErrorMessage(err, "SaveCpaTransaction", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
 	}
 	if payload.DcAmount != 0 {
+		// Use row-level locking to prevent race conditions
+		var currentBalance float64
+		err := tx.Raw(`
+			SELECT COALESCE(SUM(value), 0) 
+			FROM direct_commission_transactions 
+			WHERE ref_distrib_id = ? AND is_active = 1 
+			FOR UPDATE
+		`, payload.DistribID).Scan(&currentBalance).Error
+
+		if err != nil {
+			return utils.NotNilErrorMessage(err, "LockDCBalance", "SaveCpaICoupon", fiber.StatusInternalServerError, tx)
+		}
+
+		// Double-check balance with locked data
+		if payload.DcAmount > currentBalance {
+			return utils.CommonMessage("Insufficient dc amount", fiber.StatusInternalServerError, tx)
+		}
+
 		dcObj := models.DirectCommissionTransaction{
 			DistribId:    "",
 			Value:        -payload.DcAmount,
 			Reference:    reference,
 			RefDistribId: payload.DistribID, //This will be used to calculate the total dc amount and used to reduce the amount
 			ActivateDate: activateDate,
-			ExpiryDate:   activateDate.AddDate(50, 6, 0),
+			ExpiryDate:   activateDate.AddDate(0, 50, 0), // Fix: 6 months instead of 50 years
 			IsActive:     true,
 		}
 

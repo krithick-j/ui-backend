@@ -407,8 +407,8 @@ func SaveDirectCommissionTransaction(distribId string, bvValue float64, referenc
 		Value:        value,
 		Reference:    reference,
 		RefDistribId: refDistribId,
-		ActivateDate: activateDate, 
-		ExpiryDate:   time.Now().AddDate(0, 6, daysToThirdMonday), //6 months
+		ActivateDate: activateDate,
+		ExpiryDate:   time.Now().AddDate(0, 50, daysToThirdMonday), //50 months
 	}
 
 	if err := repositories.SaveDirectCommissionTransaction(obj, tx); err != nil {

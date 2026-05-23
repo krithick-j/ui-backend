@@ -51,7 +51,7 @@ func LoginUser(username string, password string, tx *gorm.DB) (fiber.Map, int) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Generate encoded token and send it as response.
-	tokenstring, err := token.SignedString([]byte("secret"))
+	tokenstring, err := token.SignedString([]byte(configs.GlobalConfig.JWTSecret))
 	if err != nil {
 		configs.Log.Errorln("Error on SignedString", err.Error())
 		return fiber.Map{"err": err.Error()}, fiber.StatusInternalServerError
@@ -234,7 +234,7 @@ func handleUserRegistrationObject(user_in dto.UserIn, distrib_id string) models.
 		MobilePhoneNo:           user_in.MobilePhoneNo,
 		ValidIdNo:               user_in.ValidIdNo,
 		DateOfBirth:             user_in.DateOfBirth,
-		MotherName:             user_in.MotherName,
+		MotherName:              user_in.MotherName,
 		FatherName:              user_in.FatherName,
 		BenificiaryName:         user_in.BenificiaryName,
 		BeneficiaryRelationship: user_in.BeneficiaryRelationship,

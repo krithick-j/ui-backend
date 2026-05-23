@@ -34,28 +34,28 @@ func main() {
 	app.Use(logger.New())
 	app.Get("/media/:filename", controllers.GetMediaFile)
 	api := app.Group("/api")
-	api.Route("/auth", routes.AuthRouter) 
-	api.Route("/user", routes.UserRouter) 
+	api.Route("/auth", routes.AuthRouter)
+	api.Route("/user", routes.UserRouter)
 	api.Route("/test", routes.TestRouter)
 	api.Route("/tc", routes.TcRouter)
 	api.Route("/static", routes.StaticRouter) //this route is no longer used
 
 	app.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
+		SigningKey: jwtware.SigningKey{Key: []byte(configs.GlobalConfig.JWTSecret)},
 	}))
 
 	/* Hereafter all the endpoints will be secured */
-	api.Route("/cpa", routes.CpaRouter)         //this route is no longer used
-	api.Route("/iCoupon", routes.ICouponRouter) 
-	api.Route("/product", routes.ProductRouter) 
-	api.Route("/order", routes.OrdersRouter)    
-	api.Route("/rsp", routes.RspRouter)         
-	api.Route("/history", routes.HistoryRouter) 
+	api.Route("/cpa", routes.CpaRouter) //this route is no longer used
+	api.Route("/iCoupon", routes.ICouponRouter)
+	api.Route("/product", routes.ProductRouter)
+	api.Route("/order", routes.OrdersRouter)
+	api.Route("/rsp", routes.RspRouter)
+	api.Route("/history", routes.HistoryRouter)
 	api.Route("/ui", routes.UiRouter)
 	api.Route("/redeem", routes.RedeemRouter)
 	api.Route("/tc", routes.TcRouter)
-	api.Route("/cheque", routes.CheckoutRouter)        
-	api.Route("/contactCenter", routes.ContactCenter) 
-	api.Route("/admin", routes.AdminRouter)            
+	api.Route("/cheque", routes.CheckoutRouter)
+	api.Route("/contactCenter", routes.ContactCenter)
+	api.Route("/admin", routes.AdminRouter)
 	app.Listen(fmt.Sprintf(":%d", configs.GlobalConfig.AppPort))
 }

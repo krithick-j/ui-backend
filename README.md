@@ -1,29 +1,48 @@
-## CPA Table
+# UI Backend
 
-| state | code | item | points |
---------------------------------
-| BRNZ  | 1    | PRSP | 0       |
-| BRNZ  | 1    | GRSP | 0       |
-| BRNZ  | 1    | PBV  | 0       | 
-| BRNZ  | 1    | STEP | 0       |
-| BRNZ  | 1    | GPRF | 0       |
-| SLVR  | 1    | PRSP | 0       |
-| SLVR  | 1    | GRSP | 0       |
-| SLVR  | 1    | PBV  | 6000    | 
-| SLVR  | 1    | STEP | 0       | 
-| SLVR  | 1    | GPRF | 0       |
-| GOLD  | 1    | PRSP | 50      |
-| GOLD  | 1    | GRSP | 600     |
-| GOLD  | 1    | PBV  | 500     | 
-| GOLD  | 1    | STEP | 2       |
-| GOLD  | 1    | GPRF | 0       |
-| SFFR  | 1    | PRSP | 50      |
-| SFFR  | 1    | GRSP | 2000    |
-| SFFR  | 1    | PBV  | 1000    | 
-| SFFR  | 1    | STEP | 30      |
-| SFFR  | 1    | GPRF | 5       |
-| PTMS  | 1    | PRSP | 100     |
-| PTMS  | 1    | GRSP | 6000    |
-| PTMS  | 1    | PBV  | 2000    | 
-| PTMS  | 1    | STEP | 80     |
-| PTMS  | 1    | GPRF | 4       |
+Go backend service for the UI Network application. The project is built on Fiber, GORM, and MySQL, and exposes APIs for authentication, user management, orders, products, payouts, referral workflows, and supporting admin operations.
+
+## Stack
+
+- Go
+- Fiber
+- GORM
+- MySQL
+- Viper for environment-based configuration
+
+## Configuration
+
+The service reads configuration from `app.env` in the project root.
+
+1. Copy the example file:
+
+```bash
+cp app.env.example app.env
+```
+
+2. Set the required values:
+
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `MYSQL_DB`
+- `MYSQL_HOST`
+- `MYSQL_PORT`
+- `JWT_SECRET`
+
+Optional values:
+
+- `CHEQUE_DRAW_VALUE` defaults to `4000`
+- `APP_PORT` defaults to `8000`
+
+## Run
+
+```bash
+go run ./cmd
+```
+
+The service fails fast when required configuration is missing.
+
+## Notes
+
+- Local secrets are intentionally not committed.
+- `node_modules/` and local build artifacts are excluded from version control.

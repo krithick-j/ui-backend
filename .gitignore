@@ -8,3 +8,5 @@ assets/
 distribApplicationForm/
 acknowledgmentLetter/data/
 __debug_bin1004442427
+node_modules/
+.vscode/

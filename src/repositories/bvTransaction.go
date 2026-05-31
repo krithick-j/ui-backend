@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"math"
 	"time"
 	"ui-back-end/src/models"
 
@@ -147,7 +148,11 @@ func GetBVforTCOneRowByDateForCheque(distrib_id string, tc string, fromDate stri
 
 // Get Sum of Bv transactions of an individual distributor with trans type product
 func GetBvSumByDistribId(distribId, transType string, tx *gorm.DB) (int, error) {
-	var bvSum int
+	// bv_value is a DOUBLE column, so SUM() returns a float. Scanning a large
+	// sum directly into an int fails because the driver hands back the value in
+	// scientific notation (e.g. "1.0041e+06"). Scan into a float64 and round to
+	// an int so the downstream business logic keeps working with an int.
+	var bvSum float64
 
 	err :=
 		tx.
@@ -156,7 +161,7 @@ func GetBvSumByDistribId(distribId, transType string, tx *gorm.DB) (int, error) 
 			Where("distrib_id=? AND trans_type=?", distribId, transType).
 			Scan(&bvSum).
 			Error
-	return bvSum, err
+	return int(math.Round(bvSum)), err
 }
 
 // This function will give you the count of cheque taken by the distrib id in a Month
